@@ -131,14 +131,21 @@ class MavsdkLink:
         except Exception:
             self._version = "mavsdk-grpc"
         self._system = System()
-        await self._system.connect(system_address=self.address)
 
-        async def _wait_connected() -> None:
+        async def _connect_and_wait() -> None:
+            # System.connect() starts mavsdk_server and waits for its gRPC endpoint; when
+            # the simulator address cannot be resolved the server never comes up, so the
+            # whole sequence is bounded by the timeout, not only the discovery wait.
+            await self._system.connect(system_address=self.address)
             async for state in self._system.core.connection_state():
                 if state.is_connected:
                     return
 
-        await asyncio.wait_for(_wait_connected(), timeout=timeout)
+        try:
+            await asyncio.wait_for(_connect_and_wait(), timeout=timeout)
+        except BaseException:
+            await self.disconnect()
+            raise
         self._snapshot.connected = True
         self._tasks = [
             asyncio.create_task(self._track_position()),
@@ -164,6 +171,10 @@ class MavsdkLink:
                 await task
         self._tasks = []
         self._snapshot.connected = False
+        server = getattr(self._system, "_mavsdk_server", None)
+        if server is not None:
+            with contextlib.suppress(Exception):
+                server.kill()
         self._system = None
 
     async def set_param_int(self, name: str, value: int) -> None:

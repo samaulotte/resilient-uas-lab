@@ -149,6 +149,7 @@ services:
       <<: [*common-env, *data-env]
       RESLAB_RUNNER_STALE_AFTER_SECONDS: ${RESLAB_RUNNER_STALE_AFTER_SECONDS:-45}
       RESLAB_QUEUED_TIMEOUT_SECONDS: ${RESLAB_QUEUED_TIMEOUT_SECONDS:-300}
+      RESLAB_PREPARING_TIMEOUT_SECONDS: ${RESLAB_PREPARING_TIMEOUT_SECONDS:-600}
     networks: [control, data, observability]
     depends_on:
       migrate:

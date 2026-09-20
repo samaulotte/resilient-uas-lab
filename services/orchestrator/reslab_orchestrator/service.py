@@ -57,6 +57,8 @@ class OrchestratorService:
         self.store: ArtifactStore = create_artifact_store(settings)
         self._stop = asyncio.Event()
         self._started_at = datetime.now(tz=UTC)
+        # Latest set of run ids each runner reported as executing (from heartbeats).
+        self._runner_active: dict[str, set[str]] = {}
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -284,6 +286,7 @@ class OrchestratorService:
     async def _on_heartbeat(self, message, subject: str) -> None:
         if not isinstance(message, RunnerHeartbeat):
             return
+        self._runner_active[message.runner_id] = set(message.active_run_ids)
         async with session_scope(self.sessions) as session:
             await repository.upsert_runner(
                 session,
@@ -308,6 +311,7 @@ class OrchestratorService:
         now = datetime.now(tz=UTC)
         stale_after = timedelta(seconds=self.settings.runner_stale_after_seconds)
         queued_timeout = timedelta(seconds=self.settings.queued_timeout_seconds)
+        preparing_timeout = timedelta(seconds=self.settings.preparing_timeout_seconds)
         # Grace period after start: runner heartbeats may not have been observed yet.
         heartbeats_trusted = now - self._started_at > stale_after
         async with session_scope(self.sessions) as session:
@@ -336,6 +340,20 @@ class OrchestratorService:
                     continue
                 # A run that keeps producing messages is alive whatever the heartbeat says.
                 last_progress = max(filter(None, (run.updated_at, run.started_at, run.created_at)))
+                if state is RunState.PREPARING and now - last_progress > preparing_timeout:
+                    # The adapter never reported the target ready. Tell the runner to give
+                    # up on it, then close the run with an explicit reason.
+                    reason = (
+                        f"target preparation did not complete within "
+                        f"{int(preparing_timeout.total_seconds())}s (adapter '{run.adapter}')"
+                    )
+                    await self.bus.publish_core(
+                        Subjects.control_cancel(str(run.id)),
+                        CancelRequest(run_id=str(run.id), reason=reason),
+                    )
+                    await self.finalize(session, run, outcome="failed", reason=reason)
+                    log.warning("watchdog.preparing_timeout", run_id=str(run.id))
+                    continue
                 if now - last_progress <= stale_after or not heartbeats_trusted:
                     continue
                 runner = runners.get(run.runner_id or "")
@@ -354,4 +372,18 @@ class OrchestratorService:
                     )
                     log.warning(
                         "watchdog.runner_stale", run_id=str(run.id), runner=runner.runner_id
+                    )
+                    continue
+                reported = self._runner_active.get(runner.runner_id)
+                if reported is not None and str(run.id) not in reported:
+                    # The runner is alive but no longer knows this run (it restarted while
+                    # the run was in flight): nothing will ever finish it.
+                    await self.finalize(
+                        session,
+                        run,
+                        outcome="failed",
+                        reason=f"runner '{runner.runner_id}' is no longer executing this run",
+                    )
+                    log.warning(
+                        "watchdog.runner_dropped_run", run_id=str(run.id), runner=runner.runner_id
                     )

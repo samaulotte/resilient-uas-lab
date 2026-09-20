@@ -126,9 +126,10 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         try:
             await self._link.connect(self.connection_timeout)
         except Exception as exc:
+            detail = str(exc) or type(exc).__name__
             raise AdapterError(
                 f"could not connect to PX4 at {self.connection_url} within "
-                f"{self.connection_timeout:.0f}s: {exc}. Is the simulation profile running "
+                f"{self.connection_timeout:.0f}s ({detail}). Is the simulation profile running "
                 "(docker compose --profile sim up)?"
             ) from exc
         await self._link.set_param_int("SYS_FAILURE_EN", 1)

@@ -70,13 +70,13 @@ generator). Every model exchanged is a frozen Pydantic model.
 ```python
 class AdapterCapabilities(BaseModel):
     name: str
-    kind: AdapterKind                       # simulation | hitl | replay
+    kind: AdapterKind  # simulation | hitl | replay
     description: str
     vehicles: tuple[str, ...]
-    supported_effects: dict[str, tuple[Effect, ...]]   # keyed by subsystem id
-    deterministic: bool                     # same seed and scenario reproduce the run
+    supported_effects: dict[str, tuple[Effect, ...]]  # keyed by subsystem id
+    deterministic: bool  # same seed and scenario reproduce the run
     real_time_capable: bool = True
-    data_origin: str                        # shown in the UI and written into reports
+    data_origin: str  # shown in the UI and written into reports
 ```
 
 `supported_effects` is the adapter's truthful statement of what it can realize. Before
@@ -102,10 +102,12 @@ mistake a simulation for a flight. Existing values:
 ```python
 class AdapterConfiguration(BaseModel):
     run_id: str
-    target: Target              # adapter name, vehicle, adapter-specific scalar configuration
-    mission: Mission            # type, timeout, cruise speed, altitude, waypoints
-    recovery: RecoveryPolicy    # declared reactions to GNSS, datalink and compute loss
-    simulation: SimulationConfig  # seed, speed, telemetry_rate_hz (seed and speed already overridden)
+    target: Target  # adapter name, vehicle, adapter-specific scalar configuration
+    mission: Mission  # type, timeout, cruise speed, altitude, waypoints
+    recovery: RecoveryPolicy  # declared reactions to GNSS, datalink and compute loss
+    simulation: (
+        SimulationConfig  # seed, speed, telemetry_rate_hz (seed and speed already overridden)
+    )
     topology: SystemTopology
 ```
 
@@ -125,12 +127,13 @@ class InjectionRequest(BaseModel):
     scenario_event_id: str
     subsystem: str
     effect: Effect
-    duration: float | None      # seconds; None means until cleared
+    duration: float | None  # seconds; None means until cleared
     parameters: dict[str, float | int | str]
+
 
 class InjectionResult(BaseModel):
     applied: bool
-    mechanism: str              # how the effect was realized, for traceability
+    mechanism: str  # how the effect was realized, for traceability
     detail: str = ""
 ```
 
@@ -162,7 +165,7 @@ class Observation(BaseModel):
     state_changes: tuple[ComponentStateChange, ...] = ()
     responses: tuple[SystemResponse, ...] = ()
     mission_events: tuple[MissionEvent, ...] = ()
-    finished: bool = False      # mission finished (complete or aborted)
+    finished: bool = False  # mission finished (complete or aborted)
 ```
 
 - `sample.t` is the simulation time in seconds and is the clock the engine schedules

@@ -122,6 +122,7 @@ Copy `.env.example` to `.env`. Every variable has a working default for a local 
 | `RESLAB_RUNNER_CONCURRENCY` | `1` | `runner` |
 | `RESLAB_RUNNER_STALE_AFTER_SECONDS` | `45` | `orchestrator` |
 | `RESLAB_QUEUED_TIMEOUT_SECONDS` | `300` | `orchestrator` |
+| `RESLAB_PREPARING_TIMEOUT_SECONDS` | `600` | `orchestrator` |
 | `PX4_SIM_IMAGE` | the pinned `px4io/px4-sitl-gazebo` digest | `px4-sim` |
 | `PX4_SIM_MODEL` | `gz_x500` | `px4-sim` |
 | `PX4_GZ_WORLD` | `default` | `px4-sim` |
@@ -170,6 +171,7 @@ when running services outside Compose or on another orchestrator.
 | `RESLAB_ORCHESTRATOR_WATCHDOG_SECONDS` | `10.0` | Watchdog interval |
 | `RESLAB_RUNNER_STALE_AFTER_SECONDS` | `45.0` | Seconds without heartbeat or progress before a run is failed |
 | `RESLAB_QUEUED_TIMEOUT_SECONDS` | `300.0` | Seconds a queued run waits for a runner |
+| `RESLAB_PREPARING_TIMEOUT_SECONDS` | `600.0` | Seconds a run may stay in `PREPARING` before the orchestrator fails it and asks the runner to abort; adapters time out earlier with a precise reason |
 | `RESLAB_RUNNER_METRICS_PORT` | `9102` | Prometheus port, 0 disables |
 | `RESLAB_RUNNER_ID` | `runner-local` | Runner identity in heartbeats and provenance |
 | `RESLAB_RUNNER_ADAPTERS` | `mock,replay` | Adapters this runner offers |

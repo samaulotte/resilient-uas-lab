@@ -85,13 +85,14 @@ class RunnerService:
     async def _heartbeat_loop(self) -> None:
         while not self._stop.is_set():
             try:
-                active = next(iter(self._active), None)
+                active = list(self._active)
                 await self.bus.publish_core(
                     Subjects.RUNNER_HEARTBEAT,
                     RunnerHeartbeat(
                         runner_id=self.runner_id,
                         adapters=self.adapters,
-                        active_run_id=active,
+                        active_run_id=active[0] if active else None,
+                        active_run_ids=active,
                         version=SOFTWARE_VERSION,
                     ),
                 )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
@@ -267,6 +268,38 @@ async def test_engine_cancellation() -> None:
     result = await engine.run()
     assert result.final_state is RunState.CANCELLED
     assert result.reason == "user request"
+    assert any(e.event_type == "run_cancelled" for e in sink.events)
+    assert adapter.stopped
+
+
+async def test_engine_cancellation_interrupts_preparation() -> None:
+    """A cancel request must not wait for a slow adapter connection to time out."""
+
+    class SlowToPrepare(ScriptedAdapter):
+        prepare_started = asyncio.Event()
+
+        async def prepare(self, configuration) -> PlannedPath:  # type: ignore[override]
+            self.prepare_started.set()
+            await asyncio.sleep(3600)
+            return await super().prepare(configuration)
+
+    scenario = load_scenario(SCENARIO)
+    adapter = SlowToPrepare()
+    sink = RecordingSink()
+    token = CancelToken()
+    engine = ScenarioEngine(
+        run_id=RUN_ID, scenario=scenario, adapter=adapter, sink=sink, cancel_token=token
+    )
+
+    async def cancel_once_preparing() -> None:
+        await adapter.prepare_started.wait()
+        token.cancel("operator cancelled")
+
+    result, _ = await asyncio.wait_for(
+        asyncio.gather(engine.run(), cancel_once_preparing()), timeout=5
+    )
+    assert result.final_state is RunState.CANCELLED
+    assert result.reason == "operator cancelled"
     assert any(e.event_type == "run_cancelled" for e in sink.events)
     assert adapter.stopped
 

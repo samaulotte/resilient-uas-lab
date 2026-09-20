@@ -65,6 +65,10 @@ class PlatformSettings(BaseSettings):
     orchestrator_watchdog_seconds: float = Field(default=10.0, gt=0)
     runner_stale_after_seconds: float = Field(default=45.0, gt=0)
     queued_timeout_seconds: float = Field(default=300.0, gt=0)
+    # A run may stay in PREPARING (adapter connecting to its target) at most this long.
+    # Keep it above the adapters' own connection timeouts so they fail first with a
+    # precise reason; this is the orchestrator's backstop.
+    preparing_timeout_seconds: float = Field(default=600.0, gt=0)
 
     # Runner
     runner_metrics_port: int = Field(

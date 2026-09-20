@@ -16,10 +16,11 @@ The engine does not know what the target is. It only speaks the adapter contract
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import heapq
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -60,6 +61,9 @@ class EngineSink(Protocol):
     async def on_telemetry(self, samples: list[TelemetrySample]) -> None: ...
 
 
+T = TypeVar("T")
+
+
 class CancelToken:
     def __init__(self) -> None:
         self._event = asyncio.Event()
@@ -72,6 +76,13 @@ class CancelToken:
     @property
     def cancelled(self) -> bool:
         return self._event.is_set()
+
+    async def wait(self) -> None:
+        await self._event.wait()
+
+
+class _PreparationCancelledError(Exception):
+    """Raised internally when a cancel request arrives while the adapter prepares."""
 
 
 class UnsupportedInjectionError(Exception):
@@ -244,7 +255,7 @@ class ScenarioEngine:
                 ),
                 topology=self.topology,
             )
-            self._planned_path = await self.adapter.prepare(configuration)
+            self._planned_path = await self._cancellable(self.adapter.prepare(configuration))
             health = await self.adapter.health()
             self._states = dict(health.states)
 
@@ -320,6 +331,16 @@ class ScenarioEngine:
                 severity=Severity.CRITICAL,
                 metadata={"unsupported": exc.items},
             )
+        except _PreparationCancelledError:
+            final_state = RunState.CANCELLED
+            reason = self.cancel_token.reason or "cancelled"
+            await self._emit(
+                t=0.0,
+                kind=EventKind.LIFECYCLE,
+                event_type="run_cancelled",
+                message=f"Run cancelled during preparation: {reason}",
+                source=EventSource.ENGINE,
+            )
         except asyncio.CancelledError:
             final_state = RunState.CANCELLED
             reason = "runner interrupted"
@@ -371,6 +392,27 @@ class ScenarioEngine:
             artifacts=artifacts,
             mission_complete=mission_complete,
         )
+
+    async def _cancellable(self, awaitable: Awaitable[T]) -> T:
+        """Await `awaitable` unless the cancel token fires first.
+
+        Adapter preparation can take long (connecting to a simulator); a cancel request
+        must interrupt it instead of waiting for the adapter's own timeout.
+        """
+        work = asyncio.ensure_future(awaitable)
+        cancel = asyncio.ensure_future(self.cancel_token.wait())
+        try:
+            done, _ = await asyncio.wait({work, cancel}, return_when=asyncio.FIRST_COMPLETED)
+            if work in done:
+                return work.result()
+            work.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await work
+            raise _PreparationCancelledError
+        finally:
+            cancel.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await cancel
 
     # ------------------------------------------------------------------ scheduling
 

@@ -106,7 +106,10 @@ class RunnerHeartbeat(ProtocolMessage):
     type: Literal["heartbeat"] = "heartbeat"
     runner_id: str
     adapters: list[str]
-    active_run_id: str | None = None
+    active_run_id: str | None = Field(default=None, description="First active run (summary)")
+    active_run_ids: list[str] = Field(
+        default_factory=list, description="Every run this runner is currently executing"
+    )
     version: str
 
 
