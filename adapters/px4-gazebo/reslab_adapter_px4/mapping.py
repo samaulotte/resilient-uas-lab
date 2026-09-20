@@ -1,18 +1,26 @@
-"""Translation of generic effects into PX4 mechanisms.
+"""Translation of generic effects into PX4 mechanisms that produce OBSERVABLE behaviour.
 
-Two mechanism families exist:
+The design rule for this adapter is empirical: an effect is only advertised for PX4 when
+it produces a change ResLab can actually observe over MAVLink on the reference image
+(see docs/px4-integration.md for what was measured). Three mechanism families are used:
 
-- `failure`: PX4 System Failure Injection (`failure <unit> <type>` shell command,
-  `MAV_CMD_INJECT_FAILURE` over MAVLink, MAVSDK `Failure` plugin). Only available in
-  simulation and only when the parameter `SYS_FAILURE_EN` is set. Which unit/type
-  combinations are implemented depends on the PX4 release and simulator; PX4 rejects
-  unsupported combinations and the adapter reports the injection as not applied.
-- `companion`: mechanisms realised by the adapter itself in its role of companion
-  computer (for example dropping and re-establishing its MAVLink link to emulate a
-  mission-computer restart). PX4 then reacts with its own failsafes.
+- `param`: remove an aiding source from the EKF by clearing a control parameter
+  (`EKF2_GPS_CTRL`, `EKF2_BARO_CTRL`, `EKF2_MAG_TYPE`). This injects the *effect* of a
+  sensor becoming unavailable to the estimator: the EKF stops fusing it, the affected
+  estimate degrades, and the loss is observable through the vehicle health flags and
+  PX4's own failsafe reaction. The original value is read before injection and restored
+  on clear.
+- `companion`: mechanisms realised by the adapter in its role as companion computer /
+  ground link, by dropping and re-establishing its MAVLink link. PX4 then reacts with
+  its real data-link-loss failsafe (`NAV_DLL_ACT`), which was measured to drive the
+  vehicle into Return-To-Launch.
+- `failure`: PX4 System Failure Injection (`MAV_CMD_INJECT_FAILURE`). On the reference
+  Gazebo image this command is accepted but the simulated sensors do not honour it, so
+  it is not used to claim an observable effect. The transport keeps the capability for
+  builds where it is wired, and any injection PX4 does not realise is reported as such.
 
-Reference: PX4 user guide, "System Failure Injection" (docs/px4-integration.md lists the
-upstream links).
+The `param` mechanism realises the *consequence* of losing a sensor (the estimator can
+no longer use it); it never models a physical cause. This is the project's scope.
 """
 
 from __future__ import annotations
@@ -50,74 +58,75 @@ class FailureType(StrEnum):
 
 @dataclass(frozen=True)
 class FailureMapping:
-    mechanism: str  # "failure" | "companion"
+    mechanism: str  # "param" | "companion" | "failure"
+    # param mechanism
+    param_name: str | None = None
+    param_off_value: int | None = None
+    # companion mechanism
+    companion_action: str | None = None
+    # failure mechanism (kept for builds where it is wired)
     unit: FailureUnit | None = None
     failure_type: FailureType | None = None
-    companion_action: str | None = None
     note: str = ""
 
     def describe(self) -> str:
+        if self.mechanism == "param" and self.param_name:
+            return f"px4:param {self.param_name}={self.param_off_value}"
         if self.mechanism == "failure" and self.unit and self.failure_type:
             return f"px4:failure {self.unit.value.lower()} {self.failure_type.value.lower()}"
         return f"companion:{self.companion_action}"
 
 
-_SENSOR_TYPES: dict[Effect, FailureType] = {
-    Effect.UNAVAILABLE: FailureType.OFF,
-    Effect.STUCK: FailureType.STUCK,
-    Effect.ERRONEOUS: FailureType.WRONG,
-    Effect.INTERMITTENT: FailureType.INTERMITTENT,
-    Effect.DEGRADED: FailureType.SLOW,
-}
+def _param(name: str, off: int, note: str) -> FailureMapping:
+    return FailureMapping(mechanism="param", param_name=name, param_off_value=off, note=note)
 
 
-def _sensor(unit: FailureUnit, effects: tuple[Effect, ...]) -> dict[Effect, FailureMapping]:
-    return {
-        effect: FailureMapping(mechanism="failure", unit=unit, failure_type=_SENSOR_TYPES[effect])
-        for effect in effects
-    }
-
-
+# Only (subsystem, effect) pairs that produce a MEASURED observable effect on the
+# reference image are listed. Anything not here is reported as unsupported before the run
+# starts, so a scenario never silently assumes an effect it cannot realise.
 MAPPINGS: dict[str, dict[Effect, FailureMapping]] = {
-    "navigation.gnss": _sensor(
-        FailureUnit.SENSOR_GPS,
-        (Effect.UNAVAILABLE, Effect.STUCK, Effect.ERRONEOUS, Effect.INTERMITTENT, Effect.DEGRADED),
-    ),
-    "sensors.barometer": _sensor(
-        FailureUnit.SENSOR_BARO,
-        (Effect.UNAVAILABLE, Effect.STUCK, Effect.ERRONEOUS, Effect.INTERMITTENT, Effect.DEGRADED),
-    ),
-    "sensors.magnetometer": _sensor(
-        FailureUnit.SENSOR_MAG,
-        (Effect.UNAVAILABLE, Effect.STUCK, Effect.ERRONEOUS, Effect.INTERMITTENT, Effect.DEGRADED),
-    ),
-    "sensors.imu": _sensor(
-        FailureUnit.SENSOR_GYRO, (Effect.DEGRADED, Effect.ERRONEOUS, Effect.INTERMITTENT)
-    ),
+    "navigation.gnss": {
+        Effect.UNAVAILABLE: _param(
+            "EKF2_GPS_CTRL",
+            0,
+            "removes GPS aiding from the EKF; global position estimate is lost",
+        ),
+        Effect.DEGRADED: _param(
+            "EKF2_GPS_CTRL",
+            0,
+            "removes GPS aiding from the EKF; global position estimate is lost",
+        ),
+    },
+    "sensors.barometer": {
+        Effect.UNAVAILABLE: _param(
+            "EKF2_BARO_CTRL", 0, "removes barometer aiding from the EKF height estimate"
+        ),
+        Effect.ERRONEOUS: _param(
+            "EKF2_BARO_CTRL", 0, "removes barometer aiding from the EKF height estimate"
+        ),
+        Effect.STUCK: _param(
+            "EKF2_BARO_CTRL", 0, "removes barometer aiding from the EKF height estimate"
+        ),
+    },
+    "sensors.magnetometer": {
+        Effect.UNAVAILABLE: _param(
+            "EKF2_MAG_TYPE", 5, "disables magnetometer fusion (EKF2_MAG_TYPE=5, none)"
+        ),
+        Effect.STUCK: _param(
+            "EKF2_MAG_TYPE", 5, "disables magnetometer fusion (EKF2_MAG_TYPE=5, none)"
+        ),
+    },
     "communications.c2": {
         Effect.UNAVAILABLE: FailureMapping(
-            mechanism="failure",
-            unit=FailureUnit.SYSTEM_MAVLINK_SIGNAL,
-            failure_type=FailureType.OFF,
-            note="PX4 declares data link loss and applies NAV_DLL_ACT",
-        ),
-        Effect.TEMPORARY_DISCONNECT: FailureMapping(
-            mechanism="failure",
-            unit=FailureUnit.SYSTEM_MAVLINK_SIGNAL,
-            failure_type=FailureType.OFF,
-            note="cleared with failure type OK when the duration elapses",
-        ),
-        Effect.INTERMITTENT: FailureMapping(
-            mechanism="failure",
-            unit=FailureUnit.SYSTEM_MAVLINK_SIGNAL,
-            failure_type=FailureType.INTERMITTENT,
+            mechanism="companion",
+            companion_action="link_down",
+            note="the adapter drops its GCS link; PX4 declares data-link loss (NAV_DLL_ACT)",
         ),
     },
     "external.gcs": {
         Effect.UNAVAILABLE: FailureMapping(
-            mechanism="failure",
-            unit=FailureUnit.SYSTEM_MAVLINK_SIGNAL,
-            failure_type=FailureType.OFF,
+            mechanism="companion",
+            companion_action="link_down",
             note="ground station silence is indistinguishable from link loss for the vehicle",
         ),
     },
