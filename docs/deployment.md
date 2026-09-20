@@ -46,7 +46,7 @@ the same commands. Mission Control is served at `http://localhost:8080` (or
 | `runner-sim` (profile `sim`) | same Python image, `SERVICE=runner` | `control`, `simulation`, `observability` | Executes runs with the `px4-gazebo` adapter |
 | `prometheus` (profile `observability`) | `prom/prometheus:v3.14.0` (digest pinned) | `observability` | Scrapes `api:8000/metrics`, `orchestrator:9101`, `runner:9102`, `nats-exporter:7777`; 7 days retention |
 | `nats-exporter` (profile `observability`) | `natsio/prometheus-nats-exporter:0.20.2` (digest pinned) | `observability` | Exposes NATS `varz`, `jsz` and `connz` |
-| `grafana` (profile `observability`) | `grafana/grafana:13.2.2` (digest pinned) | `observability` | Publishes `RESLAB_GRAFANA_PORT` (default 3001); provisioned Prometheus datasource and the `platform.json` dashboard |
+| `grafana` (profile `observability`) | `grafana/grafana:13.2.2` (digest pinned) | `edge`, `observability` | Publishes `RESLAB_GRAFANA_PORT` (default 3001); provisioned Prometheus datasource and the `platform.json` dashboard |
 
 The Python image is multi-stage: dependencies are resolved with `uv sync --frozen
 --no-dev` from the lock file in a builder stage and the virtual environment is copied
@@ -59,7 +59,7 @@ OCI labels with the version and git commit passed as build arguments.
 
 | Network | Internal | Members |
 | ------- | -------- | ------- |
-| `edge` | no | `gateway`, `web`, `api` |
+| `edge` | no | `gateway`, `web`, `api`, `grafana` (observability profile) |
 | `control` | yes | `api`, `orchestrator`, `runner`, `runner-sim`, `nats` |
 | `data` | yes | `api`, `orchestrator`, `migrate`, `postgres`, `objectstore` |
 | `simulation` | yes | `runner-sim`, `px4-sim` |

@@ -358,7 +358,9 @@ services:
       - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
-    networks: [observability]
+    # Grafana is browser-facing: it needs the edge network for its published port,
+    # since ports cannot be published from an internal-only network.
+    networks: [edge, observability]
     depends_on: [prometheus]
     security_opt: [no-new-privileges:true]
     deploy:
