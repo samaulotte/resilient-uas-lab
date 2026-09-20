@@ -6,9 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from reslab_api.schemas import (
+    ApiError,
+    ArtifactOut,
     CancelResponse,
     EventsResponse,
     MetricsResponse,
+    RecordingOut,
     RunCreateRequest,
     RunDetail,
     RunListResponse,
@@ -26,6 +29,7 @@ from reslab_core.analysis.assertions import AssertionResult
 from reslab_core.analysis.metrics import MetricsResult
 from reslab_core.analysis.scoring import ScoreResult
 from reslab_core.ids import InvalidIdentifierError, validate_artifact_name, validate_run_id
+from reslab_core.report.model import ResilienceReport
 from reslab_core.states import RunState
 from reslab_platform.db import Run, repository
 
@@ -186,7 +190,23 @@ async def metrics(run_id: str, session: AsyncSession = Depends(get_session)) -> 
     )
 
 
-@router.get("/{run_id}/report", summary="Canonical JSON report")
+NOT_READY = {404: {"model": ApiError, "description": "Run not found or not analyzed yet"}}
+
+
+@router.get(
+    "/{run_id}/report",
+    summary="Canonical JSON report",
+    response_model=ResilienceReport,
+    responses={
+        200: {
+            "description": "The stored report.json artifact, byte for byte",
+            "content": {
+                "application/json": {"schema": {"$ref": "#/components/schemas/ResilienceReport"}}
+            },
+        },
+        **NOT_READY,
+    },
+)
 async def report(
     run_id: str,
     state: AppState = Depends(get_state),
@@ -199,7 +219,18 @@ async def report(
     return Response(content=data, media_type="application/json")
 
 
-@router.get("/{run_id}/report.html", summary="Standalone HTML report")
+@router.get(
+    "/{run_id}/report.html",
+    summary="Standalone HTML report",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "Self-contained HTML report (inline styles only, no scripts)",
+            "content": {"text/html": {"schema": {"type": "string"}}},
+        },
+        **NOT_READY,
+    },
+)
 async def report_html(
     run_id: str,
     state: AppState = Depends(get_state),
@@ -216,24 +247,38 @@ async def report_html(
     )
 
 
-@router.get("/{run_id}/artifacts", summary="List artifacts")
-async def artifacts(run_id: str, session: AsyncSession = Depends(get_session)) -> list[dict]:
+@router.get("/{run_id}/artifacts", response_model=list[ArtifactOut], summary="List artifacts")
+async def artifacts(run_id: str, session: AsyncSession = Depends(get_session)) -> list[ArtifactOut]:
     await _load_run(session, run_id)
     rows = await repository.list_artifacts(session, run_id)
     return [
-        {
-            "name": a.name,
-            "content_type": a.content_type,
-            "size_bytes": a.size_bytes,
-            "sha256": a.sha256,
-            "description": a.description,
-            "url": f"/api/v1/runs/{run_id}/artifacts/{a.name}",
-        }
+        ArtifactOut(
+            name=a.name,
+            content_type=a.content_type,
+            size_bytes=a.size_bytes,
+            sha256=a.sha256,
+            description=a.description,
+            url=f"/api/v1/runs/{run_id}/artifacts/{a.name}",
+        )
         for a in rows
     ]
 
 
-@router.get("/{run_id}/artifacts/{name}", summary="Download an artifact")
+@router.get(
+    "/{run_id}/artifacts/{name}",
+    summary="Download an artifact",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "Artifact content with its stored media type",
+            "content": {
+                "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+            },
+        },
+        400: {"model": ApiError, "description": "Invalid artifact name"},
+        404: {"model": ApiError, "description": "Run or artifact not found"},
+    },
+)
 async def artifact(
     run_id: str,
     name: str,
@@ -258,7 +303,20 @@ async def artifact(
     return Response(content=data, media_type=media_type, headers=headers)
 
 
-@router.get("/{run_id}/recording", summary="Replay recording (normalized telemetry and events)")
+@router.get(
+    "/{run_id}/recording",
+    summary="Replay recording (normalized telemetry and events)",
+    response_model=RecordingOut,
+    responses={
+        200: {
+            "description": "Recording document served as an attachment",
+            "content": {
+                "application/json": {"schema": {"$ref": "#/components/schemas/RecordingOut"}}
+            },
+        },
+        404: {"model": ApiError, "description": "Run not found"},
+    },
+)
 async def recording(
     run_id: str,
     session: AsyncSession = Depends(get_session),

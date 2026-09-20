@@ -362,6 +362,18 @@ export type components = {
          * @enum {string}
          */
         AdapterStatus: "available" | "experimental" | "planned";
+        /** ApiError */
+        ApiError: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Error */
+            error: string;
+            /** Issues */
+            issues?: components["schemas"]["ValidationIssue"][];
+        };
         /** ArtifactOut */
         ArtifactOut: {
             /** Content Type */
@@ -374,8 +386,6 @@ export type components = {
             sha256: string | null;
             /** Size Bytes */
             size_bytes: number;
-            /** Storage Key */
-            storage_key: string;
             /** Url */
             url: string;
         };
@@ -607,6 +617,16 @@ export type components = {
          * @enum {string}
          */
         ComponentState: "NOMINAL" | "OPERATIONAL" | "DEGRADED" | "UNAVAILABLE" | "FAILED" | "RECOVERING" | "RECOVERED" | "UNKNOWN";
+        /** ComponentStateInterval */
+        ComponentStateInterval: {
+            /** End */
+            end: number;
+            /** Start */
+            start: number;
+            state: components["schemas"]["ComponentState"];
+            /** Subsystem */
+            subsystem: string;
+        };
         /**
          * Dependency
          * @description `dependent` relies on `provider`; a fault on the provider may propagate downstream.
@@ -1035,6 +1055,17 @@ export type components = {
             /** Type */
             type: string;
         };
+        /** PathPoint */
+        PathPoint: {
+            /** T */
+            t: number;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Z */
+            z: number;
+        };
         /**
          * PlannedPath
          * @description Mission plan as known before the run: waypoints in the local ENU frame.
@@ -1118,6 +1149,98 @@ export type components = {
             /** Propagation Count */
             propagation_count: number;
         };
+        /** Provenance */
+        Provenance: {
+            /** Adapter */
+            adapter: string;
+            /** Adapter Version */
+            adapter_version?: string | null;
+            /**
+             * Data Origin
+             * @description simulation, replay or hardware-in-the-loop
+             * @default simulation
+             */
+            data_origin: string;
+            /** Ended At */
+            ended_at?: string | null;
+            /**
+             * Environment
+             * @description Non-sensitive environment metadata (platform, python)
+             */
+            environment?: {
+                [key: string]: string;
+            };
+            /**
+             * Git Commit
+             * @description Git SHA of the platform build
+             */
+            git_commit?: string | null;
+            /** Image Versions */
+            image_versions?: {
+                [key: string]: string;
+            };
+            /**
+             * Protocol Version
+             * @default 1
+             */
+            protocol_version: string;
+            /** Runner Id */
+            runner_id?: string | null;
+            /**
+             * Scenario Api Version
+             * @default resilient-uas.dev/v1alpha1
+             */
+            scenario_api_version: string;
+            /**
+             * Scenario Hash
+             * @description sha256 of the canonical scenario document
+             */
+            scenario_hash: string;
+            /** Scenario Version */
+            scenario_version: string;
+            /**
+             * Score Profile
+             * @default default
+             */
+            score_profile: string;
+            /** Seed */
+            seed: number;
+            /**
+             * Software Version
+             * @default 0.1.0
+             */
+            software_version: string;
+            /** Speed */
+            speed: number;
+            /** Started At */
+            started_at?: string | null;
+            /** Target Configuration */
+            target_configuration?: {
+                [key: string]: string | number | boolean;
+            };
+        };
+        /**
+         * RecordingOut
+         * @description Normalized recording of a run, consumable by the replay adapter.
+         */
+        RecordingOut: {
+            /** Events */
+            events: components["schemas"]["RunEvent"][];
+            /**
+             * Format Version
+             * @constant
+             */
+            format_version: "1";
+            planned_path: components["schemas"]["PlannedPath"] | null;
+            /** Samples */
+            samples: components["schemas"]["TelemetrySample"][];
+            /** Scenario Name */
+            scenario_name: string;
+            /** Source Adapter */
+            source_adapter: string;
+            /** Source Run Id */
+            source_run_id: string;
+        };
         /** RecoveryMetrics */
         RecoveryMetrics: {
             /** Faults Recovered */
@@ -1193,6 +1316,67 @@ export type components = {
             /** Subsystem */
             subsystem: string;
         };
+        /** ReportArtifact */
+        ReportArtifact: {
+            /** Content Type */
+            content_type: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Name */
+            name: string;
+            /** Sha256 */
+            sha256?: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Storage Key */
+            storage_key: string;
+        };
+        /** ReportRun */
+        ReportRun: {
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+            /** Seed */
+            seed: number;
+            /** Simulation Duration */
+            simulation_duration: number;
+            /** Speed */
+            speed: number;
+            /** Started At */
+            started_at: string | null;
+            state: components["schemas"]["RunState"];
+        };
+        /** ReportScenario */
+        ReportScenario: {
+            /** Api Version */
+            api_version: string;
+            /** Assertion Count */
+            assertion_count: number;
+            /** Content Hash */
+            content_hash: string;
+            /** Description */
+            description: string;
+            /**
+             * Document
+             * @description Canonical YAML of the executed scenario
+             */
+            document: string;
+            /** Event Count */
+            event_count: number;
+            /** Mission Timeout */
+            mission_timeout: string;
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
+        };
         /**
          * ReportSummary
          * @description Headline figures generated from observed events (never hard-coded).
@@ -1220,6 +1404,64 @@ export type components = {
             recovered_subsystems: number;
             /** Safety Preservation */
             safety_preservation: string;
+        };
+        /** ReportTarget */
+        ReportTarget: {
+            /** Adapter */
+            adapter: string;
+            /** Adapter Version */
+            adapter_version: string | null;
+            /** Configuration */
+            configuration: {
+                [key: string]: string | number | boolean;
+            };
+            /** Data Origin */
+            data_origin: string;
+            /** Topology Id */
+            topology_id: string;
+            /** Vehicle */
+            vehicle: string;
+        };
+        /** ResilienceReport */
+        ResilienceReport: {
+            /**
+             * Actual Path
+             * @description Downsampled trajectory
+             */
+            actual_path: components["schemas"]["PathPoint"][];
+            /** Artifacts */
+            artifacts: components["schemas"]["ReportArtifact"][];
+            /** Assertions */
+            assertions: components["schemas"]["AssertionResult"][];
+            /** Events */
+            events: components["schemas"]["RunEvent"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            hard_gate_result: components["schemas"]["BenchmarkResult"];
+            metrics: components["schemas"]["MetricsResult"];
+            planned_path: components["schemas"]["PlannedPath"] | null;
+            provenance: components["schemas"]["Provenance"];
+            /** Resilience Score */
+            resilience_score: number;
+            result: components["schemas"]["BenchmarkResult"];
+            run: components["schemas"]["ReportRun"];
+            /** Run Id */
+            run_id: string;
+            scenario: components["schemas"]["ReportScenario"];
+            /**
+             * Schema Version
+             * @default 1.0
+             */
+            schema_version: string;
+            score: components["schemas"]["ScoreResult"];
+            /** Subsystem Timeline */
+            subsystem_timeline: components["schemas"]["ComponentStateInterval"][];
+            summary: components["schemas"]["ReportSummary"];
+            target: components["schemas"]["ReportTarget"];
+            topology: components["schemas"]["SystemTopology"];
         };
         /** RunCreateRequest */
         RunCreateRequest: {
@@ -2095,9 +2337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": components["schemas"]["ArtifactOut"][];
                 };
             };
             /** @description Validation Error */
@@ -2123,13 +2363,31 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Artifact content with its stored media type */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Invalid artifact name */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Run or artifact not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
             /** @description Validation Error */
@@ -2251,13 +2509,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Recording document served as an attachment */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Run not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
             /** @description Validation Error */
@@ -2282,13 +2549,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description The stored report.json artifact, byte for byte */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ResilienceReport"];
+                };
+            };
+            /** @description Run not found or not analyzed yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
             /** @description Validation Error */
@@ -2313,13 +2589,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Self-contained HTML report (inline styles only, no scripts) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "text/html": string;
+                };
+            };
+            /** @description Run not found or not analyzed yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
             /** @description Validation Error */

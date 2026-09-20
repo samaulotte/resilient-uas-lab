@@ -787,10 +787,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "The stored report.json artifact, byte for byte",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResilienceReport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found or not analyzed yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
               }
             }
           },
@@ -827,10 +839,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Self-contained HTML report (inline styles only, no scripts)",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found or not analyzed yet",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
               }
             }
           },
@@ -873,8 +897,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "$ref": "#/components/schemas/ArtifactOut"
                   },
                   "title": "Response Artifacts Api V1 Runs  Run Id  Artifacts Get"
                 }
@@ -923,10 +946,33 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Artifact content with its stored media type",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid artifact name",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run or artifact not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
               }
             }
           },
@@ -963,10 +1009,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Recording document served as an attachment",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
               }
             }
           },
@@ -1105,6 +1163,31 @@
         ],
         "title": "AdapterStatus"
       },
+      "ApiError": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "default": ""
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ApiError"
+      },
       "ArtifactOut": {
         "properties": {
           "name": {
@@ -1118,10 +1201,6 @@
           "size_bytes": {
             "type": "integer",
             "title": "Size Bytes"
-          },
-          "storage_key": {
-            "type": "string",
-            "title": "Storage Key"
           },
           "sha256": {
             "anyOf": [
@@ -1148,7 +1227,6 @@
           "name",
           "content_type",
           "size_bytes",
-          "storage_key",
           "sha256",
           "description",
           "url"
@@ -1677,6 +1755,33 @@
         ],
         "title": "ComponentState",
         "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component."
+      },
+      "ComponentStateInterval": {
+        "properties": {
+          "subsystem": {
+            "type": "string",
+            "title": "Subsystem"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ComponentState"
+          },
+          "start": {
+            "type": "number",
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subsystem",
+          "state",
+          "start",
+          "end"
+        ],
+        "title": "ComponentStateInterval"
       },
       "Dependency": {
         "properties": {
@@ -2568,6 +2673,34 @@
         ],
         "title": "ParameterSpecOut"
       },
+      "PathPoint": {
+        "properties": {
+          "t": {
+            "type": "number",
+            "title": "T"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "z": {
+            "type": "number",
+            "title": "Z"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t",
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "PathPoint"
+      },
       "PlannedPath": {
         "properties": {
           "origin": {
@@ -2766,6 +2899,216 @@
         ],
         "title": "PropagationMetrics"
       },
+      "Provenance": {
+        "properties": {
+          "software_version": {
+            "type": "string",
+            "title": "Software Version",
+            "default": "0.1.0"
+          },
+          "scenario_api_version": {
+            "type": "string",
+            "title": "Scenario Api Version",
+            "default": "resilient-uas.dev/v1alpha1"
+          },
+          "protocol_version": {
+            "type": "string",
+            "title": "Protocol Version",
+            "default": "1"
+          },
+          "scenario_hash": {
+            "type": "string",
+            "title": "Scenario Hash",
+            "description": "sha256 of the canonical scenario document"
+          },
+          "scenario_version": {
+            "type": "string",
+            "title": "Scenario Version"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "adapter_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter Version"
+          },
+          "target_configuration": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Target Configuration"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "speed": {
+            "type": "number",
+            "title": "Speed"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit",
+            "description": "Git SHA of the platform build"
+          },
+          "image_versions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Image Versions"
+          },
+          "runner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Id"
+          },
+          "environment": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Environment",
+            "description": "Non-sensitive environment metadata (platform, python)"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "score_profile": {
+            "type": "string",
+            "title": "Score Profile",
+            "default": "default"
+          },
+          "data_origin": {
+            "type": "string",
+            "title": "Data Origin",
+            "description": "simulation, replay or hardware-in-the-loop",
+            "default": "simulation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario_hash",
+          "scenario_version",
+          "adapter",
+          "seed",
+          "speed"
+        ],
+        "title": "Provenance"
+      },
+      "RecordingOut": {
+        "properties": {
+          "format_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Format Version"
+          },
+          "source_run_id": {
+            "type": "string",
+            "title": "Source Run Id"
+          },
+          "source_adapter": {
+            "type": "string",
+            "title": "Source Adapter"
+          },
+          "scenario_name": {
+            "type": "string",
+            "title": "Scenario Name"
+          },
+          "planned_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannedPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetrySample"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format_version",
+          "source_run_id",
+          "source_adapter",
+          "scenario_name",
+          "planned_path",
+          "samples",
+          "events"
+        ],
+        "title": "RecordingOut",
+        "description": "Normalized recording of a run, consumable by the replay adapter."
+      },
       "RecoveryMetrics": {
         "properties": {
           "records": {
@@ -2954,6 +3297,162 @@
         ],
         "title": "RecoveryRecord"
       },
+      "ReportArtifact": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content_type",
+          "size_bytes",
+          "storage_key"
+        ],
+        "title": "ReportArtifact"
+      },
+      "ReportRun": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/RunState"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "simulation_duration": {
+            "type": "number",
+            "title": "Simulation Duration"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "speed": {
+            "type": "number",
+            "title": "Speed"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "started_at",
+          "ended_at",
+          "simulation_duration",
+          "seed",
+          "speed"
+        ],
+        "title": "ReportRun"
+      },
+      "ReportScenario": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "document": {
+            "type": "string",
+            "title": "Document",
+            "description": "Canonical YAML of the executed scenario"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "assertion_count": {
+            "type": "integer",
+            "title": "Assertion Count"
+          },
+          "mission_timeout": {
+            "type": "string",
+            "title": "Mission Timeout"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "version",
+          "api_version",
+          "content_hash",
+          "document",
+          "event_count",
+          "assertion_count",
+          "mission_timeout"
+        ],
+        "title": "ReportScenario"
+      },
       "ReportSummary": {
         "properties": {
           "mission_complete": {
@@ -3026,6 +3525,191 @@
         ],
         "title": "ReportSummary",
         "description": "Headline figures generated from observed events (never hard-coded)."
+      },
+      "ReportTarget": {
+        "properties": {
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "adapter_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter Version"
+          },
+          "vehicle": {
+            "type": "string",
+            "title": "Vehicle"
+          },
+          "configuration": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Configuration"
+          },
+          "data_origin": {
+            "type": "string",
+            "title": "Data Origin"
+          },
+          "topology_id": {
+            "type": "string",
+            "title": "Topology Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "adapter",
+          "adapter_version",
+          "vehicle",
+          "configuration",
+          "data_origin",
+          "topology_id"
+        ],
+        "title": "ReportTarget"
+      },
+      "ResilienceReport": {
+        "$id": "https://resilient-uas.dev/schemas/report/v1.json",
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "1.0"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ReportScenario"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ReportTarget"
+          },
+          "run": {
+            "$ref": "#/components/schemas/ReportRun"
+          },
+          "result": {
+            "$ref": "#/components/schemas/BenchmarkResult"
+          },
+          "resilience_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Resilience Score"
+          },
+          "hard_gate_result": {
+            "$ref": "#/components/schemas/BenchmarkResult"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ReportSummary"
+          },
+          "score": {
+            "$ref": "#/components/schemas/ScoreResult"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MetricsResult"
+          },
+          "assertions": {
+            "items": {
+              "$ref": "#/components/schemas/AssertionResult"
+            },
+            "type": "array",
+            "title": "Assertions"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "subsystem_timeline": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentStateInterval"
+            },
+            "type": "array",
+            "title": "Subsystem Timeline"
+          },
+          "planned_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannedPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actual_path": {
+            "items": {
+              "$ref": "#/components/schemas/PathPoint"
+            },
+            "type": "array",
+            "title": "Actual Path",
+            "description": "Downsampled trajectory"
+          },
+          "topology": {
+            "$ref": "#/components/schemas/SystemTopology"
+          },
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ReportArtifact"
+            },
+            "type": "array",
+            "title": "Artifacts"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "generated_at",
+          "scenario",
+          "target",
+          "run",
+          "result",
+          "resilience_score",
+          "hard_gate_result",
+          "summary",
+          "score",
+          "metrics",
+          "assertions",
+          "events",
+          "subsystem_timeline",
+          "planned_path",
+          "actual_path",
+          "topology",
+          "artifacts",
+          "provenance"
+        ],
+        "title": "ResilienceReport"
       },
       "RunCreateRequest": {
         "properties": {

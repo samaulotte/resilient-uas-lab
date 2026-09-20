@@ -200,10 +200,21 @@ class ArtifactOut(BaseModel):
     name: str
     content_type: str
     size_bytes: int
-    storage_key: str
     sha256: str | None
     description: str
     url: str
+
+
+class RecordingOut(BaseModel):
+    """Normalized recording of a run, consumable by the replay adapter."""
+
+    format_version: Literal["1"]
+    source_run_id: str
+    source_adapter: str
+    scenario_name: str
+    planned_path: PlannedPath | None
+    samples: list[TelemetrySample]
+    events: list[RunEvent]
 
 
 class EventsResponse(BaseModel):
