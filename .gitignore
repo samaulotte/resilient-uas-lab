@@ -1,0 +1,48 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+apps/web/coverage/
+
+# Playwright
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/blob-report/
+tests/e2e/.auth/
+
+# Local run artifacts
+.reslab/
+artifacts/
+*.log
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

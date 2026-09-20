@@ -1,0 +1,25 @@
+[project]
+name = "reslab-runner"
+version = "0.1.0"
+description = "Resilient UAS Lab runner: executes scenarios against adapters."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+  "reslab-core",
+  "reslab-adapter-mock",
+  "reslab-adapter-replay",
+  "reslab-adapter-px4",
+  "nats-py==2.16.0",
+  "structlog==26.1.0",
+  "orjson==3.12.0",
+  "pydantic-settings==2.15.0",
+  "prometheus-client==0.26.0",
+  "httpx==0.28.1",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reslab_runner"]

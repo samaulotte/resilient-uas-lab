@@ -1,0 +1,23 @@
+[project]
+name = "reslab-cli"
+version = "0.1.0"
+description = "reslab command line interface for Resilient UAS Lab."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+  "reslab-core",
+  "reslab-adapter-mock",
+  "typer==0.27.2",
+  "httpx==0.28.1",
+  "rich==15.0.0",
+]
+
+[project.scripts]
+reslab = "reslab_cli.main:app"
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reslab_cli"]
