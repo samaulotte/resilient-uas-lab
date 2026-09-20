@@ -1,0 +1,4970 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Resilient UAS Lab API",
+    "description": "\nResilient UAS Lab control-plane API.\n\nResilience scenarios are declarative YAML documents validated against a versioned\nschema. Runs execute scenarios against an autonomous-system adapter and produce\nnormalized telemetry, classified events, objective metrics, a transparent score and a\ncanonical report. Live run state is streamed over `WS /api/v1/runs/{run_id}/stream`.\n\nAuthentication is not enforced in the local v0.1 deployment; the API is designed to\nsit behind an OIDC-aware gateway (see docs/security-model.md).\n",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness probe",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness probe (database, bus, artifact store)",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Readyz Readyz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Platform, topology and catalog",
+        "operationId": "system_info_api_v1_system_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios": {
+      "get": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "List the scenario library",
+        "operationId": "list_scenarios_api_v1_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Api V1 Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Create or update a scenario in the library",
+        "operationId": "create_scenario_api_v1_scenarios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/validate": {
+      "post": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Validate a scenario document",
+        "operationId": "validate_scenario_api_v1_scenarios_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioValidateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{name}": {
+      "get": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Get a scenario",
+        "operationId": "get_scenario_api_v1_scenarios__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Delete a user scenario",
+        "operationId": "delete_scenario_api_v1_scenarios__name__delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{name}/document": {
+      "get": {
+        "tags": [
+          "scenarios"
+        ],
+        "summary": "Get the raw YAML document",
+        "operationId": "get_scenario_document_api_v1_scenarios__name__document_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "List runs (newest first)",
+        "operationId": "list_runs_api_v1_runs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "scenario",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RunState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "adapter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Adapter"
+            }
+          },
+          {
+            "name": "result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 16
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Result"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Create and queue a run",
+        "operationId": "create_api_v1_runs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Get a run",
+        "operationId": "get_run_api_v1_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/cancel": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Cancel a run",
+        "operationId": "cancel_api_v1_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/events": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run events",
+        "operationId": "events_api_v1_runs__run_id__events_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "after_sequence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -1,
+              "default": -1,
+              "title": "After Sequence"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 1000,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/telemetry": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run telemetry",
+        "operationId": "telemetry_api_v1_runs__run_id__telemetry_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Return every sample (bounded by a hard cap)",
+              "default": false,
+              "title": "All"
+            },
+            "description": "Return every sample (bounded by a hard cap)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/metrics": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Metrics and score",
+        "operationId": "metrics_api_v1_runs__run_id__metrics_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/report": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Canonical JSON report",
+        "operationId": "report_api_v1_runs__run_id__report_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/report.html": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Standalone HTML report",
+        "operationId": "report_html_api_v1_runs__run_id__report_html_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/artifacts": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "List artifacts",
+        "operationId": "artifacts_api_v1_runs__run_id__artifacts_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Artifacts Api V1 Runs  Run Id  Artifacts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/artifacts/{name}": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Download an artifact",
+        "operationId": "artifact_api_v1_runs__run_id__artifacts__name__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/recording": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Replay recording (normalized telemetry and events)",
+        "operationId": "recording_api_v1_runs__run_id__recording_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compare": {
+      "get": {
+        "tags": [
+          "compare"
+        ],
+        "summary": "Compare two completed runs",
+        "operationId": "compare_api_v1_compare_get",
+        "parameters": [
+          {
+            "name": "baseline",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Baseline run id",
+              "title": "Baseline"
+            },
+            "description": "Baseline run id"
+          },
+          {
+            "name": "candidate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Candidate run id",
+              "title": "Candidate"
+            },
+            "description": "Candidate run id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdapterOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AdapterStatus"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "data_origin": {
+            "type": "string",
+            "title": "Data Origin"
+          },
+          "requirements": {
+            "type": "string",
+            "title": "Requirements",
+            "default": ""
+          },
+          "online": {
+            "type": "boolean",
+            "title": "Online"
+          },
+          "runners": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Runners"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "display_name",
+          "kind",
+          "status",
+          "description",
+          "data_origin",
+          "online",
+          "runners"
+        ],
+        "title": "AdapterOut"
+      },
+      "AdapterStatus": {
+        "type": "string",
+        "enum": [
+          "available",
+          "experimental",
+          "planned"
+        ],
+        "title": "AdapterStatus"
+      },
+      "ArtifactOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content_type",
+          "size_bytes",
+          "storage_key",
+          "sha256",
+          "description",
+          "url"
+        ],
+        "title": "ArtifactOut"
+      },
+      "AssertionComparison": {
+        "properties": {
+          "expression": {
+            "type": "string",
+            "title": "Expression"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "improvement",
+              "regression",
+              "unchanged",
+              "changed",
+              "not_comparable"
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "expression",
+          "severity",
+          "baseline",
+          "candidate",
+          "verdict"
+        ],
+        "title": "AssertionComparison"
+      },
+      "AssertionOutcome": {
+        "type": "string",
+        "enum": [
+          "passed",
+          "failed",
+          "not_evaluated"
+        ],
+        "title": "AssertionOutcome"
+      },
+      "AssertionResult": {
+        "properties": {
+          "expression": {
+            "type": "string",
+            "title": "Expression"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AssertionOutcome"
+          },
+          "measured": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured",
+            "description": "Value observed for the metric path"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Expected",
+            "description": "Literal the metric was compared against"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "metric_path": {
+            "type": "string",
+            "title": "Metric Path"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "simulation_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Simulation Time",
+            "description": "Simulation time at which the metric was finalized"
+          }
+        },
+        "type": "object",
+        "required": [
+          "expression",
+          "severity",
+          "outcome",
+          "measured",
+          "expected",
+          "operator",
+          "metric_path",
+          "explanation"
+        ],
+        "title": "AssertionResult"
+      },
+      "Attitude": {
+        "properties": {
+          "roll": {
+            "type": "number",
+            "title": "Roll",
+            "description": "Roll angle (rad)"
+          },
+          "pitch": {
+            "type": "number",
+            "title": "Pitch",
+            "description": "Pitch angle (rad)"
+          },
+          "yaw": {
+            "type": "number",
+            "title": "Yaw",
+            "description": "Yaw / heading angle (rad, 0 = north, clockwise positive)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roll",
+          "pitch",
+          "yaw"
+        ],
+        "title": "Attitude"
+      },
+      "AvailabilityMetrics": {
+        "properties": {
+          "control": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Control"
+          },
+          "navigation_integrity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Navigation Integrity",
+            "description": "Weighted: healthy 1.0, degraded 0.5, down 0.0"
+          },
+          "navigation": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Navigation"
+          },
+          "communications": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Communications"
+          },
+          "compute": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Compute"
+          },
+          "power": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Power"
+          }
+        },
+        "type": "object",
+        "required": [
+          "control",
+          "navigation_integrity",
+          "navigation",
+          "communications",
+          "compute",
+          "power"
+        ],
+        "title": "AvailabilityMetrics",
+        "description": "Fraction of run time during which a domain delivered its function."
+      },
+      "BenchmarkResult": {
+        "type": "string",
+        "enum": [
+          "passed",
+          "failed",
+          "inconclusive"
+        ],
+        "title": "BenchmarkResult",
+        "description": "Outcome of a run once analyzed.\n\n`passed` and `failed` are only emitted for runs that completed their scenario.\n`inconclusive` marks runs that could not be fully executed or analyzed."
+      },
+      "CancelResponse": {
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "delivered": {
+            "type": "boolean",
+            "title": "Delivered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run",
+          "delivered"
+        ],
+        "title": "CancelResponse"
+      },
+      "CatalogEntryOut": {
+        "properties": {
+          "subsystem": {
+            "type": "string",
+            "title": "Subsystem"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "trust_zone": {
+            "type": "string",
+            "title": "Trust Zone"
+          },
+          "healthy_state": {
+            "$ref": "#/components/schemas/ComponentState"
+          },
+          "critical": {
+            "type": "boolean",
+            "title": "Critical"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/Effect"
+            },
+            "type": "array",
+            "title": "Effects"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subsystem",
+          "name",
+          "domain",
+          "category",
+          "trust_zone",
+          "healthy_state",
+          "critical",
+          "description",
+          "effects"
+        ],
+        "title": "CatalogEntryOut"
+      },
+      "CommunicationsStatus": {
+        "properties": {
+          "c2_link": {
+            "type": "boolean",
+            "title": "C2 Link"
+          },
+          "telemetry_link": {
+            "type": "boolean",
+            "title": "Telemetry Link"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "packet_loss": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packet Loss"
+          }
+        },
+        "type": "object",
+        "required": [
+          "c2_link",
+          "telemetry_link"
+        ],
+        "title": "CommunicationsStatus"
+      },
+      "CompareResponse": {
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "same_scenario": {
+            "type": "boolean",
+            "title": "Same Scenario"
+          },
+          "same_scenario_hash": {
+            "type": "boolean",
+            "title": "Same Scenario Hash"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricComparison"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/DimensionComparison"
+            },
+            "type": "array",
+            "title": "Dimensions"
+          },
+          "assertions": {
+            "items": {
+              "$ref": "#/components/schemas/AssertionComparison"
+            },
+            "type": "array",
+            "title": "Assertions"
+          },
+          "baseline_events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "type": "array",
+            "title": "Baseline Events"
+          },
+          "candidate_events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "type": "array",
+            "title": "Candidate Events"
+          },
+          "regressions": {
+            "type": "integer",
+            "title": "Regressions"
+          },
+          "improvements": {
+            "type": "integer",
+            "title": "Improvements"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "regression",
+              "improvement",
+              "unchanged",
+              "mixed",
+              "not_comparable"
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "baseline",
+          "candidate",
+          "same_scenario",
+          "same_scenario_hash",
+          "metrics",
+          "dimensions",
+          "assertions",
+          "baseline_events",
+          "candidate_events",
+          "regressions",
+          "improvements",
+          "verdict"
+        ],
+        "title": "CompareResponse"
+      },
+      "Component": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Subsystem identifier '<category>.<component>'"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/Domain"
+          },
+          "category": {
+            "$ref": "#/components/schemas/FaultCategory"
+          },
+          "trust_zone": {
+            "$ref": "#/components/schemas/TrustZone"
+          },
+          "healthy_state": {
+            "$ref": "#/components/schemas/ComponentState",
+            "description": "Vocabulary used when the component is healthy (NOMINAL or OPERATIONAL)",
+            "default": "NOMINAL"
+          },
+          "critical": {
+            "type": "boolean",
+            "title": "Critical",
+            "description": "Loss of this component means loss of flight-critical function",
+            "default": false
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "domain",
+          "category",
+          "trust_zone"
+        ],
+        "title": "Component"
+      },
+      "ComponentHealth": {
+        "properties": {
+          "database": {
+            "type": "boolean",
+            "title": "Database"
+          },
+          "bus": {
+            "type": "boolean",
+            "title": "Bus"
+          },
+          "artifact_store": {
+            "type": "boolean",
+            "title": "Artifact Store"
+          }
+        },
+        "type": "object",
+        "required": [
+          "database",
+          "bus",
+          "artifact_store"
+        ],
+        "title": "ComponentHealth"
+      },
+      "ComponentState": {
+        "type": "string",
+        "enum": [
+          "NOMINAL",
+          "OPERATIONAL",
+          "DEGRADED",
+          "UNAVAILABLE",
+          "FAILED",
+          "RECOVERING",
+          "RECOVERED",
+          "UNKNOWN"
+        ],
+        "title": "ComponentState",
+        "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component."
+      },
+      "Dependency": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "dependent": {
+            "type": "string",
+            "title": "Dependent"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation",
+            "default": "depends_on"
+          },
+          "crosses_trust_boundary": {
+            "type": "boolean",
+            "title": "Crosses Trust Boundary",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "dependent"
+        ],
+        "title": "Dependency",
+        "description": "`dependent` relies on `provider`; a fault on the provider may propagate downstream."
+      },
+      "DimensionComparison": {
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "title": "Dimension"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "weight": {
+            "type": "integer",
+            "title": "Weight"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "improvement",
+              "regression",
+              "unchanged",
+              "not_comparable"
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dimension",
+          "label",
+          "weight",
+          "baseline",
+          "candidate",
+          "delta",
+          "verdict"
+        ],
+        "title": "DimensionComparison"
+      },
+      "DimensionScore": {
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "title": "Dimension"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "weight": {
+            "type": "integer",
+            "title": "Weight"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Normalized dimension score"
+          },
+          "points": {
+            "type": "number",
+            "title": "Points",
+            "description": "score * weight"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dimension",
+          "label",
+          "weight",
+          "score",
+          "points",
+          "explanation"
+        ],
+        "title": "DimensionScore"
+      },
+      "Domain": {
+        "type": "string",
+        "enum": [
+          "external",
+          "communications",
+          "navigation",
+          "mission_compute",
+          "flight_control",
+          "actuation",
+          "power"
+        ],
+        "title": "Domain"
+      },
+      "Effect": {
+        "type": "string",
+        "enum": [
+          "unavailable",
+          "intermittent",
+          "degraded",
+          "erroneous",
+          "stuck",
+          "restart",
+          "crash",
+          "latency",
+          "packet_loss",
+          "resource_pressure",
+          "temporary_disconnect"
+        ],
+        "title": "Effect"
+      },
+      "EffectDescriptor": {
+        "properties": {
+          "effect": {
+            "$ref": "#/components/schemas/Effect"
+          },
+          "transient": {
+            "type": "boolean",
+            "title": "Transient"
+          },
+          "duration_required": {
+            "type": "boolean",
+            "title": "Duration Required"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/ParameterSpecOut"
+            },
+            "type": "array",
+            "title": "Parameters"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "effect",
+          "transient",
+          "duration_required",
+          "parameters",
+          "description"
+        ],
+        "title": "EffectDescriptor"
+      },
+      "EventCounts": {
+        "properties": {
+          "injected": {
+            "type": "integer",
+            "title": "Injected"
+          },
+          "applied": {
+            "type": "integer",
+            "title": "Applied"
+          },
+          "rejected": {
+            "type": "integer",
+            "title": "Rejected"
+          },
+          "cleared": {
+            "type": "integer",
+            "title": "Cleared"
+          },
+          "observed_effects": {
+            "type": "integer",
+            "title": "Observed Effects"
+          },
+          "system_responses": {
+            "type": "integer",
+            "title": "System Responses"
+          },
+          "recoveries": {
+            "type": "integer",
+            "title": "Recoveries"
+          },
+          "expectations_passed": {
+            "type": "integer",
+            "title": "Expectations Passed"
+          },
+          "expectations_failed": {
+            "type": "integer",
+            "title": "Expectations Failed"
+          },
+          "degraded_transitions": {
+            "type": "integer",
+            "title": "Degraded Transitions"
+          },
+          "failed_transitions": {
+            "type": "integer",
+            "title": "Failed Transitions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "injected",
+          "applied",
+          "rejected",
+          "cleared",
+          "observed_effects",
+          "system_responses",
+          "recoveries",
+          "expectations_passed",
+          "expectations_failed",
+          "degraded_transitions",
+          "failed_transitions"
+        ],
+        "title": "EventCounts"
+      },
+      "EventKind": {
+        "type": "string",
+        "enum": [
+          "INJECTION_REQUEST",
+          "INJECTION_APPLIED",
+          "INJECTION_REJECTED",
+          "INJECTION_CLEARED",
+          "OBSERVED_EFFECT",
+          "SYSTEM_RESPONSE",
+          "RECOVERY",
+          "EXPECTATION_RESULT",
+          "ASSERTION_RESULT",
+          "MISSION",
+          "LIFECYCLE",
+          "LOG"
+        ],
+        "title": "EventKind",
+        "description": "Scientific classification of a run event.\n\nThe distinction matters: a requested disturbance is not evidence that the\nsystem was actually disturbed, and an expected response is not evidence that\nit happened.\n\n- `INJECTION_REQUEST`: the scenario engine asked the adapter to inject an effect.\n- `INJECTION_APPLIED`: the adapter confirmed the effect is active in the target.\n- `INJECTION_REJECTED`: the adapter could not apply the effect.\n- `INJECTION_CLEARED`: the effect was removed (duration elapsed or scenario end).\n- `OBSERVED_EFFECT`: a component state change observed in the target.\n- `SYSTEM_RESPONSE`: an autonomous reaction of the target (mode change, failsafe).\n- `RECOVERY`: a component returned to a healthy state.\n- `EXPECTATION_RESULT`: an expected behaviour declared in the scenario was checked.\n- `ASSERTION_RESULT`: a scenario assertion was evaluated during analysis.\n- `MISSION`: mission progress (waypoint reached, mission complete).\n- `LIFECYCLE`: run lifecycle transition.\n- `LOG`: informational message from a component."
+      },
+      "EventSource": {
+        "type": "string",
+        "enum": [
+          "scenario",
+          "adapter",
+          "engine",
+          "analysis",
+          "platform"
+        ],
+        "title": "EventSource"
+      },
+      "EventsResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "next_after_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Sequence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "events",
+          "count",
+          "next_after_sequence"
+        ],
+        "title": "EventsResponse"
+      },
+      "FaultCategory": {
+        "type": "string",
+        "enum": [
+          "Navigation",
+          "Sensors",
+          "Communications",
+          "Compute",
+          "Process",
+          "Network",
+          "Power",
+          "Security boundary",
+          "Service"
+        ],
+        "title": "FaultCategory",
+        "description": "Fault library categories exposed to scenario authors."
+      },
+      "FlightMode": {
+        "type": "string",
+        "enum": [
+          "IDLE",
+          "TAKEOFF",
+          "MISSION",
+          "HOLD",
+          "RTL",
+          "LAND",
+          "LANDED",
+          "UNKNOWN"
+        ],
+        "title": "FlightMode",
+        "description": "Vehicle-level operating mode reported by the adapter."
+      },
+      "FlightStatus": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/FlightMode"
+          },
+          "armed": {
+            "type": "boolean",
+            "title": "Armed"
+          },
+          "control_authority": {
+            "type": "boolean",
+            "title": "Control Authority",
+            "description": "True while the flight core has full control of the vehicle"
+          },
+          "autonomy": {
+            "type": "string",
+            "title": "Autonomy",
+            "description": "Which entity is currently driving the vehicle: mission, local, failsafe",
+            "default": "mission"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "armed",
+          "control_authority"
+        ],
+        "title": "FlightStatus"
+      },
+      "GeoPosition": {
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "altitude_msl": {
+            "type": "number",
+            "title": "Altitude Msl",
+            "description": "Altitude above mean sea level (m)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "altitude_msl"
+        ],
+        "title": "GeoPosition"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HardGate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "passed",
+          "reason"
+        ],
+        "title": "HardGate"
+      },
+      "MetricComparison": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "percent",
+              "seconds",
+              "count",
+              "score",
+              "bool"
+            ],
+            "title": "Unit"
+          },
+          "better": {
+            "type": "string",
+            "enum": [
+              "higher",
+              "lower",
+              "neutral"
+            ],
+            "title": "Better"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "improvement",
+              "regression",
+              "unchanged",
+              "changed",
+              "not_comparable"
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "better",
+          "baseline",
+          "candidate",
+          "delta",
+          "verdict"
+        ],
+        "title": "MetricComparison"
+      },
+      "MetricsResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MetricsResult"
+          },
+          "context": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Context"
+          },
+          "score": {
+            "$ref": "#/components/schemas/ScoreResult"
+          },
+          "assertions": {
+            "items": {
+              "$ref": "#/components/schemas/AssertionResult"
+            },
+            "type": "array",
+            "title": "Assertions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "metrics",
+          "context",
+          "score",
+          "assertions"
+        ],
+        "title": "MetricsResponse"
+      },
+      "MetricsResult": {
+        "properties": {
+          "run_duration": {
+            "type": "number",
+            "title": "Run Duration"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          },
+          "mission": {
+            "$ref": "#/components/schemas/MissionMetrics"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/AvailabilityMetrics"
+          },
+          "recovery": {
+            "$ref": "#/components/schemas/RecoveryMetrics"
+          },
+          "propagation": {
+            "$ref": "#/components/schemas/PropagationMetrics"
+          },
+          "modes": {
+            "$ref": "#/components/schemas/ModeMetrics"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyMetrics"
+          },
+          "events": {
+            "$ref": "#/components/schemas/EventCounts"
+          },
+          "component_time_in_state": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Component Time In State"
+          },
+          "final_component_states": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ComponentState"
+            },
+            "type": "object",
+            "title": "Final Component States"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_duration",
+          "sample_count",
+          "mission",
+          "availability",
+          "recovery",
+          "propagation",
+          "modes",
+          "safety",
+          "events",
+          "component_time_in_state",
+          "final_component_states"
+        ],
+        "title": "MetricsResult"
+      },
+      "MissionMetrics": {
+        "properties": {
+          "completion": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Completion",
+            "description": "Fraction of mission objectives reached"
+          },
+          "continuity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Continuity",
+            "description": "1 - (time held or diverted / duration)"
+          },
+          "completed": {
+            "type": "boolean",
+            "title": "Completed"
+          },
+          "duration": {
+            "type": "number",
+            "title": "Duration",
+            "description": "Simulation seconds from start to end of run"
+          },
+          "time_in_hold": {
+            "type": "number",
+            "title": "Time In Hold"
+          },
+          "time_in_mission_modes": {
+            "type": "number",
+            "title": "Time In Mission Modes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "completion",
+          "continuity",
+          "completed",
+          "duration",
+          "time_in_hold",
+          "time_in_mission_modes"
+        ],
+        "title": "MissionMetrics"
+      },
+      "MissionPhase": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "TAKEOFF",
+          "ENROUTE",
+          "HOLDING",
+          "RETURNING",
+          "LANDING",
+          "COMPLETE",
+          "ABORTED"
+        ],
+        "title": "MissionPhase"
+      },
+      "MissionStatus": {
+        "properties": {
+          "phase": {
+            "$ref": "#/components/schemas/MissionPhase"
+          },
+          "progress": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "description": "Mission completion ratio"
+          },
+          "waypoint_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Waypoint Index",
+            "description": "Index of the waypoint currently targeted"
+          },
+          "waypoints_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Waypoints Total"
+          },
+          "distance_to_waypoint": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance To Waypoint",
+            "description": "Metres"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phase",
+          "progress",
+          "waypoint_index",
+          "waypoints_total"
+        ],
+        "title": "MissionStatus"
+      },
+      "ModeMetrics": {
+        "properties": {
+          "time_nominal": {
+            "type": "number",
+            "title": "Time Nominal"
+          },
+          "time_degraded": {
+            "type": "number",
+            "title": "Time Degraded"
+          },
+          "time_failed": {
+            "type": "number",
+            "title": "Time Failed"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "time_nominal",
+          "time_degraded",
+          "time_failed",
+          "total"
+        ],
+        "title": "ModeMetrics"
+      },
+      "NavigationStatus": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Position source: gnss, dead_reckoning, none"
+          },
+          "gnss_fix": {
+            "type": "boolean",
+            "title": "Gnss Fix"
+          },
+          "position_error": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Position Error",
+            "description": "Estimated horizontal position error (m)"
+          },
+          "satellites": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Satellites"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "gnss_fix",
+          "position_error"
+        ],
+        "title": "NavigationStatus"
+      },
+      "ParameterSpecOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "minimum": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum"
+          },
+          "maximum": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "description"
+        ],
+        "title": "ParameterSpecOut"
+      },
+      "PlannedPath": {
+        "properties": {
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeoPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "waypoints": {
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            },
+            "type": "array",
+            "title": "Waypoints"
+          },
+          "safe_zone": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Position"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Return / safe landing point"
+          },
+          "safe_zone_radius": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Safe Zone Radius",
+            "default": 15.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "waypoints"
+        ],
+        "title": "PlannedPath",
+        "description": "Mission plan as known before the run: waypoints in the local ENU frame."
+      },
+      "Position": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X",
+            "description": "East (m)"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y",
+            "description": "North (m)"
+          },
+          "z": {
+            "type": "number",
+            "title": "Z",
+            "description": "Up, altitude above origin (m)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "Position",
+        "description": "Local position in an East-North-Up frame relative to the mission origin (metres)."
+      },
+      "PowerStatus": {
+        "properties": {
+          "voltage": {
+            "type": "number",
+            "title": "Voltage"
+          },
+          "remaining": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Remaining"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          }
+        },
+        "type": "object",
+        "required": [
+          "voltage",
+          "remaining"
+        ],
+        "title": "PowerStatus"
+      },
+      "PropagationMetrics": {
+        "properties": {
+          "injected_components": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Injected Components"
+          },
+          "affected_components": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Affected Components"
+          },
+          "propagated_components": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Propagated Components",
+            "description": "Affected components that were not injection targets"
+          },
+          "affected_domains": {
+            "items": {
+              "$ref": "#/components/schemas/Domain"
+            },
+            "type": "array",
+            "title": "Affected Domains"
+          },
+          "injected_domains": {
+            "items": {
+              "$ref": "#/components/schemas/Domain"
+            },
+            "type": "array",
+            "title": "Injected Domains"
+          },
+          "propagated_domains": {
+            "items": {
+              "$ref": "#/components/schemas/Domain"
+            },
+            "type": "array",
+            "title": "Propagated Domains"
+          },
+          "propagation_count": {
+            "type": "integer",
+            "title": "Propagation Count"
+          },
+          "max_propagation_depth": {
+            "type": "integer",
+            "title": "Max Propagation Depth"
+          },
+          "depths": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Depths"
+          },
+          "critical_domain_reached": {
+            "type": "boolean",
+            "title": "Critical Domain Reached"
+          },
+          "flight_domain_affected": {
+            "type": "boolean",
+            "title": "Flight Domain Affected"
+          },
+          "contained": {
+            "type": "boolean",
+            "title": "Contained"
+          },
+          "boundary_crossed": {
+            "type": "boolean",
+            "title": "Boundary Crossed",
+            "description": "A trust boundary was crossed by the propagation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "injected_components",
+          "affected_components",
+          "propagated_components",
+          "affected_domains",
+          "injected_domains",
+          "propagated_domains",
+          "propagation_count",
+          "max_propagation_depth",
+          "depths",
+          "critical_domain_reached",
+          "flight_domain_affected",
+          "contained",
+          "boundary_crossed"
+        ],
+        "title": "PropagationMetrics"
+      },
+      "RecoveryMetrics": {
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "mean_time_to_recovery": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Time To Recovery",
+            "description": "Seconds; None when nothing recovered"
+          },
+          "max_time_to_recovery": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Time To Recovery"
+          },
+          "faults_requiring_recovery": {
+            "type": "integer",
+            "title": "Faults Requiring Recovery"
+          },
+          "faults_recovered": {
+            "type": "integer",
+            "title": "Faults Recovered"
+          },
+          "success_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success Rate",
+            "description": "recovered / requiring; None when none required"
+          },
+          "time_to_safe_state": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time To Safe State",
+            "description": "Seconds from the observed fault that triggered the first safe-state response to that response"
+          },
+          "safe_state_entered": {
+            "type": "boolean",
+            "title": "Safe State Entered"
+          },
+          "per_subsystem_max": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Per Subsystem Max",
+            "description": "Maximum recovery time per subsystem (seconds)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "records",
+          "mean_time_to_recovery",
+          "max_time_to_recovery",
+          "faults_requiring_recovery",
+          "faults_recovered",
+          "success_rate",
+          "time_to_safe_state",
+          "safe_state_entered",
+          "per_subsystem_max"
+        ],
+        "title": "RecoveryMetrics"
+      },
+      "RecoveryRecord": {
+        "properties": {
+          "subsystem": {
+            "type": "string",
+            "title": "Subsystem"
+          },
+          "fault_state": {
+            "$ref": "#/components/schemas/ComponentState"
+          },
+          "fault_started_at": {
+            "type": "number",
+            "title": "Fault Started At"
+          },
+          "recovered_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered At"
+          },
+          "fault_duration": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fault Duration",
+            "description": "Seconds from fault start to recovery"
+          },
+          "recovery_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovery Time",
+            "description": "Seconds needed to recover once the disturbance ended: measured from the moment the causing injection was cleared (or from fault start for transient and self-inflicted faults) to the return to a healthy state"
+          },
+          "disturbance_cleared_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disturbance Cleared At",
+            "description": "When the causing injection was cleared, if bounded"
+          },
+          "caused_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caused By",
+            "description": "Scenario event id when attributable"
+          },
+          "direct": {
+            "type": "boolean",
+            "title": "Direct",
+            "description": "True when the fault is the injected subsystem itself"
+          },
+          "recovery_expected": {
+            "type": "boolean",
+            "title": "Recovery Expected",
+            "description": "False when the injected effect persisted until scenario end"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subsystem",
+          "fault_state",
+          "fault_started_at",
+          "recovered_at",
+          "fault_duration",
+          "recovery_time",
+          "caused_by",
+          "direct",
+          "recovery_expected"
+        ],
+        "title": "RecoveryRecord"
+      },
+      "ReportSummary": {
+        "properties": {
+          "mission_complete": {
+            "type": "boolean",
+            "title": "Mission Complete"
+          },
+          "faults_injected": {
+            "type": "integer",
+            "title": "Faults Injected"
+          },
+          "faults_applied": {
+            "type": "integer",
+            "title": "Faults Applied"
+          },
+          "critical_failures": {
+            "type": "integer",
+            "title": "Critical Failures"
+          },
+          "recovered_subsystems": {
+            "type": "integer",
+            "title": "Recovered Subsystems"
+          },
+          "degraded_transitions": {
+            "type": "integer",
+            "title": "Degraded Transitions"
+          },
+          "loss_of_control": {
+            "type": "boolean",
+            "title": "Loss Of Control"
+          },
+          "safety_preservation": {
+            "type": "string",
+            "pattern": "^(PASS|FAIL)$",
+            "title": "Safety Preservation"
+          },
+          "fault_containment": {
+            "type": "string",
+            "pattern": "^(PASS|FAIL)$",
+            "title": "Fault Containment"
+          },
+          "mean_time_to_recovery": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Time To Recovery"
+          },
+          "affected_domains": {
+            "type": "integer",
+            "title": "Affected Domains"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mission_complete",
+          "faults_injected",
+          "faults_applied",
+          "critical_failures",
+          "recovered_subsystems",
+          "degraded_transitions",
+          "loss_of_control",
+          "safety_preservation",
+          "fault_containment",
+          "mean_time_to_recovery",
+          "affected_domains"
+        ],
+        "title": "ReportSummary",
+        "description": "Headline figures generated from observed events (never hard-coded)."
+      },
+      "RunCreateRequest": {
+        "properties": {
+          "scenario_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Name"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 262144
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          },
+          "adapter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mock",
+                  "px4-gazebo",
+                  "replay"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4294967295.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Label",
+            "default": ""
+          },
+          "replay_source_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Source Run Id"
+          }
+        },
+        "type": "object",
+        "title": "RunCreateRequest"
+      },
+      "RunDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scenario_name": {
+            "type": "string",
+            "title": "Scenario Name"
+          },
+          "scenario_version": {
+            "type": "string",
+            "title": "Scenario Version"
+          },
+          "scenario_hash": {
+            "type": "string",
+            "title": "Scenario Hash"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "vehicle": {
+            "type": "string",
+            "title": "Vehicle"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "state": {
+            "$ref": "#/components/schemas/RunState"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "speed": {
+            "type": "number",
+            "title": "Speed"
+          },
+          "runner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Id"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hard_gate_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resilience_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resilience Score"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          },
+          "last_simulation_time": {
+            "type": "number",
+            "title": "Last Simulation Time"
+          },
+          "mission_complete": {
+            "type": "boolean",
+            "title": "Mission Complete"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "replay_source_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Source Run Id"
+          },
+          "scenario_document": {
+            "type": "string",
+            "title": "Scenario Document"
+          },
+          "planned_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannedPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provenance": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Provenance"
+          },
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactOut"
+            },
+            "type": "array",
+            "title": "Artifacts"
+          },
+          "report_available": {
+            "type": "boolean",
+            "title": "Report Available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "scenario_name",
+          "scenario_version",
+          "scenario_hash",
+          "adapter",
+          "vehicle",
+          "label",
+          "state",
+          "reason",
+          "seed",
+          "speed",
+          "runner_id",
+          "result",
+          "hard_gate_result",
+          "resilience_score",
+          "summary",
+          "event_count",
+          "sample_count",
+          "last_simulation_time",
+          "mission_complete",
+          "created_at",
+          "started_at",
+          "ended_at",
+          "updated_at",
+          "scenario_document",
+          "planned_path",
+          "provenance",
+          "artifacts",
+          "report_available"
+        ],
+        "title": "RunDetail"
+      },
+      "RunEvent": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sequence",
+            "description": "Monotonic sequence number within the run"
+          },
+          "simulation_time": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Simulation Time"
+          },
+          "wall_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Wall Time"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EventSource"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "event_type": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Event Type",
+            "description": "Machine readable type, snake_case"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "default": "info"
+          },
+          "subsystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subsystem"
+          },
+          "state_before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComponentState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state_after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComponentState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Message"
+          },
+          "scenario_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Event Id",
+            "description": "Scenario event this run event originates from"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "sequence",
+          "simulation_time",
+          "source",
+          "kind",
+          "event_type",
+          "message"
+        ],
+        "title": "RunEvent",
+        "description": "A discrete, classified event that happened during a run."
+      },
+      "RunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "type": "array",
+            "title": "Runs"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "RunListResponse"
+      },
+      "RunState": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "VALIDATING",
+          "QUEUED",
+          "PREPARING",
+          "RUNNING",
+          "RECOVERING",
+          "COLLECTING",
+          "ANALYZING",
+          "COMPLETED",
+          "FAILED",
+          "CANCELLED"
+        ],
+        "title": "RunState"
+      },
+      "RunSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scenario_name": {
+            "type": "string",
+            "title": "Scenario Name"
+          },
+          "scenario_version": {
+            "type": "string",
+            "title": "Scenario Version"
+          },
+          "scenario_hash": {
+            "type": "string",
+            "title": "Scenario Hash"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "vehicle": {
+            "type": "string",
+            "title": "Vehicle"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "state": {
+            "$ref": "#/components/schemas/RunState"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "speed": {
+            "type": "number",
+            "title": "Speed"
+          },
+          "runner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Id"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hard_gate_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resilience_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resilience Score"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          },
+          "last_simulation_time": {
+            "type": "number",
+            "title": "Last Simulation Time"
+          },
+          "mission_complete": {
+            "type": "boolean",
+            "title": "Mission Complete"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "replay_source_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Source Run Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "scenario_name",
+          "scenario_version",
+          "scenario_hash",
+          "adapter",
+          "vehicle",
+          "label",
+          "state",
+          "reason",
+          "seed",
+          "speed",
+          "runner_id",
+          "result",
+          "hard_gate_result",
+          "resilience_score",
+          "summary",
+          "event_count",
+          "sample_count",
+          "last_simulation_time",
+          "mission_complete",
+          "created_at",
+          "started_at",
+          "ended_at",
+          "updated_at"
+        ],
+        "title": "RunSummary"
+      },
+      "RunnerOut": {
+        "properties": {
+          "runner_id": {
+            "type": "string",
+            "title": "Runner Id"
+          },
+          "adapters": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Adapters"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "active_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Run Id"
+          },
+          "last_heartbeat_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Heartbeat At"
+          },
+          "online": {
+            "type": "boolean",
+            "title": "Online"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runner_id",
+          "adapters",
+          "version",
+          "active_run_id",
+          "last_heartbeat_at",
+          "online"
+        ],
+        "title": "RunnerOut"
+      },
+      "SafetyMetrics": {
+        "properties": {
+          "loss_of_control": {
+            "type": "boolean",
+            "title": "Loss Of Control"
+          },
+          "control_availability": {
+            "type": "number",
+            "title": "Control Availability"
+          },
+          "flight_control_available": {
+            "type": "boolean",
+            "title": "Flight Control Available",
+            "description": "Flight core never left a healthy state"
+          },
+          "preserved": {
+            "type": "boolean",
+            "title": "Preserved",
+            "description": "No loss of control and flight core always available"
+          },
+          "safe_state_reached": {
+            "type": "boolean",
+            "title": "Safe State Reached"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loss_of_control",
+          "control_availability",
+          "flight_control_available",
+          "preserved",
+          "safe_state_reached"
+        ],
+        "title": "SafetyMetrics"
+      },
+      "ScenarioCreateRequest": {
+        "properties": {
+          "document": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Document"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "title": "Overwrite",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "ScenarioCreateRequest"
+      },
+      "ScenarioDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "assertion_count": {
+            "type": "integer",
+            "title": "Assertion Count"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "document": {
+            "type": "string",
+            "title": "Document"
+          },
+          "scenario": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Scenario",
+            "description": "Parsed scenario (canonical JSON)"
+          },
+          "expanded_events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Expanded Events"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "version",
+          "adapter",
+          "tags",
+          "content_hash",
+          "event_count",
+          "assertion_count",
+          "source",
+          "updated_at",
+          "document",
+          "scenario",
+          "expanded_events",
+          "warnings"
+        ],
+        "title": "ScenarioDetail"
+      },
+      "ScenarioSummary": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "assertion_count": {
+            "type": "integer",
+            "title": "Assertion Count"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "version",
+          "adapter",
+          "tags",
+          "content_hash",
+          "event_count",
+          "assertion_count",
+          "source",
+          "updated_at"
+        ],
+        "title": "ScenarioSummary"
+      },
+      "ScenarioValidateRequest": {
+        "properties": {
+          "document": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "ScenarioValidateRequest"
+      },
+      "ScenarioValidateResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
+          },
+          "canonical_yaml": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Yaml"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "expanded_events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Expanded Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "issues",
+          "warnings"
+        ],
+        "title": "ScenarioValidateResponse"
+      },
+      "ScoreParameters": {
+        "properties": {
+          "mttr_target": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Mttr Target",
+            "description": "Recovery time scoring 1.0 (s)",
+            "default": 5.0
+          },
+          "mttr_limit": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Mttr Limit",
+            "description": "Recovery time scoring 0.0 (s)",
+            "default": 30.0
+          },
+          "containment_penalty_per_domain": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Containment Penalty Per Domain",
+            "default": 0.25
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ScoreParameters"
+      },
+      "ScoreProfile": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Weights",
+            "description": "Dimension weights, must sum to 100"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/ScoreParameters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "weights"
+        ],
+        "title": "ScoreProfile"
+      },
+      "ScoreResult": {
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/ScoreProfile"
+          },
+          "total": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Total"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/DimensionScore"
+            },
+            "type": "array",
+            "title": "Dimensions"
+          },
+          "hard_gates": {
+            "items": {
+              "$ref": "#/components/schemas/HardGate"
+            },
+            "type": "array",
+            "title": "Hard Gates"
+          },
+          "hard_gate_result": {
+            "$ref": "#/components/schemas/BenchmarkResult"
+          },
+          "result": {
+            "$ref": "#/components/schemas/BenchmarkResult"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile",
+          "total",
+          "dimensions",
+          "hard_gates",
+          "hard_gate_result",
+          "result",
+          "reason"
+        ],
+        "title": "ScoreResult"
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "info",
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "title": "Severity"
+      },
+      "SystemInfo": {
+        "properties": {
+          "software_version": {
+            "type": "string",
+            "title": "Software Version"
+          },
+          "scenario_api_version": {
+            "type": "string",
+            "title": "Scenario Api Version"
+          },
+          "report_schema_version": {
+            "type": "string",
+            "title": "Report Schema Version"
+          },
+          "protocol_version": {
+            "type": "string",
+            "title": "Protocol Version"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "health": {
+            "$ref": "#/components/schemas/ComponentHealth"
+          },
+          "topology": {
+            "$ref": "#/components/schemas/SystemTopology"
+          },
+          "catalog": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogEntryOut"
+            },
+            "type": "array",
+            "title": "Catalog"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/EffectDescriptor"
+            },
+            "type": "array",
+            "title": "Effects"
+          },
+          "adapters": {
+            "items": {
+              "$ref": "#/components/schemas/AdapterOut"
+            },
+            "type": "array",
+            "title": "Adapters"
+          },
+          "runners": {
+            "items": {
+              "$ref": "#/components/schemas/RunnerOut"
+            },
+            "type": "array",
+            "title": "Runners"
+          },
+          "score_profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreProfile"
+            },
+            "type": "array",
+            "title": "Score Profiles"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "component_states": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentState"
+            },
+            "type": "array",
+            "title": "Component States"
+          },
+          "run_states": {
+            "items": {
+              "$ref": "#/components/schemas/RunState"
+            },
+            "type": "array",
+            "title": "Run States"
+          }
+        },
+        "type": "object",
+        "required": [
+          "software_version",
+          "scenario_api_version",
+          "report_schema_version",
+          "protocol_version",
+          "git_commit",
+          "environment",
+          "health",
+          "topology",
+          "catalog",
+          "effects",
+          "adapters",
+          "runners",
+          "score_profiles",
+          "counts",
+          "component_states",
+          "run_states"
+        ],
+        "title": "SystemInfo"
+      },
+      "SystemTopology": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "vehicle_class": {
+            "type": "string",
+            "title": "Vehicle Class"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/Component"
+            },
+            "type": "array",
+            "title": "Components"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/Dependency"
+            },
+            "type": "array",
+            "title": "Dependencies"
+          },
+          "trust_boundaries": {
+            "items": {
+              "$ref": "#/components/schemas/TrustBoundary"
+            },
+            "type": "array",
+            "title": "Trust Boundaries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "vehicle_class",
+          "components",
+          "dependencies",
+          "trust_boundaries"
+        ],
+        "title": "SystemTopology"
+      },
+      "TelemetryResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetrySample"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "stride": {
+            "type": "integer",
+            "title": "Stride"
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "samples",
+          "count",
+          "total",
+          "stride",
+          "complete"
+        ],
+        "title": "TelemetryResponse"
+      },
+      "TelemetrySample": {
+        "properties": {
+          "t": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "T",
+            "description": "Simulation time (s)"
+          },
+          "wall_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Wall Time"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Adapter that produced the sample (mock, px4-gazebo, replay)"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeoPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attitude": {
+            "$ref": "#/components/schemas/Attitude"
+          },
+          "velocity": {
+            "$ref": "#/components/schemas/Velocity"
+          },
+          "mission": {
+            "$ref": "#/components/schemas/MissionStatus"
+          },
+          "flight": {
+            "$ref": "#/components/schemas/FlightStatus"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/NavigationStatus"
+          },
+          "communications": {
+            "$ref": "#/components/schemas/CommunicationsStatus"
+          },
+          "power": {
+            "$ref": "#/components/schemas/PowerStatus"
+          },
+          "health": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ComponentState"
+            },
+            "type": "object",
+            "title": "Health",
+            "description": "Component states keyed by subsystem id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t",
+          "source",
+          "position",
+          "attitude",
+          "velocity",
+          "mission",
+          "flight",
+          "navigation",
+          "communications",
+          "power"
+        ],
+        "title": "TelemetrySample",
+        "description": "One normalized telemetry sample at a simulation instant."
+      },
+      "TrustBoundary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "upstream_zone": {
+            "$ref": "#/components/schemas/TrustZone"
+          },
+          "downstream_zone": {
+            "$ref": "#/components/schemas/TrustZone"
+          },
+          "enforcement_point": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enforcement Point",
+            "description": "Component id acting as policy enforcement point"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "upstream_zone",
+          "downstream_zone"
+        ],
+        "title": "TrustBoundary"
+      },
+      "TrustZone": {
+        "type": "string",
+        "enum": [
+          "external",
+          "mission",
+          "flight_critical"
+        ],
+        "title": "TrustZone",
+        "description": "Trust zones, ordered from least to most trusted."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Location in the scenario document, e.g. 'events[2].inject'"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "severity": {
+            "type": "string",
+            "pattern": "^(error|warning)$",
+            "title": "Severity",
+            "default": "error"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "default": "invalid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "message"
+        ],
+        "title": "ValidationIssue"
+      },
+      "Velocity": {
+        "properties": {
+          "vx": {
+            "type": "number",
+            "title": "Vx",
+            "description": "East velocity (m/s)"
+          },
+          "vy": {
+            "type": "number",
+            "title": "Vy",
+            "description": "North velocity (m/s)"
+          },
+          "vz": {
+            "type": "number",
+            "title": "Vz",
+            "description": "Up velocity (m/s)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vx",
+          "vy",
+          "vz"
+        ],
+        "title": "Velocity"
+      },
+      "StreamSnapshot": {
+        "properties": {
+          "type": {
+            "const": "snapshot",
+            "default": "snapshot",
+            "title": "Type",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunDetail"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "telemetry": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetrySample"
+            },
+            "title": "Telemetry",
+            "type": "array"
+          },
+          "server_time": {
+            "format": "date-time",
+            "title": "Server Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run",
+          "events",
+          "telemetry",
+          "server_time"
+        ],
+        "title": "StreamSnapshot",
+        "type": "object"
+      },
+      "StreamCompleted": {
+        "properties": {
+          "type": {
+            "const": "completed",
+            "default": "completed",
+            "title": "Type",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "report_available": {
+            "title": "Report Available",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "run",
+          "report_available"
+        ],
+        "title": "StreamCompleted",
+        "type": "object"
+      },
+      "StreamHeartbeat": {
+        "properties": {
+          "type": {
+            "const": "heartbeat",
+            "default": "heartbeat",
+            "title": "Type",
+            "type": "string"
+          },
+          "server_time": {
+            "format": "date-time",
+            "title": "Server Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "server_time"
+        ],
+        "title": "StreamHeartbeat",
+        "type": "object"
+      },
+      "LifecycleMessage": {
+        "properties": {
+          "protocol_version": {
+            "default": "1",
+            "title": "Protocol Version",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          },
+          "type": {
+            "const": "lifecycle",
+            "default": "lifecycle",
+            "title": "Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/RunState"
+          },
+          "previous_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "runner_id": {
+            "title": "Runner Id",
+            "type": "string"
+          },
+          "simulation_time": {
+            "default": 0.0,
+            "title": "Simulation Time",
+            "type": "number"
+          },
+          "planned_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannedPath"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "adapter_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Adapter Version"
+          },
+          "data_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Data Origin"
+          }
+        },
+        "required": [
+          "run_id",
+          "state",
+          "runner_id"
+        ],
+        "title": "LifecycleMessage",
+        "type": "object"
+      },
+      "EventMessage": {
+        "properties": {
+          "protocol_version": {
+            "default": "1",
+            "title": "Protocol Version",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          },
+          "type": {
+            "const": "event",
+            "default": "event",
+            "title": "Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/RunEvent"
+          }
+        },
+        "required": [
+          "run_id",
+          "event"
+        ],
+        "title": "EventMessage",
+        "type": "object"
+      },
+      "TelemetryMessage": {
+        "description": "A batch of telemetry samples, ordered by simulation time.",
+        "properties": {
+          "protocol_version": {
+            "default": "1",
+            "title": "Protocol Version",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          },
+          "type": {
+            "const": "telemetry",
+            "default": "telemetry",
+            "title": "Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "description": "Batch sequence number",
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetrySample"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Samples",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "sequence",
+          "samples"
+        ],
+        "title": "TelemetryMessage",
+        "type": "object"
+      },
+      "RunFinishedMessage": {
+        "description": "Final word of the runner: the run is over and no more messages will follow.",
+        "properties": {
+          "protocol_version": {
+            "default": "1",
+            "title": "Protocol Version",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          },
+          "type": {
+            "const": "run_finished",
+            "default": "run_finished",
+            "title": "Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "runner_id": {
+            "title": "Runner Id",
+            "type": "string"
+          },
+          "simulation_time": {
+            "default": 0.0,
+            "title": "Simulation Time",
+            "type": "number"
+          },
+          "event_count": {
+            "default": 0,
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "sample_count": {
+            "default": 0,
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "mission_complete": {
+            "default": false,
+            "title": "Mission Complete",
+            "type": "boolean"
+          },
+          "final_component_states": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Final Component States",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run_id",
+          "outcome",
+          "runner_id"
+        ],
+        "title": "RunFinishedMessage",
+        "type": "object"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "system",
+      "description": "Platform, topology, fault catalog, adapters, runners"
+    },
+    {
+      "name": "scenarios",
+      "description": "Scenario library and validation"
+    },
+    {
+      "name": "runs",
+      "description": "Run lifecycle, events, telemetry, metrics, reports"
+    },
+    {
+      "name": "compare",
+      "description": "Two-run comparison"
+    },
+    {
+      "name": "stream",
+      "description": "Live run stream (WebSocket)"
+    },
+    {
+      "name": "health",
+      "description": "Probes"
+    }
+  ],
+  "x-websocket": {
+    "/api/v1/runs/{run_id}/stream": {
+      "description": "Live run stream; JSON text frames of the listed message types.",
+      "messages": [
+        "StreamSnapshot",
+        "StreamCompleted",
+        "StreamHeartbeat",
+        "LifecycleMessage",
+        "EventMessage",
+        "TelemetryMessage",
+        "RunFinishedMessage"
+      ]
+    }
+  }
+}

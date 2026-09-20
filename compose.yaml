@@ -1,0 +1,390 @@
+# Resilient UAS Lab - reference deployment.
+#
+#   cp .env.example .env
+#   docker compose up --build                         # control plane + Mission Control + mock runner
+#   docker compose --profile sim up --build           # + PX4 SITL / Gazebo simulation runner (Linux)
+#   docker compose --profile observability up         # + Prometheus / Grafana
+#
+# Networks (see docs/security-model.md):
+#   edge          browser-facing: gateway, web, api
+#   control       event bus: api, orchestrator, runners, nats
+#   data          persistence: api, orchestrator, postgres, object store
+#   simulation    runner-sim <-> px4-sim only
+#   observability metrics scraping only
+#
+# No service mounts the Docker socket. Runners hold neither database nor object-store
+# credentials; they only speak to the event bus.
+
+name: resilient-uas-lab
+
+x-python-service: &python-service
+  build:
+    context: .
+    dockerfile: infra/docker/python-service.Dockerfile
+    args:
+      VERSION: ${RESLAB_VERSION:-0.1.0}
+      GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-common-env: &common-env
+  RESLAB_ENVIRONMENT: ${RESLAB_ENVIRONMENT:-development}
+  RESLAB_LOG_LEVEL: ${RESLAB_LOG_LEVEL:-INFO}
+  RESLAB_LOG_FORMAT: ${RESLAB_LOG_FORMAT:-json}
+  RESLAB_NATS_URL: nats://nats:4222
+  RESLAB_GIT_COMMIT: ${RESLAB_GIT_COMMIT:-}
+
+x-data-env: &data-env
+  RESLAB_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-reslab}:${POSTGRES_PASSWORD:-reslab}@postgres:5432/${POSTGRES_DB:-reslab}
+  RESLAB_S3_ENDPOINT_URL: http://objectstore:9000
+  RESLAB_S3_BUCKET: ${S3_BUCKET:-reslab-artifacts}
+  RESLAB_S3_ACCESS_KEY: ${S3_ACCESS_KEY:-reslab}
+  RESLAB_S3_SECRET_KEY: ${S3_SECRET_KEY:-reslab-secret}
+  RESLAB_SCENARIOS_DIR: /app/scenarios
+
+services:
+  # ------------------------------------------------------------------ edge
+  gateway:
+    image: caddy:2.11.4-alpine@sha256:de23def33b17fb5d1290b0f6c2add1d70780e52341896c00a4c8a2a2fe9d355e
+    restart: unless-stopped
+    ports:
+      - "${RESLAB_GATEWAY_PORT:-8080}:80"
+    volumes:
+      - ./infra/docker/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [edge]
+    depends_on:
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 128M }
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      NEXT_TELEMETRY_DISABLED: "1"
+    networks: [edge]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /app/.next/cache:size=64m,uid=10001,gid=10001
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  # ------------------------------------------------------------------ control plane
+  api:
+    <<: *python-service
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        SERVICE: api
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    environment:
+      <<: [*common-env, *data-env]
+      RESLAB_API_PORT: "8000"
+      RESLAB_API_CORS_ORIGINS: ${RESLAB_API_CORS_ORIGINS:-http://localhost:8080,http://localhost:3000}
+    networks: [edge, control, data, observability]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+      objectstore:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  orchestrator:
+    <<: *python-service
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        SERVICE: orchestrator
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    environment:
+      <<: [*common-env, *data-env]
+      RESLAB_RUNNER_STALE_AFTER_SECONDS: ${RESLAB_RUNNER_STALE_AFTER_SECONDS:-45}
+      RESLAB_QUEUED_TIMEOUT_SECONDS: ${RESLAB_QUEUED_TIMEOUT_SECONDS:-300}
+    networks: [control, data, observability]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+      objectstore:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  runner:
+    <<: *python-service
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        SERVICE: runner
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    environment:
+      <<: *common-env
+      RESLAB_RUNNER_ID: ${RESLAB_RUNNER_ID:-runner-1}
+      RESLAB_RUNNER_ADAPTERS: mock,replay
+      RESLAB_RUNNER_CONCURRENCY: ${RESLAB_RUNNER_CONCURRENCY:-1}
+      RESLAB_API_BASE_URL: http://api:8000
+    networks: [control, observability]
+    depends_on:
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  migrate:
+    <<: *python-service
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        SERVICE: migrate
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    restart: "no"
+    environment:
+      <<: [*common-env, *data-env]
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  # ------------------------------------------------------------------ infrastructure
+  nats:
+    image: nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4
+    command: ["-c", "/etc/nats/nats.conf"]
+    restart: unless-stopped
+    volumes:
+      - ./infra/nats/nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data
+    networks: [control, observability]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8222/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  postgres:
+    image: postgres:17.11@sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reslab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reslab}
+      POSTGRES_DB: ${POSTGRES_DB:-reslab}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [data]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reslab} -d ${POSTGRES_DB:-reslab}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    deploy:
+      resources:
+        limits: { cpus: "2.00", memory: 1G }
+
+  objectstore:
+    # S3-compatible artifact store (Apache-2.0). Any S3 endpoint works; see docs/deployment.md.
+    image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-reslab}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-reslab-secret}
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOGGER_LEVEL: warn
+    volumes:
+      - objectstore-data:/data
+    networks: [data]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://127.0.0.1:9000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  # ------------------------------------------------------------------ profile: sim
+  px4-sim:
+    profiles: [sim]
+    # Official PX4 SITL + Gazebo Harmonic image, pinned by digest (see docs/deployment.md).
+    image: ${PX4_SIM_IMAGE:-px4io/px4-sitl-gazebo@sha256:aa4bbf35f0bd6bdb3269cc96e317c8e78b87f1fc769c734c0818094074e1cc0a}
+    restart: unless-stopped
+    environment:
+      HEADLESS: "1"
+      PX4_SIM_MODEL: ${PX4_SIM_MODEL:-gz_x500}
+      PX4_GZ_WORLD: ${PX4_GZ_WORLD:-default}
+      PX4_SIM_SPEED_FACTOR: ${PX4_SIM_SPEED_FACTOR:-1}
+    networks: [simulation]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "4.00", memory: 4G }
+
+  runner-sim:
+    <<: *python-service
+    profiles: [sim]
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        SERVICE: runner
+        VERSION: ${RESLAB_VERSION:-0.1.0}
+        GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
+    environment:
+      <<: *common-env
+      RESLAB_RUNNER_ID: ${RESLAB_SIM_RUNNER_ID:-runner-sim-1}
+      RESLAB_RUNNER_ADAPTERS: px4-gazebo
+      RESLAB_RUNNER_CONCURRENCY: "1"
+      RESLAB_PX4_MAVSDK_ADDRESS: ${RESLAB_PX4_MAVSDK_ADDRESS:-udpout://px4-sim:14580}
+      RESLAB_PX4_CONNECTION_TIMEOUT_SECONDS: ${RESLAB_PX4_CONNECTION_TIMEOUT_SECONDS:-120}
+      RESLAB_API_BASE_URL: http://api:8000
+    networks: [control, simulation, observability]
+    depends_on:
+      nats:
+        condition: service_healthy
+      px4-sim:
+        condition: service_started
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 768M }
+
+  # ------------------------------------------------------------------ profile: observability
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v3.14.0@sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [observability]
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 1G }
+
+  nats-exporter:
+    profiles: [observability]
+    image: natsio/prometheus-nats-exporter:0.20.2@sha256:c623b608e148e31e1c1c878673a197f1828e58ce90de4f01d22f1baa84c8fee9
+    restart: unless-stopped
+    command: ["-varz", "-jsz=all", "-connz", "http://nats:8222"]
+    networks: [observability]
+    security_opt: [no-new-privileges:true]
+
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:13.2.2@sha256:ac461fb352abc50da10a51c7d02462e9c05488f11f53f14b3ad79a8145f638a0
+    restart: unless-stopped
+    ports:
+      - "${RESLAB_GRAFANA_PORT:-3001}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks: [observability]
+    depends_on: [prometheus]
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+networks:
+  edge:
+    driver: bridge
+  control:
+    driver: bridge
+    internal: true
+  data:
+    driver: bridge
+    internal: true
+  simulation:
+    driver: bridge
+    internal: true
+  observability:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres-data:
+  nats-data:
+  objectstore-data:
+  caddy-data:
+  caddy-config:
+  prometheus-data:
+  grafana-data:

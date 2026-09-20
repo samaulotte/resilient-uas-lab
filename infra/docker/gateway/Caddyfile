@@ -1,0 +1,44 @@
+# Edge gateway: the only service exposed to the browser.
+#
+# /api/*, /healthz, /readyz, /metrics  -> API (REST, WebSocket, OpenAPI docs)
+# everything else                       -> web (Mission Control)
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	@api path /api/* /healthz /readyz /metrics
+	handle @api {
+		reverse_proxy api:8000 {
+			# WebSocket upgrades are proxied transparently; keep the long-lived
+			# stream alive.
+			transport http {
+				read_timeout 0
+				write_timeout 0
+			}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

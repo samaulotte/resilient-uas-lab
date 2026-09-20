@@ -1,0 +1,627 @@
+{
+  "$defs": {
+    "Assertion": {
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "maxLength": 200,
+          "minLength": 3,
+          "title": "Expression",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "default": "medium"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expression"
+      ],
+      "title": "Assertion",
+      "type": "object"
+    },
+    "ComponentState": {
+      "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component.",
+      "enum": [
+        "NOMINAL",
+        "OPERATIONAL",
+        "DEGRADED",
+        "UNAVAILABLE",
+        "FAILED",
+        "RECOVERING",
+        "RECOVERED",
+        "UNKNOWN"
+      ],
+      "title": "ComponentState",
+      "type": "string"
+    },
+    "ConsequenceProfile": {
+      "additionalProperties": false,
+      "description": "Abstract consequence profile (used for electromagnetic resilience scenarios).\n\nA profile lists the behaviours each subsystem exhibits during a transient. It is\nexpanded into ordinary injection events at load time. Subsystems marked\n`operational` are explicitly expected to stay healthy and become expectations.\nNo physical source parameter can be expressed here.",
+      "properties": {
+        "name": {
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+          "title": "Name",
+          "type": "string"
+        },
+        "at": {
+          "description": "Simulation time at which the transient starts",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "At",
+          "type": "string"
+        },
+        "duration": {
+          "description": "Transient duration for persistent behaviours",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Duration",
+          "type": "string"
+        },
+        "effects": {
+          "minProperties": 1,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,31}\\.[a-z][a-z0-9_]{0,31}$": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Effect"
+                },
+                {
+                  "const": "operational",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "propertyNames": {
+            "maxLength": 65
+          },
+          "title": "Effects",
+          "type": "object"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "at",
+        "duration",
+        "effects"
+      ],
+      "title": "ConsequenceProfile",
+      "type": "object"
+    },
+    "Effect": {
+      "enum": [
+        "unavailable",
+        "intermittent",
+        "degraded",
+        "erroneous",
+        "stuck",
+        "restart",
+        "crash",
+        "latency",
+        "packet_loss",
+        "resource_pressure",
+        "temporary_disconnect"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "Expectation": {
+      "additionalProperties": false,
+      "description": "Expected observable behaviour after an event. Verified, never assumed.",
+      "properties": {
+        "subsystem": {
+          "maxLength": 65,
+          "pattern": "^[a-z][a-z0-9_]{0,31}\\.[a-z][a-z0-9_]{0,31}$",
+          "title": "Subsystem",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/ComponentState"
+        },
+        "within": {
+          "default": "5s",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Within",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subsystem",
+        "state"
+      ],
+      "title": "Expectation",
+      "type": "object"
+    },
+    "Injection": {
+      "additionalProperties": false,
+      "properties": {
+        "subsystem": {
+          "maxLength": 65,
+          "pattern": "^[a-z][a-z0-9_]{0,31}\\.[a-z][a-z0-9_]{0,31}$",
+          "title": "Subsystem",
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/$defs/Effect"
+        },
+        "duration": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "minLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How long the effect stays active. Omitted means until scenario end.",
+          "title": "Duration"
+        },
+        "parameters": {
+          "maxProperties": 8,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,31}$": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "subsystem",
+        "effect"
+      ],
+      "title": "Injection",
+      "type": "object"
+    },
+    "Mission": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "default": "waypoint",
+          "enum": [
+            "waypoint",
+            "hover",
+            "survey"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "timeout": {
+          "default": "180s",
+          "description": "Hard limit for the whole mission",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Timeout",
+          "type": "string"
+        },
+        "cruise_speed": {
+          "default": 6.0,
+          "description": "Cruise speed (m/s)",
+          "exclusiveMinimum": 0,
+          "maximum": 30,
+          "title": "Cruise Speed",
+          "type": "number"
+        },
+        "altitude": {
+          "default": 30.0,
+          "description": "Default altitude (m)",
+          "maximum": 500,
+          "minimum": 2,
+          "title": "Altitude",
+          "type": "number"
+        },
+        "waypoints": {
+          "items": {
+            "$ref": "#/$defs/Waypoint"
+          },
+          "maxItems": 64,
+          "title": "Waypoints",
+          "type": "array"
+        }
+      },
+      "title": "Mission",
+      "type": "object"
+    },
+    "RecoveryPolicy": {
+      "additionalProperties": false,
+      "description": "Declared recovery behaviour of the target. The adapter maps it to the system.\n\nThese are expectations that the platform will verify, not commands it executes.",
+      "properties": {
+        "gnss_loss": {
+          "default": "dead_reckoning",
+          "enum": [
+            "dead_reckoning",
+            "hold",
+            "land"
+          ],
+          "title": "Gnss Loss",
+          "type": "string"
+        },
+        "datalink_loss": {
+          "default": "continue",
+          "enum": [
+            "continue",
+            "hold",
+            "rtl"
+          ],
+          "title": "Datalink Loss",
+          "type": "string"
+        },
+        "compute_loss": {
+          "default": "hold",
+          "enum": [
+            "hold",
+            "land",
+            "rtl"
+          ],
+          "title": "Compute Loss",
+          "type": "string"
+        },
+        "hold_timeout": {
+          "default": "60s",
+          "description": "Maximum time to hold before escalating to land",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Hold Timeout",
+          "type": "string"
+        },
+        "max_dead_reckoning": {
+          "default": "90s",
+          "description": "Maximum time to fly without GNSS aiding before holding",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Max Dead Reckoning",
+          "type": "string"
+        }
+      },
+      "title": "RecoveryPolicy",
+      "type": "object"
+    },
+    "ScenarioEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "at": {
+          "description": "Simulation time at which the injection is requested",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "At",
+          "type": "string"
+        },
+        "inject": {
+          "$ref": "#/$defs/Injection"
+        },
+        "expect": {
+          "items": {
+            "$ref": "#/$defs/Expectation"
+          },
+          "maxItems": 8,
+          "title": "Expect",
+          "type": "array"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "inject"
+      ],
+      "title": "ScenarioEvent",
+      "type": "object"
+    },
+    "ScenarioMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Unique scenario name (kebab-case)",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 4000,
+          "title": "Description",
+          "type": "string"
+        },
+        "version": {
+          "default": "1",
+          "maxLength": 32,
+          "title": "Version",
+          "type": "string"
+        },
+        "labels": {
+          "maxProperties": 16,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,31}$": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          "title": "Labels",
+          "type": "object"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 64,
+            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ScenarioMetadata",
+      "type": "object"
+    },
+    "ScoringConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "default": "default",
+          "description": "Named score profile",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "title": "ScoringConfig",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SimulationConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "seed": {
+          "default": 42,
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "speed": {
+          "default": 1.0,
+          "description": "Simulation speed factor",
+          "maximum": 100.0,
+          "minimum": 0.1,
+          "title": "Speed",
+          "type": "number"
+        },
+        "telemetry_rate_hz": {
+          "default": 10.0,
+          "maximum": 50.0,
+          "minimum": 1.0,
+          "title": "Telemetry Rate Hz",
+          "type": "number"
+        }
+      },
+      "title": "SimulationConfig",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter": {
+          "description": "Adapter used to execute the scenario",
+          "enum": [
+            "mock",
+            "px4-gazebo",
+            "replay"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "vehicle": {
+          "default": "x500",
+          "description": "Vehicle model identifier",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$",
+          "title": "Vehicle",
+          "type": "string"
+        },
+        "configuration": {
+          "description": "Adapter-specific configuration (scalar values only)",
+          "maxProperties": 32,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,31}$": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "title": "Configuration",
+          "type": "object"
+        }
+      },
+      "required": [
+        "adapter"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "Waypoint": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "description": "East offset from origin (m)",
+          "maximum": 5000,
+          "minimum": -5000,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "description": "North offset from origin (m)",
+          "maximum": 5000,
+          "minimum": -5000,
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "description": "Altitude above origin (m)",
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Z",
+          "type": "number"
+        },
+        "hold": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "minLength": 2,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hold time at the waypoint",
+          "title": "Hold"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "Waypoint",
+      "type": "object"
+    }
+  },
+  "$id": "https://resilient-uas.dev/schemas/scenario/v1alpha1.json",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "title": "Apiversion",
+      "type": "string"
+    },
+    "kind": {
+      "title": "Kind",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ScenarioMetadata"
+    },
+    "target": {
+      "$ref": "#/$defs/Target"
+    },
+    "mission": {
+      "$ref": "#/$defs/Mission"
+    },
+    "recovery": {
+      "$ref": "#/$defs/RecoveryPolicy"
+    },
+    "simulation": {
+      "$ref": "#/$defs/SimulationConfig"
+    },
+    "profile": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConsequenceProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/ScenarioEvent"
+      },
+      "maxItems": 128,
+      "title": "Events",
+      "type": "array"
+    },
+    "assertions": {
+      "items": {
+        "$ref": "#/$defs/Assertion"
+      },
+      "maxItems": 64,
+      "title": "Assertions",
+      "type": "array"
+    },
+    "scoring": {
+      "$ref": "#/$defs/ScoringConfig"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "target"
+  ],
+  "title": "ResilienceScenario",
+  "type": "object"
+}

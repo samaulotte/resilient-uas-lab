@@ -1,0 +1,1970 @@
+{
+  "$defs": {
+    "AssertionOutcome": {
+      "enum": [
+        "passed",
+        "failed",
+        "not_evaluated"
+      ],
+      "title": "AssertionOutcome",
+      "type": "string"
+    },
+    "AssertionResult": {
+      "properties": {
+        "expression": {
+          "title": "Expression",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/AssertionOutcome"
+        },
+        "measured": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Value observed for the metric path",
+          "title": "Measured"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Literal the metric was compared against",
+          "title": "Expected"
+        },
+        "operator": {
+          "title": "Operator",
+          "type": "string"
+        },
+        "metric_path": {
+          "title": "Metric Path",
+          "type": "string"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "simulation_time": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Simulation time at which the metric was finalized",
+          "title": "Simulation Time"
+        }
+      },
+      "required": [
+        "expression",
+        "severity",
+        "outcome",
+        "measured",
+        "expected",
+        "operator",
+        "metric_path",
+        "explanation"
+      ],
+      "title": "AssertionResult",
+      "type": "object"
+    },
+    "AvailabilityMetrics": {
+      "description": "Fraction of run time during which a domain delivered its function.",
+      "properties": {
+        "control": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Control",
+          "type": "number"
+        },
+        "navigation_integrity": {
+          "description": "Weighted: healthy 1.0, degraded 0.5, down 0.0",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Navigation Integrity",
+          "type": "number"
+        },
+        "navigation": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Navigation",
+          "type": "number"
+        },
+        "communications": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Communications",
+          "type": "number"
+        },
+        "compute": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Compute",
+          "type": "number"
+        },
+        "power": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Power",
+          "type": "number"
+        }
+      },
+      "required": [
+        "control",
+        "navigation_integrity",
+        "navigation",
+        "communications",
+        "compute",
+        "power"
+      ],
+      "title": "AvailabilityMetrics",
+      "type": "object"
+    },
+    "BenchmarkResult": {
+      "description": "Outcome of a run once analyzed.\n\n`passed` and `failed` are only emitted for runs that completed their scenario.\n`inconclusive` marks runs that could not be fully executed or analyzed.",
+      "enum": [
+        "passed",
+        "failed",
+        "inconclusive"
+      ],
+      "title": "BenchmarkResult",
+      "type": "string"
+    },
+    "Component": {
+      "properties": {
+        "id": {
+          "description": "Subsystem identifier '<category>.<component>'",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "domain": {
+          "$ref": "#/$defs/Domain"
+        },
+        "category": {
+          "$ref": "#/$defs/FaultCategory"
+        },
+        "trust_zone": {
+          "$ref": "#/$defs/TrustZone"
+        },
+        "healthy_state": {
+          "$ref": "#/$defs/ComponentState",
+          "default": "NOMINAL",
+          "description": "Vocabulary used when the component is healthy (NOMINAL or OPERATIONAL)"
+        },
+        "critical": {
+          "default": false,
+          "description": "Loss of this component means loss of flight-critical function",
+          "title": "Critical",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "domain",
+        "category",
+        "trust_zone"
+      ],
+      "title": "Component",
+      "type": "object"
+    },
+    "ComponentState": {
+      "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component.",
+      "enum": [
+        "NOMINAL",
+        "OPERATIONAL",
+        "DEGRADED",
+        "UNAVAILABLE",
+        "FAILED",
+        "RECOVERING",
+        "RECOVERED",
+        "UNKNOWN"
+      ],
+      "title": "ComponentState",
+      "type": "string"
+    },
+    "ComponentStateInterval": {
+      "properties": {
+        "subsystem": {
+          "title": "Subsystem",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/ComponentState"
+        },
+        "start": {
+          "title": "Start",
+          "type": "number"
+        },
+        "end": {
+          "title": "End",
+          "type": "number"
+        }
+      },
+      "required": [
+        "subsystem",
+        "state",
+        "start",
+        "end"
+      ],
+      "title": "ComponentStateInterval",
+      "type": "object"
+    },
+    "Dependency": {
+      "description": "`dependent` relies on `provider`; a fault on the provider may propagate downstream.",
+      "properties": {
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "dependent": {
+          "title": "Dependent",
+          "type": "string"
+        },
+        "relation": {
+          "default": "depends_on",
+          "title": "Relation",
+          "type": "string"
+        },
+        "crosses_trust_boundary": {
+          "default": false,
+          "title": "Crosses Trust Boundary",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provider",
+        "dependent"
+      ],
+      "title": "Dependency",
+      "type": "object"
+    },
+    "DimensionScore": {
+      "properties": {
+        "dimension": {
+          "title": "Dimension",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "weight": {
+          "title": "Weight",
+          "type": "integer"
+        },
+        "score": {
+          "description": "Normalized dimension score",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "points": {
+          "description": "score * weight",
+          "title": "Points",
+          "type": "number"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dimension",
+        "label",
+        "weight",
+        "score",
+        "points",
+        "explanation"
+      ],
+      "title": "DimensionScore",
+      "type": "object"
+    },
+    "Domain": {
+      "enum": [
+        "external",
+        "communications",
+        "navigation",
+        "mission_compute",
+        "flight_control",
+        "actuation",
+        "power"
+      ],
+      "title": "Domain",
+      "type": "string"
+    },
+    "EventCounts": {
+      "properties": {
+        "injected": {
+          "title": "Injected",
+          "type": "integer"
+        },
+        "applied": {
+          "title": "Applied",
+          "type": "integer"
+        },
+        "rejected": {
+          "title": "Rejected",
+          "type": "integer"
+        },
+        "cleared": {
+          "title": "Cleared",
+          "type": "integer"
+        },
+        "observed_effects": {
+          "title": "Observed Effects",
+          "type": "integer"
+        },
+        "system_responses": {
+          "title": "System Responses",
+          "type": "integer"
+        },
+        "recoveries": {
+          "title": "Recoveries",
+          "type": "integer"
+        },
+        "expectations_passed": {
+          "title": "Expectations Passed",
+          "type": "integer"
+        },
+        "expectations_failed": {
+          "title": "Expectations Failed",
+          "type": "integer"
+        },
+        "degraded_transitions": {
+          "title": "Degraded Transitions",
+          "type": "integer"
+        },
+        "failed_transitions": {
+          "title": "Failed Transitions",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "injected",
+        "applied",
+        "rejected",
+        "cleared",
+        "observed_effects",
+        "system_responses",
+        "recoveries",
+        "expectations_passed",
+        "expectations_failed",
+        "degraded_transitions",
+        "failed_transitions"
+      ],
+      "title": "EventCounts",
+      "type": "object"
+    },
+    "EventKind": {
+      "description": "Scientific classification of a run event.\n\nThe distinction matters: a requested disturbance is not evidence that the\nsystem was actually disturbed, and an expected response is not evidence that\nit happened.\n\n- `INJECTION_REQUEST`: the scenario engine asked the adapter to inject an effect.\n- `INJECTION_APPLIED`: the adapter confirmed the effect is active in the target.\n- `INJECTION_REJECTED`: the adapter could not apply the effect.\n- `INJECTION_CLEARED`: the effect was removed (duration elapsed or scenario end).\n- `OBSERVED_EFFECT`: a component state change observed in the target.\n- `SYSTEM_RESPONSE`: an autonomous reaction of the target (mode change, failsafe).\n- `RECOVERY`: a component returned to a healthy state.\n- `EXPECTATION_RESULT`: an expected behaviour declared in the scenario was checked.\n- `ASSERTION_RESULT`: a scenario assertion was evaluated during analysis.\n- `MISSION`: mission progress (waypoint reached, mission complete).\n- `LIFECYCLE`: run lifecycle transition.\n- `LOG`: informational message from a component.",
+      "enum": [
+        "INJECTION_REQUEST",
+        "INJECTION_APPLIED",
+        "INJECTION_REJECTED",
+        "INJECTION_CLEARED",
+        "OBSERVED_EFFECT",
+        "SYSTEM_RESPONSE",
+        "RECOVERY",
+        "EXPECTATION_RESULT",
+        "ASSERTION_RESULT",
+        "MISSION",
+        "LIFECYCLE",
+        "LOG"
+      ],
+      "title": "EventKind",
+      "type": "string"
+    },
+    "EventSource": {
+      "enum": [
+        "scenario",
+        "adapter",
+        "engine",
+        "analysis",
+        "platform"
+      ],
+      "title": "EventSource",
+      "type": "string"
+    },
+    "FaultCategory": {
+      "description": "Fault library categories exposed to scenario authors.",
+      "enum": [
+        "Navigation",
+        "Sensors",
+        "Communications",
+        "Compute",
+        "Process",
+        "Network",
+        "Power",
+        "Security boundary",
+        "Service"
+      ],
+      "title": "FaultCategory",
+      "type": "string"
+    },
+    "GeoPosition": {
+      "properties": {
+        "latitude": {
+          "maximum": 90,
+          "minimum": -90,
+          "title": "Latitude",
+          "type": "number"
+        },
+        "longitude": {
+          "maximum": 180,
+          "minimum": -180,
+          "title": "Longitude",
+          "type": "number"
+        },
+        "altitude_msl": {
+          "description": "Altitude above mean sea level (m)",
+          "title": "Altitude Msl",
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "altitude_msl"
+      ],
+      "title": "GeoPosition",
+      "type": "object"
+    },
+    "HardGate": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "passed",
+        "reason"
+      ],
+      "title": "HardGate",
+      "type": "object"
+    },
+    "MetricsResult": {
+      "properties": {
+        "run_duration": {
+          "title": "Run Duration",
+          "type": "number"
+        },
+        "sample_count": {
+          "title": "Sample Count",
+          "type": "integer"
+        },
+        "mission": {
+          "$ref": "#/$defs/MissionMetrics"
+        },
+        "availability": {
+          "$ref": "#/$defs/AvailabilityMetrics"
+        },
+        "recovery": {
+          "$ref": "#/$defs/RecoveryMetrics"
+        },
+        "propagation": {
+          "$ref": "#/$defs/PropagationMetrics"
+        },
+        "modes": {
+          "$ref": "#/$defs/ModeMetrics"
+        },
+        "safety": {
+          "$ref": "#/$defs/SafetyMetrics"
+        },
+        "events": {
+          "$ref": "#/$defs/EventCounts"
+        },
+        "component_time_in_state": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "title": "Component Time In State",
+          "type": "object"
+        },
+        "final_component_states": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ComponentState"
+          },
+          "title": "Final Component States",
+          "type": "object"
+        }
+      },
+      "required": [
+        "run_duration",
+        "sample_count",
+        "mission",
+        "availability",
+        "recovery",
+        "propagation",
+        "modes",
+        "safety",
+        "events",
+        "component_time_in_state",
+        "final_component_states"
+      ],
+      "title": "MetricsResult",
+      "type": "object"
+    },
+    "MissionMetrics": {
+      "properties": {
+        "completion": {
+          "description": "Fraction of mission objectives reached",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Completion",
+          "type": "number"
+        },
+        "continuity": {
+          "description": "1 - (time held or diverted / duration)",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Continuity",
+          "type": "number"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "boolean"
+        },
+        "duration": {
+          "description": "Simulation seconds from start to end of run",
+          "title": "Duration",
+          "type": "number"
+        },
+        "time_in_hold": {
+          "title": "Time In Hold",
+          "type": "number"
+        },
+        "time_in_mission_modes": {
+          "title": "Time In Mission Modes",
+          "type": "number"
+        }
+      },
+      "required": [
+        "completion",
+        "continuity",
+        "completed",
+        "duration",
+        "time_in_hold",
+        "time_in_mission_modes"
+      ],
+      "title": "MissionMetrics",
+      "type": "object"
+    },
+    "ModeMetrics": {
+      "properties": {
+        "time_nominal": {
+          "title": "Time Nominal",
+          "type": "number"
+        },
+        "time_degraded": {
+          "title": "Time Degraded",
+          "type": "number"
+        },
+        "time_failed": {
+          "title": "Time Failed",
+          "type": "number"
+        },
+        "total": {
+          "title": "Total",
+          "type": "number"
+        }
+      },
+      "required": [
+        "time_nominal",
+        "time_degraded",
+        "time_failed",
+        "total"
+      ],
+      "title": "ModeMetrics",
+      "type": "object"
+    },
+    "PathPoint": {
+      "properties": {
+        "t": {
+          "title": "T",
+          "type": "number"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "t",
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "PathPoint",
+      "type": "object"
+    },
+    "PlannedPath": {
+      "description": "Mission plan as known before the run: waypoints in the local ENU frame.",
+      "properties": {
+        "origin": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeoPosition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "waypoints": {
+          "items": {
+            "$ref": "#/$defs/Position"
+          },
+          "title": "Waypoints",
+          "type": "array"
+        },
+        "safe_zone": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Position"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Return / safe landing point"
+        },
+        "safe_zone_radius": {
+          "default": 15.0,
+          "exclusiveMinimum": 0,
+          "title": "Safe Zone Radius",
+          "type": "number"
+        }
+      },
+      "required": [
+        "waypoints"
+      ],
+      "title": "PlannedPath",
+      "type": "object"
+    },
+    "Position": {
+      "description": "Local position in an East-North-Up frame relative to the mission origin (metres).",
+      "properties": {
+        "x": {
+          "description": "East (m)",
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "description": "North (m)",
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "description": "Up, altitude above origin (m)",
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "PropagationMetrics": {
+      "properties": {
+        "injected_components": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Injected Components",
+          "type": "array"
+        },
+        "affected_components": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affected Components",
+          "type": "array"
+        },
+        "propagated_components": {
+          "description": "Affected components that were not injection targets",
+          "items": {
+            "type": "string"
+          },
+          "title": "Propagated Components",
+          "type": "array"
+        },
+        "affected_domains": {
+          "items": {
+            "$ref": "#/$defs/Domain"
+          },
+          "title": "Affected Domains",
+          "type": "array"
+        },
+        "injected_domains": {
+          "items": {
+            "$ref": "#/$defs/Domain"
+          },
+          "title": "Injected Domains",
+          "type": "array"
+        },
+        "propagated_domains": {
+          "items": {
+            "$ref": "#/$defs/Domain"
+          },
+          "title": "Propagated Domains",
+          "type": "array"
+        },
+        "propagation_count": {
+          "title": "Propagation Count",
+          "type": "integer"
+        },
+        "max_propagation_depth": {
+          "title": "Max Propagation Depth",
+          "type": "integer"
+        },
+        "depths": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Depths",
+          "type": "object"
+        },
+        "critical_domain_reached": {
+          "title": "Critical Domain Reached",
+          "type": "boolean"
+        },
+        "flight_domain_affected": {
+          "title": "Flight Domain Affected",
+          "type": "boolean"
+        },
+        "contained": {
+          "title": "Contained",
+          "type": "boolean"
+        },
+        "boundary_crossed": {
+          "description": "A trust boundary was crossed by the propagation",
+          "title": "Boundary Crossed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "injected_components",
+        "affected_components",
+        "propagated_components",
+        "affected_domains",
+        "injected_domains",
+        "propagated_domains",
+        "propagation_count",
+        "max_propagation_depth",
+        "depths",
+        "critical_domain_reached",
+        "flight_domain_affected",
+        "contained",
+        "boundary_crossed"
+      ],
+      "title": "PropagationMetrics",
+      "type": "object"
+    },
+    "Provenance": {
+      "properties": {
+        "software_version": {
+          "default": "0.1.0",
+          "title": "Software Version",
+          "type": "string"
+        },
+        "scenario_api_version": {
+          "default": "resilient-uas.dev/v1alpha1",
+          "title": "Scenario Api Version",
+          "type": "string"
+        },
+        "protocol_version": {
+          "default": "1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "scenario_hash": {
+          "description": "sha256 of the canonical scenario document",
+          "title": "Scenario Hash",
+          "type": "string"
+        },
+        "scenario_version": {
+          "title": "Scenario Version",
+          "type": "string"
+        },
+        "adapter": {
+          "title": "Adapter",
+          "type": "string"
+        },
+        "adapter_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Adapter Version"
+        },
+        "target_configuration": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Target Configuration",
+          "type": "object"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "speed": {
+          "title": "Speed",
+          "type": "number"
+        },
+        "git_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git SHA of the platform build",
+          "title": "Git Commit"
+        },
+        "image_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Image Versions",
+          "type": "object"
+        },
+        "runner_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runner Id"
+        },
+        "environment": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Non-sensitive environment metadata (platform, python)",
+          "title": "Environment",
+          "type": "object"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "ended_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ended At"
+        },
+        "score_profile": {
+          "default": "default",
+          "title": "Score Profile",
+          "type": "string"
+        },
+        "data_origin": {
+          "default": "simulation",
+          "description": "simulation, replay or hardware-in-the-loop",
+          "title": "Data Origin",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scenario_hash",
+        "scenario_version",
+        "adapter",
+        "seed",
+        "speed"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "RecoveryMetrics": {
+      "properties": {
+        "records": {
+          "items": {
+            "$ref": "#/$defs/RecoveryRecord"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "mean_time_to_recovery": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Seconds; None when nothing recovered",
+          "title": "Mean Time To Recovery"
+        },
+        "max_time_to_recovery": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Time To Recovery"
+        },
+        "faults_requiring_recovery": {
+          "title": "Faults Requiring Recovery",
+          "type": "integer"
+        },
+        "faults_recovered": {
+          "title": "Faults Recovered",
+          "type": "integer"
+        },
+        "success_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "recovered / requiring; None when none required",
+          "title": "Success Rate"
+        },
+        "time_to_safe_state": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Seconds from the observed fault that triggered the first safe-state response to that response",
+          "title": "Time To Safe State"
+        },
+        "safe_state_entered": {
+          "title": "Safe State Entered",
+          "type": "boolean"
+        },
+        "per_subsystem_max": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Maximum recovery time per subsystem (seconds)",
+          "title": "Per Subsystem Max",
+          "type": "object"
+        }
+      },
+      "required": [
+        "records",
+        "mean_time_to_recovery",
+        "max_time_to_recovery",
+        "faults_requiring_recovery",
+        "faults_recovered",
+        "success_rate",
+        "time_to_safe_state",
+        "safe_state_entered",
+        "per_subsystem_max"
+      ],
+      "title": "RecoveryMetrics",
+      "type": "object"
+    },
+    "RecoveryRecord": {
+      "properties": {
+        "subsystem": {
+          "title": "Subsystem",
+          "type": "string"
+        },
+        "fault_state": {
+          "$ref": "#/$defs/ComponentState"
+        },
+        "fault_started_at": {
+          "title": "Fault Started At",
+          "type": "number"
+        },
+        "recovered_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recovered At"
+        },
+        "fault_duration": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Seconds from fault start to recovery",
+          "title": "Fault Duration"
+        },
+        "recovery_time": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Seconds needed to recover once the disturbance ended: measured from the moment the causing injection was cleared (or from fault start for transient and self-inflicted faults) to the return to a healthy state",
+          "title": "Recovery Time"
+        },
+        "disturbance_cleared_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the causing injection was cleared, if bounded",
+          "title": "Disturbance Cleared At"
+        },
+        "caused_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Scenario event id when attributable",
+          "title": "Caused By"
+        },
+        "direct": {
+          "description": "True when the fault is the injected subsystem itself",
+          "title": "Direct",
+          "type": "boolean"
+        },
+        "recovery_expected": {
+          "description": "False when the injected effect persisted until scenario end",
+          "title": "Recovery Expected",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "subsystem",
+        "fault_state",
+        "fault_started_at",
+        "recovered_at",
+        "fault_duration",
+        "recovery_time",
+        "caused_by",
+        "direct",
+        "recovery_expected"
+      ],
+      "title": "RecoveryRecord",
+      "type": "object"
+    },
+    "ReportArtifact": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_key": {
+          "title": "Storage Key",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        }
+      },
+      "required": [
+        "name",
+        "content_type",
+        "size_bytes",
+        "storage_key"
+      ],
+      "title": "ReportArtifact",
+      "type": "object"
+    },
+    "ReportRun": {
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/RunState"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Started At"
+        },
+        "ended_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ended At"
+        },
+        "simulation_duration": {
+          "title": "Simulation Duration",
+          "type": "number"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "speed": {
+          "title": "Speed",
+          "type": "number"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "started_at",
+        "ended_at",
+        "simulation_duration",
+        "seed",
+        "speed"
+      ],
+      "title": "ReportRun",
+      "type": "object"
+    },
+    "ReportScenario": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "api_version": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "content_hash": {
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "document": {
+          "description": "Canonical YAML of the executed scenario",
+          "title": "Document",
+          "type": "string"
+        },
+        "event_count": {
+          "title": "Event Count",
+          "type": "integer"
+        },
+        "assertion_count": {
+          "title": "Assertion Count",
+          "type": "integer"
+        },
+        "mission_timeout": {
+          "title": "Mission Timeout",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "version",
+        "api_version",
+        "content_hash",
+        "document",
+        "event_count",
+        "assertion_count",
+        "mission_timeout"
+      ],
+      "title": "ReportScenario",
+      "type": "object"
+    },
+    "ReportSummary": {
+      "description": "Headline figures generated from observed events (never hard-coded).",
+      "properties": {
+        "mission_complete": {
+          "title": "Mission Complete",
+          "type": "boolean"
+        },
+        "faults_injected": {
+          "title": "Faults Injected",
+          "type": "integer"
+        },
+        "faults_applied": {
+          "title": "Faults Applied",
+          "type": "integer"
+        },
+        "critical_failures": {
+          "title": "Critical Failures",
+          "type": "integer"
+        },
+        "recovered_subsystems": {
+          "title": "Recovered Subsystems",
+          "type": "integer"
+        },
+        "degraded_transitions": {
+          "title": "Degraded Transitions",
+          "type": "integer"
+        },
+        "loss_of_control": {
+          "title": "Loss Of Control",
+          "type": "boolean"
+        },
+        "safety_preservation": {
+          "pattern": "^(PASS|FAIL)$",
+          "title": "Safety Preservation",
+          "type": "string"
+        },
+        "fault_containment": {
+          "pattern": "^(PASS|FAIL)$",
+          "title": "Fault Containment",
+          "type": "string"
+        },
+        "mean_time_to_recovery": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean Time To Recovery"
+        },
+        "affected_domains": {
+          "title": "Affected Domains",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mission_complete",
+        "faults_injected",
+        "faults_applied",
+        "critical_failures",
+        "recovered_subsystems",
+        "degraded_transitions",
+        "loss_of_control",
+        "safety_preservation",
+        "fault_containment",
+        "mean_time_to_recovery",
+        "affected_domains"
+      ],
+      "title": "ReportSummary",
+      "type": "object"
+    },
+    "ReportTarget": {
+      "properties": {
+        "adapter": {
+          "title": "Adapter",
+          "type": "string"
+        },
+        "adapter_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Adapter Version"
+        },
+        "vehicle": {
+          "title": "Vehicle",
+          "type": "string"
+        },
+        "configuration": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Configuration",
+          "type": "object"
+        },
+        "data_origin": {
+          "title": "Data Origin",
+          "type": "string"
+        },
+        "topology_id": {
+          "title": "Topology Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "adapter_version",
+        "vehicle",
+        "configuration",
+        "data_origin",
+        "topology_id"
+      ],
+      "title": "ReportTarget",
+      "type": "object"
+    },
+    "RunEvent": {
+      "description": "A discrete, classified event that happened during a run.",
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "sequence": {
+          "description": "Monotonic sequence number within the run",
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "simulation_time": {
+          "minimum": 0,
+          "title": "Simulation Time",
+          "type": "number"
+        },
+        "wall_time": {
+          "format": "date-time",
+          "title": "Wall Time",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/EventSource"
+        },
+        "kind": {
+          "$ref": "#/$defs/EventKind"
+        },
+        "event_type": {
+          "description": "Machine readable type, snake_case",
+          "maxLength": 64,
+          "title": "Event Type",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "default": "info"
+        },
+        "subsystem": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subsystem"
+        },
+        "state_before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComponentState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "state_after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComponentState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "message": {
+          "maxLength": 500,
+          "title": "Message",
+          "type": "string"
+        },
+        "scenario_event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Scenario event this run event originates from",
+          "title": "Scenario Event Id"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "required": [
+        "run_id",
+        "sequence",
+        "simulation_time",
+        "source",
+        "kind",
+        "event_type",
+        "message"
+      ],
+      "title": "RunEvent",
+      "type": "object"
+    },
+    "RunState": {
+      "enum": [
+        "CREATED",
+        "VALIDATING",
+        "QUEUED",
+        "PREPARING",
+        "RUNNING",
+        "RECOVERING",
+        "COLLECTING",
+        "ANALYZING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "RunState",
+      "type": "string"
+    },
+    "SafetyMetrics": {
+      "properties": {
+        "loss_of_control": {
+          "title": "Loss Of Control",
+          "type": "boolean"
+        },
+        "control_availability": {
+          "title": "Control Availability",
+          "type": "number"
+        },
+        "flight_control_available": {
+          "description": "Flight core never left a healthy state",
+          "title": "Flight Control Available",
+          "type": "boolean"
+        },
+        "preserved": {
+          "description": "No loss of control and flight core always available",
+          "title": "Preserved",
+          "type": "boolean"
+        },
+        "safe_state_reached": {
+          "title": "Safe State Reached",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "loss_of_control",
+        "control_availability",
+        "flight_control_available",
+        "preserved",
+        "safe_state_reached"
+      ],
+      "title": "SafetyMetrics",
+      "type": "object"
+    },
+    "ScoreParameters": {
+      "additionalProperties": false,
+      "properties": {
+        "mttr_target": {
+          "default": 5.0,
+          "description": "Recovery time scoring 1.0 (s)",
+          "exclusiveMinimum": 0,
+          "title": "Mttr Target",
+          "type": "number"
+        },
+        "mttr_limit": {
+          "default": 30.0,
+          "description": "Recovery time scoring 0.0 (s)",
+          "exclusiveMinimum": 0,
+          "title": "Mttr Limit",
+          "type": "number"
+        },
+        "containment_penalty_per_domain": {
+          "default": 0.25,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Containment Penalty Per Domain",
+          "type": "number"
+        }
+      },
+      "title": "ScoreParameters",
+      "type": "object"
+    },
+    "ScoreProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "weights": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Dimension weights, must sum to 100",
+          "title": "Weights",
+          "type": "object"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ScoreParameters"
+        }
+      },
+      "required": [
+        "name",
+        "weights"
+      ],
+      "title": "ScoreProfile",
+      "type": "object"
+    },
+    "ScoreResult": {
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/ScoreProfile"
+        },
+        "total": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Total",
+          "type": "number"
+        },
+        "dimensions": {
+          "items": {
+            "$ref": "#/$defs/DimensionScore"
+          },
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "hard_gates": {
+          "items": {
+            "$ref": "#/$defs/HardGate"
+          },
+          "title": "Hard Gates",
+          "type": "array"
+        },
+        "hard_gate_result": {
+          "$ref": "#/$defs/BenchmarkResult"
+        },
+        "result": {
+          "$ref": "#/$defs/BenchmarkResult"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile",
+        "total",
+        "dimensions",
+        "hard_gates",
+        "hard_gate_result",
+        "result",
+        "reason"
+      ],
+      "title": "ScoreResult",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SystemTopology": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "vehicle_class": {
+          "title": "Vehicle Class",
+          "type": "string"
+        },
+        "components": {
+          "items": {
+            "$ref": "#/$defs/Component"
+          },
+          "title": "Components",
+          "type": "array"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/Dependency"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "trust_boundaries": {
+          "items": {
+            "$ref": "#/$defs/TrustBoundary"
+          },
+          "title": "Trust Boundaries",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "vehicle_class",
+        "components",
+        "dependencies",
+        "trust_boundaries"
+      ],
+      "title": "SystemTopology",
+      "type": "object"
+    },
+    "TrustBoundary": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "upstream_zone": {
+          "$ref": "#/$defs/TrustZone"
+        },
+        "downstream_zone": {
+          "$ref": "#/$defs/TrustZone"
+        },
+        "enforcement_point": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Component id acting as policy enforcement point",
+          "title": "Enforcement Point"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "upstream_zone",
+        "downstream_zone"
+      ],
+      "title": "TrustBoundary",
+      "type": "object"
+    },
+    "TrustZone": {
+      "description": "Trust zones, ordered from least to most trusted.",
+      "enum": [
+        "external",
+        "mission",
+        "flight_critical"
+      ],
+      "title": "TrustZone",
+      "type": "string"
+    }
+  },
+  "$id": "https://resilient-uas.dev/schemas/report/v1.json",
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "scenario": {
+      "$ref": "#/$defs/ReportScenario"
+    },
+    "target": {
+      "$ref": "#/$defs/ReportTarget"
+    },
+    "run": {
+      "$ref": "#/$defs/ReportRun"
+    },
+    "result": {
+      "$ref": "#/$defs/BenchmarkResult"
+    },
+    "resilience_score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Resilience Score",
+      "type": "number"
+    },
+    "hard_gate_result": {
+      "$ref": "#/$defs/BenchmarkResult"
+    },
+    "summary": {
+      "$ref": "#/$defs/ReportSummary"
+    },
+    "score": {
+      "$ref": "#/$defs/ScoreResult"
+    },
+    "metrics": {
+      "$ref": "#/$defs/MetricsResult"
+    },
+    "assertions": {
+      "items": {
+        "$ref": "#/$defs/AssertionResult"
+      },
+      "title": "Assertions",
+      "type": "array"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/RunEvent"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "subsystem_timeline": {
+      "items": {
+        "$ref": "#/$defs/ComponentStateInterval"
+      },
+      "title": "Subsystem Timeline",
+      "type": "array"
+    },
+    "planned_path": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlannedPath"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "actual_path": {
+      "description": "Downsampled trajectory",
+      "items": {
+        "$ref": "#/$defs/PathPoint"
+      },
+      "title": "Actual Path",
+      "type": "array"
+    },
+    "topology": {
+      "$ref": "#/$defs/SystemTopology"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/ReportArtifact"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "run_id",
+    "generated_at",
+    "scenario",
+    "target",
+    "run",
+    "result",
+    "resilience_score",
+    "hard_gate_result",
+    "summary",
+    "score",
+    "metrics",
+    "assertions",
+    "events",
+    "subsystem_timeline",
+    "planned_path",
+    "actual_path",
+    "topology",
+    "artifacts",
+    "provenance"
+  ],
+  "title": "ResilienceReport",
+  "type": "object"
+}

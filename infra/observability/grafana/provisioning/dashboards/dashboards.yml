@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: resilient-uas-lab
+    folder: Resilient UAS Lab
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "ComponentState": {
+      "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component.",
+      "enum": [
+        "NOMINAL",
+        "OPERATIONAL",
+        "DEGRADED",
+        "UNAVAILABLE",
+        "FAILED",
+        "RECOVERING",
+        "RECOVERED",
+        "UNKNOWN"
+      ],
+      "title": "ComponentState",
+      "type": "string"
+    },
+    "EventKind": {
+      "description": "Scientific classification of a run event.\n\nThe distinction matters: a requested disturbance is not evidence that the\nsystem was actually disturbed, and an expected response is not evidence that\nit happened.\n\n- `INJECTION_REQUEST`: the scenario engine asked the adapter to inject an effect.\n- `INJECTION_APPLIED`: the adapter confirmed the effect is active in the target.\n- `INJECTION_REJECTED`: the adapter could not apply the effect.\n- `INJECTION_CLEARED`: the effect was removed (duration elapsed or scenario end).\n- `OBSERVED_EFFECT`: a component state change observed in the target.\n- `SYSTEM_RESPONSE`: an autonomous reaction of the target (mode change, failsafe).\n- `RECOVERY`: a component returned to a healthy state.\n- `EXPECTATION_RESULT`: an expected behaviour declared in the scenario was checked.\n- `ASSERTION_RESULT`: a scenario assertion was evaluated during analysis.\n- `MISSION`: mission progress (waypoint reached, mission complete).\n- `LIFECYCLE`: run lifecycle transition.\n- `LOG`: informational message from a component.",
+      "enum": [
+        "INJECTION_REQUEST",
+        "INJECTION_APPLIED",
+        "INJECTION_REJECTED",
+        "INJECTION_CLEARED",
+        "OBSERVED_EFFECT",
+        "SYSTEM_RESPONSE",
+        "RECOVERY",
+        "EXPECTATION_RESULT",
+        "ASSERTION_RESULT",
+        "MISSION",
+        "LIFECYCLE",
+        "LOG"
+      ],
+      "title": "EventKind",
+      "type": "string"
+    },
+    "EventSource": {
+      "enum": [
+        "scenario",
+        "adapter",
+        "engine",
+        "analysis",
+        "platform"
+      ],
+      "title": "EventSource",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "description": "A discrete, classified event that happened during a run.",
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "sequence": {
+      "description": "Monotonic sequence number within the run",
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "simulation_time": {
+      "minimum": 0,
+      "title": "Simulation Time",
+      "type": "number"
+    },
+    "wall_time": {
+      "format": "date-time",
+      "title": "Wall Time",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/EventSource"
+    },
+    "kind": {
+      "$ref": "#/$defs/EventKind"
+    },
+    "event_type": {
+      "description": "Machine readable type, snake_case",
+      "maxLength": 64,
+      "title": "Event Type",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity",
+      "default": "info"
+    },
+    "subsystem": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subsystem"
+    },
+    "state_before": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ComponentState"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "state_after": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ComponentState"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "message": {
+      "maxLength": 500,
+      "title": "Message",
+      "type": "string"
+    },
+    "scenario_event_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Scenario event this run event originates from",
+      "title": "Scenario Event Id"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "run_id",
+    "sequence",
+    "simulation_time",
+    "source",
+    "kind",
+    "event_type",
+    "message"
+  ],
+  "title": "RunEvent",
+  "type": "object"
+}

@@ -1,0 +1,420 @@
+{
+  "$defs": {
+    "Attitude": {
+      "properties": {
+        "roll": {
+          "description": "Roll angle (rad)",
+          "title": "Roll",
+          "type": "number"
+        },
+        "pitch": {
+          "description": "Pitch angle (rad)",
+          "title": "Pitch",
+          "type": "number"
+        },
+        "yaw": {
+          "description": "Yaw / heading angle (rad, 0 = north, clockwise positive)",
+          "title": "Yaw",
+          "type": "number"
+        }
+      },
+      "required": [
+        "roll",
+        "pitch",
+        "yaw"
+      ],
+      "title": "Attitude",
+      "type": "object"
+    },
+    "CommunicationsStatus": {
+      "properties": {
+        "c2_link": {
+          "title": "C2 Link",
+          "type": "boolean"
+        },
+        "telemetry_link": {
+          "title": "Telemetry Link",
+          "type": "boolean"
+        },
+        "latency_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latency Ms"
+        },
+        "packet_loss": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Packet Loss"
+        }
+      },
+      "required": [
+        "c2_link",
+        "telemetry_link"
+      ],
+      "title": "CommunicationsStatus",
+      "type": "object"
+    },
+    "ComponentState": {
+      "description": "Observed operating state of a system component or subsystem.\n\nSemantics:\n\n- `NOMINAL`: performing within specification, no active fault. Used for sensors,\n  navigation, communications and power components.\n- `OPERATIONAL`: performing its function. Used for flight control, actuation and\n  compute components where \"operational\" is the natural vocabulary. Equivalent to\n  `NOMINAL` for every calculation.\n- `DEGRADED`: still performing its function with reduced quality, capacity or\n  confidence (for example navigation without GNSS aiding).\n- `UNAVAILABLE`: the function is not being provided (link lost, sensor silent) but\n  the component itself did not fail.\n- `FAILED`: the component itself failed (crash, fault latch, loss of control).\n- `RECOVERING`: a recovery action is in progress (process restart, re-acquisition).\n- `RECOVERED`: back to a healthy state after a fault. Behaves as healthy for every\n  availability calculation; kept distinct so timelines show the recovery.\n- `UNKNOWN`: no observation is available for this component.",
+      "enum": [
+        "NOMINAL",
+        "OPERATIONAL",
+        "DEGRADED",
+        "UNAVAILABLE",
+        "FAILED",
+        "RECOVERING",
+        "RECOVERED",
+        "UNKNOWN"
+      ],
+      "title": "ComponentState",
+      "type": "string"
+    },
+    "FlightMode": {
+      "description": "Vehicle-level operating mode reported by the adapter.",
+      "enum": [
+        "IDLE",
+        "TAKEOFF",
+        "MISSION",
+        "HOLD",
+        "RTL",
+        "LAND",
+        "LANDED",
+        "UNKNOWN"
+      ],
+      "title": "FlightMode",
+      "type": "string"
+    },
+    "FlightStatus": {
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/FlightMode"
+        },
+        "armed": {
+          "title": "Armed",
+          "type": "boolean"
+        },
+        "control_authority": {
+          "description": "True while the flight core has full control of the vehicle",
+          "title": "Control Authority",
+          "type": "boolean"
+        },
+        "autonomy": {
+          "default": "mission",
+          "description": "Which entity is currently driving the vehicle: mission, local, failsafe",
+          "title": "Autonomy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "armed",
+        "control_authority"
+      ],
+      "title": "FlightStatus",
+      "type": "object"
+    },
+    "GeoPosition": {
+      "properties": {
+        "latitude": {
+          "maximum": 90,
+          "minimum": -90,
+          "title": "Latitude",
+          "type": "number"
+        },
+        "longitude": {
+          "maximum": 180,
+          "minimum": -180,
+          "title": "Longitude",
+          "type": "number"
+        },
+        "altitude_msl": {
+          "description": "Altitude above mean sea level (m)",
+          "title": "Altitude Msl",
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "altitude_msl"
+      ],
+      "title": "GeoPosition",
+      "type": "object"
+    },
+    "MissionPhase": {
+      "enum": [
+        "PENDING",
+        "TAKEOFF",
+        "ENROUTE",
+        "HOLDING",
+        "RETURNING",
+        "LANDING",
+        "COMPLETE",
+        "ABORTED"
+      ],
+      "title": "MissionPhase",
+      "type": "string"
+    },
+    "MissionStatus": {
+      "properties": {
+        "phase": {
+          "$ref": "#/$defs/MissionPhase"
+        },
+        "progress": {
+          "description": "Mission completion ratio",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Progress",
+          "type": "number"
+        },
+        "waypoint_index": {
+          "description": "Index of the waypoint currently targeted",
+          "minimum": 0,
+          "title": "Waypoint Index",
+          "type": "integer"
+        },
+        "waypoints_total": {
+          "minimum": 0,
+          "title": "Waypoints Total",
+          "type": "integer"
+        },
+        "distance_to_waypoint": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metres",
+          "title": "Distance To Waypoint"
+        }
+      },
+      "required": [
+        "phase",
+        "progress",
+        "waypoint_index",
+        "waypoints_total"
+      ],
+      "title": "MissionStatus",
+      "type": "object"
+    },
+    "NavigationStatus": {
+      "properties": {
+        "source": {
+          "description": "Position source: gnss, dead_reckoning, none",
+          "title": "Source",
+          "type": "string"
+        },
+        "gnss_fix": {
+          "title": "Gnss Fix",
+          "type": "boolean"
+        },
+        "position_error": {
+          "description": "Estimated horizontal position error (m)",
+          "minimum": 0,
+          "title": "Position Error",
+          "type": "number"
+        },
+        "satellites": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Satellites"
+        }
+      },
+      "required": [
+        "source",
+        "gnss_fix",
+        "position_error"
+      ],
+      "title": "NavigationStatus",
+      "type": "object"
+    },
+    "Position": {
+      "description": "Local position in an East-North-Up frame relative to the mission origin (metres).",
+      "properties": {
+        "x": {
+          "description": "East (m)",
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "description": "North (m)",
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "description": "Up, altitude above origin (m)",
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "PowerStatus": {
+      "properties": {
+        "voltage": {
+          "title": "Voltage",
+          "type": "number"
+        },
+        "remaining": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Remaining",
+          "type": "number"
+        },
+        "current": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current"
+        }
+      },
+      "required": [
+        "voltage",
+        "remaining"
+      ],
+      "title": "PowerStatus",
+      "type": "object"
+    },
+    "Velocity": {
+      "properties": {
+        "vx": {
+          "description": "East velocity (m/s)",
+          "title": "Vx",
+          "type": "number"
+        },
+        "vy": {
+          "description": "North velocity (m/s)",
+          "title": "Vy",
+          "type": "number"
+        },
+        "vz": {
+          "description": "Up velocity (m/s)",
+          "title": "Vz",
+          "type": "number"
+        }
+      },
+      "required": [
+        "vx",
+        "vy",
+        "vz"
+      ],
+      "title": "Velocity",
+      "type": "object"
+    }
+  },
+  "description": "One normalized telemetry sample at a simulation instant.",
+  "properties": {
+    "t": {
+      "description": "Simulation time (s)",
+      "minimum": 0,
+      "title": "T",
+      "type": "number"
+    },
+    "wall_time": {
+      "format": "date-time",
+      "title": "Wall Time",
+      "type": "string"
+    },
+    "source": {
+      "description": "Adapter that produced the sample (mock, px4-gazebo, replay)",
+      "title": "Source",
+      "type": "string"
+    },
+    "position": {
+      "$ref": "#/$defs/Position"
+    },
+    "geo": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeoPosition"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "attitude": {
+      "$ref": "#/$defs/Attitude"
+    },
+    "velocity": {
+      "$ref": "#/$defs/Velocity"
+    },
+    "mission": {
+      "$ref": "#/$defs/MissionStatus"
+    },
+    "flight": {
+      "$ref": "#/$defs/FlightStatus"
+    },
+    "navigation": {
+      "$ref": "#/$defs/NavigationStatus"
+    },
+    "communications": {
+      "$ref": "#/$defs/CommunicationsStatus"
+    },
+    "power": {
+      "$ref": "#/$defs/PowerStatus"
+    },
+    "health": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ComponentState"
+      },
+      "description": "Component states keyed by subsystem id",
+      "title": "Health",
+      "type": "object"
+    }
+  },
+  "required": [
+    "t",
+    "source",
+    "position",
+    "attitude",
+    "velocity",
+    "mission",
+    "flight",
+    "navigation",
+    "communications",
+    "power"
+  ],
+  "title": "TelemetrySample",
+  "type": "object"
+}

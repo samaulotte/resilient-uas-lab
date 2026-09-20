@@ -1,0 +1,25 @@
+# Prometheus configuration for the `observability` Compose profile.
+# Application observability (process health, throughput) is separate from the
+# resilience telemetry of the systems under test.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: reslab-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+
+  - job_name: reslab-orchestrator
+    static_configs:
+      - targets: ["orchestrator:9101"]
+
+  - job_name: reslab-runner
+    static_configs:
+      - targets: ["runner:9102"]
+
+  - job_name: nats
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["nats-exporter:7777"]

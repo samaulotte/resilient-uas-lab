@@ -1,0 +1,6 @@
+node_modules
+.next
+packages/client/src/schema.d.ts
+packages/schemas
+tests/e2e/test-results
+tests/e2e/playwright-report

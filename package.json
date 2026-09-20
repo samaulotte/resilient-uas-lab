@@ -1,0 +1,27 @@
+{
+  "name": "resilient-uas-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source resilience engineering and chaos testing for autonomous systems.",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @reslab/web dev",
+    "build": "pnpm --filter @reslab/api-client build && pnpm --filter @reslab/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "gen:client": "pnpm --filter @reslab/api-client generate",
+    "e2e": "playwright test -c tests/e2e/playwright.config.ts",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css,json}\" \"packages/client/src/**/*.ts\" \"tests/e2e/**/*.ts\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/client/src/**/*.ts\" \"tests/e2e/**/*.ts\""
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "prettier": "3.9.8",
+    "typescript": "5.9.3"
+  }
+}

@@ -21,3 +21,4 @@ tests
 artifacts
 *.md
 !README.md
+!**/README.md

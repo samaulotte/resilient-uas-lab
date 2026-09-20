@@ -12,12 +12,20 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from pydantic import TypeAdapter
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from reslab_api.routers import compare, health, runs, scenarios, stream, system
+from reslab_api.schemas import StreamCompleted, StreamHeartbeat, StreamSnapshot
 from reslab_api.state import build_state, start_state, stop_state
 from reslab_core.ids import InvalidIdentifierError
+from reslab_core.protocol import (
+    EventMessage,
+    LifecycleMessage,
+    RunFinishedMessage,
+    TelemetryMessage,
+)
 from reslab_core.scenario import ScenarioValidationError
 from reslab_core.states import InvalidRunTransitionError
 from reslab_core.versions import SOFTWARE_VERSION
@@ -103,6 +111,50 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         return response
 
 
+WEBSOCKET_MESSAGE_MODELS = (
+    StreamSnapshot,
+    StreamCompleted,
+    StreamHeartbeat,
+    LifecycleMessage,
+    EventMessage,
+    TelemetryMessage,
+    RunFinishedMessage,
+)
+
+
+def _register_stream_schemas(app: FastAPI) -> None:
+    """Publish WebSocket message models in the OpenAPI components.
+
+    They are not bound to an HTTP route, but the generated TypeScript client relies on
+    them to type the live stream, so they are added explicitly.
+    """
+
+    original = app.openapi
+
+    def openapi_with_streams() -> dict:
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = original()
+        components = schema.setdefault("components", {}).setdefault("schemas", {})
+        for model in WEBSOCKET_MESSAGE_MODELS:
+            generated = TypeAdapter(model).json_schema(
+                ref_template="#/components/schemas/{model}", mode="serialization"
+            )
+            for name, definition in generated.pop("$defs", {}).items():
+                components.setdefault(name, definition)
+            components.setdefault(model.__name__, generated)
+        schema["x-websocket"] = {
+            "/api/v1/runs/{run_id}/stream": {
+                "description": "Live run stream; JSON text frames of the listed message types.",
+                "messages": [m.__name__ for m in WEBSOCKET_MESSAGE_MODELS],
+            }
+        }
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = openapi_with_streams  # type: ignore[method-assign]
+
+
 def create_app(settings: PlatformSettings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, settings.log_format, service="api")
@@ -159,6 +211,8 @@ def create_app(settings: PlatformSettings | None = None) -> FastAPI:
     @app.get("/metrics", include_in_schema=False)
     async def prometheus_metrics() -> Response:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+    _register_stream_schemas(app)
 
     @app.exception_handler(ScenarioValidationError)
     async def _scenario_error(_: Request, exc: ScenarioValidationError) -> JSONResponse:
