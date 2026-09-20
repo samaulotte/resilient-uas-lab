@@ -232,12 +232,23 @@ def _time_in_state(samples: Sequence[TelemetrySample]) -> dict[str, dict[Compone
 def _domain_availability(
     samples: Sequence[TelemetrySample], components: list[str], total: float
 ) -> float:
+    """Fraction of time every *observed* component of the domain was healthy.
+
+    Components reported as UNKNOWN (never observed by the adapter) are excluded so that an
+    adapter with partial observability does not zero out a domain it cannot see.
+    """
+
     if total <= 0 or not samples or not components:
         return 1.0
     healthy_time = 0.0
     for current, nxt in pairwise(samples):
         dt = max(0.0, nxt.t - current.t)
-        if all(current.health.get(c, ComponentState.UNKNOWN).is_healthy for c in components):
+        observed = [
+            current.health.get(c, ComponentState.UNKNOWN)
+            for c in components
+            if current.health.get(c, ComponentState.UNKNOWN) is not ComponentState.UNKNOWN
+        ]
+        if all(state.is_healthy for state in observed):
             healthy_time += dt
     return round(min(1.0, healthy_time / total), 6)
 
@@ -249,7 +260,7 @@ def _weighted_integrity(samples: Sequence[TelemetrySample], component: str, tota
     for current, nxt in pairwise(samples):
         dt = max(0.0, nxt.t - current.t)
         state = current.health.get(component, ComponentState.UNKNOWN)
-        if state.is_healthy:
+        if state.is_healthy or state is ComponentState.UNKNOWN:
             score += dt
         elif state.is_impaired:
             score += 0.5 * dt

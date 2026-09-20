@@ -1059,12 +1059,14 @@ version = "0.1.0"
 source = { editable = "adapters/px4-gazebo" }
 dependencies = [
     { name = "mavsdk" },
+    { name = "reslab-adapter-mock" },
     { name = "reslab-core" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "mavsdk", specifier = "==3.17.4" },
+    { name = "reslab-adapter-mock", editable = "adapters/mock" },
     { name = "reslab-core", editable = "packages/core" },
 ]
 
