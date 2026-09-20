@@ -19,18 +19,20 @@ explicitly.
 | Scenario schema `resilient-uas.dev/v1alpha1` | Strict loader (restricted YAML, duplicate keys rejected, 256 KiB limit, single document), timeline events, expectations, assertions, mission, recovery policy, simulation parameters, scoring profile name, consequence profile |
 | Engine | Deterministic timeline execution, bounded injections, expectation evaluation, cancellation, lifecycle events, telemetry batching |
 | Analysis | Availability, weighted navigation integrity, recovery records measured from the end of the disturbance window, topology-based propagation depth, degraded-mode timing, safety metrics, declarative assertion grammar, weighted scoring with hard gates, `report.json` schema `1.0`, standalone `report.html` |
-| Adapters | `mock` (whole catalog, deterministic, labelled), `replay` (recorded runs), `px4-gazebo` (MAVSDK transport, PX4 failure injection, companion-side mechanisms; unit-tested with a fake link) |
+| Adapters | `mock` (whole catalog, deterministic, labelled), `replay` (recorded runs), `px4-gazebo` (MAVSDK transport, EKF-aiding and companion-link fault mechanisms; validated end to end against live PX4 SITL) |
 | Platform | FastAPI control plane with versioned REST API, WebSocket run stream and Prometheus metrics; orchestrator with state management, watchdog and analysis; runner with at-most-once acceptance from a JetStream work queue; PostgreSQL schema with Alembic; S3-compatible artifact store; scenario library seeding |
 | Mission Control | Live mission view (digital twin, blast radius, state timeline, event feed, system panel), run history and detail, comparison, scenario library and studio, reports, system and settings pages |
 | CLI | `reslab scenario validate/list/show`, `run` (platform or `--local`), `report`, `compare`, `system`, `regression check` |
 | Reference deployment | Hardened Compose stack with segmented networks, digest-pinned images, Caddy gateway, optional `sim` and `observability` profiles |
 | Continuous integration | Lint, type checks, unit, integration and end-to-end suites, image builds with a non-root check, schema and client drift checks; a security workflow with dependency audits, secret scanning, CodeQL, Dockerfile and image scans and SBOMs; a nightly, on-demand simulation workflow |
 
-**Not verified in this release:** execution of the `px4-gazebo` adapter against a real
-PX4 SITL instance. The adapter, the `sim` Compose profile and the simulation workflow
-exist and the adapter's logic is unit-tested against an in-memory fake link, but no run
-against the simulator has been performed as part of this release's verification. It
-is marked `experimental` in the adapter catalog. See
+**PX4 SITL is validated in this release.** The `px4-gazebo` adapter was executed against
+live PX4 v1.18 + Gazebo Harmonic, and `gnss-loss`, `mission-compute-restart` and
+`compound-degradation` pass end to end with real injected faults. It remains marked
+`experimental` in the catalog because some effects are not observable on the reference
+image (PX4's `MAV_CMD_INJECT_FAILURE` sensor injections are accepted but not realised by
+the Gazebo sensor pipeline, so aiding is removed at the EKF instead) and because the
+barometer and magnetometer parameter mechanisms are not yet flight-verified. See
 [PX4 integration](px4-integration.md).
 
 ## Planned

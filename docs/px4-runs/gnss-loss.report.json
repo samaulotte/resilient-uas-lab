@@ -1,0 +1,5052 @@
+{
+  "schema_version": "1.0",
+  "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+  "generated_at": "2026-09-20T20:26:14.156052Z",
+  "scenario": {
+    "name": "gnss-loss",
+    "description": "Complete loss of GNSS aiding while enroute. The navigation estimator must degrade gracefully to dead reckoning and the mission must continue under the declared recovery policy without affecting flight control.",
+    "version": "1",
+    "api_version": "resilient-uas.dev/v1alpha1",
+    "content_hash": "sha256:c9386c00a2d386c7816297e490890ec71da4c6f60e288805c973f3fa1fd9dc94",
+    "document": "apiVersion: resilient-uas.dev/v1alpha1\nkind: ResilienceScenario\nmetadata:\n  name: gnss-loss\n  description: Complete loss of GNSS aiding while enroute. The navigation estimator must degrade gracefully\n    to dead reckoning and the mission must continue under the declared recovery policy without affecting\n    flight control.\n  version: '1'\n  labels: {}\n  tags:\n  - navigation\ntarget:\n  adapter: px4-gazebo\n  vehicle: x500\n  configuration: {}\nmission:\n  type: waypoint\n  timeout: 180s\n  cruise_speed: 6.0\n  altitude: 30.0\n  waypoints: []\nrecovery:\n  gnss_loss: dead_reckoning\n  datalink_loss: continue\n  compute_loss: hold\n  hold_timeout: 60s\n  max_dead_reckoning: 120s\nsimulation:\n  seed: 7\n  speed: 1.0\n  telemetry_rate_hz: 10.0\nevents:\n- id: gnss-loss\n  at: 35s\n  inject:\n    subsystem: navigation.gnss\n    effect: unavailable\n    duration: 40s\n    parameters: {}\n  expect:\n  - subsystem: navigation.estimator\n    state: DEGRADED\n    within: 3s\n    description: ''\n  description: ''\nassertions:\n- expression: flight_control.available == true\n  severity: critical\n  description: ''\n- expression: safety.loss_of_control == false\n  severity: critical\n  description: ''\n- expression: containment.flight_domain_affected == false\n  severity: critical\n  description: ''\n- expression: navigation.integrity >= 0.70\n  severity: medium\n  description: ''\n- expression: recovery.navigation_estimator < 5s\n  severity: high\n  description: The estimator re-acquires GNSS aiding promptly once fixes return\n- expression: mission.completion >= 0.90\n  severity: medium\n  description: ''\nscoring:\n  profile: default\n",
+    "event_count": 1,
+    "assertion_count": 6,
+    "mission_timeout": "180s"
+  },
+  "target": {
+    "adapter": "px4-gazebo",
+    "adapter_version": "0.1.0 (mavsdk-grpc 3.17.4)",
+    "vehicle": "x500",
+    "configuration": {},
+    "data_origin": "PX4 SITL simulation (software in the loop, no hardware)",
+    "topology_id": "multirotor-companion-v1"
+  },
+  "run": {
+    "state": "COMPLETED",
+    "started_at": "2026-09-20T20:23:12.616108Z",
+    "ended_at": "2026-09-20T20:26:14.123582Z",
+    "simulation_duration": 180.012,
+    "seed": 7,
+    "speed": 1.0,
+    "reason": ""
+  },
+  "result": "passed",
+  "resilience_score": 97.4,
+  "hard_gate_result": "passed",
+  "summary": {
+    "mission_complete": false,
+    "faults_injected": 1,
+    "faults_applied": 1,
+    "critical_failures": 0,
+    "recovered_subsystems": 9,
+    "degraded_transitions": 2,
+    "loss_of_control": false,
+    "safety_preservation": "PASS",
+    "fault_containment": "PASS",
+    "mean_time_to_recovery": 1.186,
+    "affected_domains": 1
+  },
+  "score": {
+    "profile": {
+      "name": "default",
+      "description": "Balanced profile for autonomous flight: safety first, then mission continuity and recovery, then containment and navigation, then communications.",
+      "weights": {
+        "safety": 30,
+        "mission_continuity": 20,
+        "recovery": 20,
+        "containment": 15,
+        "navigation": 10,
+        "communications": 5,
+        "compute": 0
+      },
+      "parameters": {
+        "mttr_target": 5.0,
+        "mttr_limit": 30.0,
+        "containment_penalty_per_domain": 0.25
+      }
+    },
+    "total": 97.4,
+    "dimensions": [
+      {
+        "dimension": "safety",
+        "label": "Safety preservation",
+        "weight": 30,
+        "score": 1.0,
+        "points": 30.0,
+        "explanation": "flight control available 100.0% of the run"
+      },
+      {
+        "dimension": "mission_continuity",
+        "label": "Mission continuity",
+        "weight": 20,
+        "score": 0.9285,
+        "points": 18.57,
+        "explanation": "completion 85.7%, continuity 100.0%"
+      },
+      {
+        "dimension": "recovery",
+        "label": "Recovery capability",
+        "weight": 20,
+        "score": 1.0,
+        "points": 20.0,
+        "explanation": "3/3 recovered, MTTR 1.2s (target 5s, limit 30s)"
+      },
+      {
+        "dimension": "containment",
+        "label": "Fault containment",
+        "weight": 15,
+        "score": 1.0,
+        "points": 15.0,
+        "explanation": "propagated to 0 domain(s): none"
+      },
+      {
+        "dimension": "navigation",
+        "label": "Navigation integrity",
+        "weight": 10,
+        "score": 0.8833,
+        "points": 8.83,
+        "explanation": "navigation integrity 88.3%"
+      },
+      {
+        "dimension": "communications",
+        "label": "Communications",
+        "weight": 5,
+        "score": 1.0,
+        "points": 5.0,
+        "explanation": "communications available 100.0%"
+      },
+      {
+        "dimension": "compute",
+        "label": "Compute availability",
+        "weight": 0,
+        "score": 1.0,
+        "points": 0.0,
+        "explanation": "mission compute available 100.0%"
+      }
+    ],
+    "hard_gates": [
+      {
+        "name": "critical_assertions",
+        "passed": true,
+        "reason": "all critical assertions passed"
+      },
+      {
+        "name": "control_authority",
+        "passed": true,
+        "reason": "control authority preserved"
+      },
+      {
+        "name": "run_completed",
+        "passed": true,
+        "reason": "run executed to completion"
+      }
+    ],
+    "hard_gate_result": "passed",
+    "result": "passed",
+    "reason": "all hard gates passed"
+  },
+  "metrics": {
+    "run_duration": 180.012,
+    "sample_count": 1783,
+    "mission": {
+      "completion": 0.8571,
+      "continuity": 1.0,
+      "completed": false,
+      "duration": 180.012,
+      "time_in_hold": 0.0,
+      "time_in_mission_modes": 179.507
+    },
+    "availability": {
+      "control": 1.0,
+      "navigation_integrity": 0.883269,
+      "navigation": 0.766538,
+      "communications": 1.0,
+      "compute": 1.0,
+      "power": 1.0
+    },
+    "recovery": {
+      "records": [
+        {
+          "subsystem": "navigation.estimator",
+          "fault_state": "DEGRADED",
+          "fault_started_at": 0.505,
+          "recovered_at": 1.514,
+          "fault_duration": 1.009,
+          "recovery_time": 1.009,
+          "disturbance_cleared_at": null,
+          "caused_by": null,
+          "direct": false,
+          "recovery_expected": true
+        },
+        {
+          "subsystem": "navigation.gnss",
+          "fault_state": "UNAVAILABLE",
+          "fault_started_at": 35.169,
+          "recovered_at": 75.178,
+          "fault_duration": 40.009,
+          "recovery_time": 0.113,
+          "disturbance_cleared_at": 75.065,
+          "caused_by": "gnss-loss",
+          "direct": true,
+          "recovery_expected": true
+        },
+        {
+          "subsystem": "navigation.estimator",
+          "fault_state": "DEGRADED",
+          "fault_started_at": 36.483,
+          "recovered_at": 77.5,
+          "fault_duration": 41.017,
+          "recovery_time": 2.435,
+          "disturbance_cleared_at": 75.065,
+          "caused_by": "gnss-loss",
+          "direct": false,
+          "recovery_expected": true
+        }
+      ],
+      "mean_time_to_recovery": 1.186,
+      "max_time_to_recovery": 2.435,
+      "faults_requiring_recovery": 3,
+      "faults_recovered": 3,
+      "success_rate": 1.0,
+      "time_to_safe_state": 2.727,
+      "safe_state_entered": true,
+      "per_subsystem_max": {
+        "navigation.estimator": 2.435,
+        "navigation.gnss": 0.113
+      }
+    },
+    "propagation": {
+      "injected_components": [
+        "navigation.gnss"
+      ],
+      "affected_components": [
+        "navigation.estimator",
+        "navigation.gnss"
+      ],
+      "propagated_components": [
+        "navigation.estimator"
+      ],
+      "affected_domains": [
+        "navigation"
+      ],
+      "injected_domains": [
+        "navigation"
+      ],
+      "propagated_domains": [],
+      "propagation_count": 1,
+      "max_propagation_depth": 1,
+      "depths": {
+        "navigation.gnss": 0,
+        "navigation.estimator": 1
+      },
+      "critical_domain_reached": false,
+      "flight_domain_affected": false,
+      "contained": true,
+      "boundary_crossed": false
+    },
+    "modes": {
+      "time_nominal": 136.672,
+      "time_degraded": 43.34,
+      "time_failed": 0.0,
+      "total": 180.012
+    },
+    "safety": {
+      "loss_of_control": false,
+      "control_availability": 1.0,
+      "flight_control_available": true,
+      "preserved": true,
+      "safe_state_reached": true
+    },
+    "events": {
+      "injected": 1,
+      "applied": 1,
+      "rejected": 0,
+      "cleared": 1,
+      "observed_effects": 3,
+      "system_responses": 4,
+      "recoveries": 11,
+      "expectations_passed": 1,
+      "expectations_failed": 0,
+      "degraded_transitions": 2,
+      "failed_transitions": 1
+    },
+    "component_time_in_state": {
+      "external.gcs": {
+        "UNKNOWN": 180.012
+      },
+      "communications.c2": {
+        "NOMINAL": 180.012
+      },
+      "communications.telemetry": {
+        "NOMINAL": 180.012
+      },
+      "mission.compute": {
+        "OPERATIONAL": 180.012
+      },
+      "mission.planner": {
+        "UNKNOWN": 180.012
+      },
+      "mission.services": {
+        "UNKNOWN": 180.012
+      },
+      "network.companion_link": {
+        "UNKNOWN": 180.012
+      },
+      "security.gateway": {
+        "UNKNOWN": 180.012
+      },
+      "navigation.gnss": {
+        "NOMINAL": 140.003,
+        "UNAVAILABLE": 40.009
+      },
+      "navigation.estimator": {
+        "UNKNOWN": 0.505,
+        "DEGRADED": 42.026,
+        "NOMINAL": 137.481
+      },
+      "sensors.barometer": {
+        "UNKNOWN": 180.012
+      },
+      "sensors.magnetometer": {
+        "UNKNOWN": 0.505,
+        "NOMINAL": 179.507
+      },
+      "sensors.imu": {
+        "UNKNOWN": 0.505,
+        "NOMINAL": 179.507
+      },
+      "flight_control.core": {
+        "UNKNOWN": 0.505,
+        "OPERATIONAL": 179.507
+      },
+      "actuation.motors": {
+        "UNKNOWN": 180.012
+      },
+      "power.battery": {
+        "NOMINAL": 180.012
+      },
+      "power.bus": {
+        "UNKNOWN": 180.012
+      }
+    },
+    "final_component_states": {
+      "external.gcs": "UNKNOWN",
+      "communications.c2": "NOMINAL",
+      "communications.telemetry": "NOMINAL",
+      "mission.compute": "OPERATIONAL",
+      "mission.planner": "UNKNOWN",
+      "mission.services": "UNKNOWN",
+      "network.companion_link": "UNKNOWN",
+      "security.gateway": "UNKNOWN",
+      "navigation.gnss": "NOMINAL",
+      "navigation.estimator": "NOMINAL",
+      "sensors.barometer": "UNKNOWN",
+      "sensors.magnetometer": "NOMINAL",
+      "sensors.imu": "NOMINAL",
+      "flight_control.core": "OPERATIONAL",
+      "actuation.motors": "UNKNOWN",
+      "power.battery": "NOMINAL",
+      "power.bus": "UNKNOWN"
+    }
+  },
+  "assertions": [
+    {
+      "expression": "flight_control.available == true",
+      "severity": "critical",
+      "description": "",
+      "outcome": "passed",
+      "measured": true,
+      "expected": true,
+      "operator": "==",
+      "metric_path": "flight_control.available",
+      "explanation": "measured flight_control.available = true, expected == true",
+      "simulation_time": 180.012
+    },
+    {
+      "expression": "safety.loss_of_control == false",
+      "severity": "critical",
+      "description": "",
+      "outcome": "passed",
+      "measured": false,
+      "expected": false,
+      "operator": "==",
+      "metric_path": "safety.loss_of_control",
+      "explanation": "measured safety.loss_of_control = false, expected == false",
+      "simulation_time": 180.012
+    },
+    {
+      "expression": "containment.flight_domain_affected == false",
+      "severity": "critical",
+      "description": "",
+      "outcome": "passed",
+      "measured": false,
+      "expected": false,
+      "operator": "==",
+      "metric_path": "containment.flight_domain_affected",
+      "explanation": "measured containment.flight_domain_affected = false, expected == false",
+      "simulation_time": 180.012
+    },
+    {
+      "expression": "navigation.integrity >= 0.70",
+      "severity": "medium",
+      "description": "",
+      "outcome": "passed",
+      "measured": 0.883269,
+      "expected": 0.7,
+      "operator": ">=",
+      "metric_path": "navigation.integrity",
+      "explanation": "measured navigation.integrity = 0.883, expected >= 0.70",
+      "simulation_time": 180.012
+    },
+    {
+      "expression": "recovery.navigation_estimator < 5s",
+      "severity": "high",
+      "description": "The estimator re-acquires GNSS aiding promptly once fixes return",
+      "outcome": "passed",
+      "measured": 2.435,
+      "expected": 5.0,
+      "operator": "<",
+      "metric_path": "recovery.navigation_estimator",
+      "explanation": "measured recovery.navigation_estimator = 2.4s, expected < 5s",
+      "simulation_time": 180.012
+    },
+    {
+      "expression": "mission.completion >= 0.90",
+      "severity": "medium",
+      "description": "",
+      "outcome": "failed",
+      "measured": 0.8571,
+      "expected": 0.9,
+      "operator": ">=",
+      "metric_path": "mission.completion",
+      "explanation": "measured mission.completion = 0.857, expected >= 0.90",
+      "simulation_time": 180.012
+    }
+  ],
+  "events": [
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 0,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.042841Z",
+      "source": "engine",
+      "kind": "MISSION",
+      "event_type": "mission_started",
+      "severity": "info",
+      "subsystem": null,
+      "state_before": null,
+      "state_after": null,
+      "message": "Mission 'gnss-loss' started on adapter 'px4-gazebo'",
+      "scenario_event_id": null,
+      "metadata": {
+        "seed": 7,
+        "speed": 1.0
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 1,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.093776Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "communications.c2",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "C2 Datalink UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 2,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.093832Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "communications.telemetry",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "Telemetry Gateway UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 3,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.093851Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "mission.compute",
+      "state_before": "UNKNOWN",
+      "state_after": "OPERATIONAL",
+      "message": "Mission Computer UNKNOWN -> OPERATIONAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 4,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.093866Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "navigation.gnss",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "GNSS Receiver UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 5,
+      "simulation_time": 0.0,
+      "wall_time": "2026-09-20T20:23:14.093881Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "power.battery",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "Battery UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 6,
+      "simulation_time": 0.505,
+      "wall_time": "2026-09-20T20:23:14.598598Z",
+      "source": "adapter",
+      "kind": "OBSERVED_EFFECT",
+      "event_type": "state_change",
+      "severity": "medium",
+      "subsystem": "navigation.estimator",
+      "state_before": "UNKNOWN",
+      "state_after": "DEGRADED",
+      "message": "Navigation Estimator UNKNOWN -> DEGRADED: px4 telemetry",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 7,
+      "simulation_time": 0.505,
+      "wall_time": "2026-09-20T20:23:14.598648Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "sensors.magnetometer",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "Magnetometer UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 8,
+      "simulation_time": 0.505,
+      "wall_time": "2026-09-20T20:23:14.598665Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "sensors.imu",
+      "state_before": "UNKNOWN",
+      "state_after": "NOMINAL",
+      "message": "Inertial Measurement Unit UNKNOWN -> NOMINAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 9,
+      "simulation_time": 0.505,
+      "wall_time": "2026-09-20T20:23:14.598694Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "flight_control.core",
+      "state_before": "UNKNOWN",
+      "state_after": "OPERATIONAL",
+      "message": "Flight Core UNKNOWN -> OPERATIONAL",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": null
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 10,
+      "simulation_time": 0.505,
+      "wall_time": "2026-09-20T20:23:14.598710Z",
+      "source": "adapter",
+      "kind": "SYSTEM_RESPONSE",
+      "event_type": "mode_mission",
+      "severity": "info",
+      "subsystem": "flight_control.core",
+      "state_before": null,
+      "state_after": null,
+      "message": "PX4 flight mode UNKNOWN -> MISSION",
+      "scenario_event_id": null,
+      "metadata": {
+        "safe_state": false
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 11,
+      "simulation_time": 1.514,
+      "wall_time": "2026-09-20T20:23:15.607402Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "navigation.estimator",
+      "state_before": "DEGRADED",
+      "state_after": "NOMINAL",
+      "message": "Navigation Estimator DEGRADED -> NOMINAL (after 1.0s)",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": 1.009
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 12,
+      "simulation_time": 35.046,
+      "wall_time": "2026-09-20T20:23:49.140135Z",
+      "source": "scenario",
+      "kind": "INJECTION_REQUEST",
+      "event_type": "injection_requested",
+      "severity": "info",
+      "subsystem": "navigation.gnss",
+      "state_before": null,
+      "state_after": null,
+      "message": "Inject 'unavailable' into GNSS Receiver",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "effect": "unavailable",
+        "duration": "40s",
+        "parameters": {},
+        "scheduled_at": "35s"
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 13,
+      "simulation_time": 35.046,
+      "wall_time": "2026-09-20T20:23:49.161663Z",
+      "source": "adapter",
+      "kind": "INJECTION_APPLIED",
+      "event_type": "injection_applied",
+      "severity": "info",
+      "subsystem": "navigation.gnss",
+      "state_before": null,
+      "state_after": null,
+      "message": "GNSS Receiver: 'unavailable' applied via px4:param EKF2_GPS_CTRL=0",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "mechanism": "px4:param EKF2_GPS_CTRL=0",
+        "detail": "EKF2_GPS_CTRL 7 -> 0: removes GPS aiding from the EKF; global position estimate is lost"
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 14,
+      "simulation_time": 35.169,
+      "wall_time": "2026-09-20T20:23:49.262881Z",
+      "source": "adapter",
+      "kind": "OBSERVED_EFFECT",
+      "event_type": "state_change",
+      "severity": "high",
+      "subsystem": "navigation.gnss",
+      "state_before": "NOMINAL",
+      "state_after": "UNAVAILABLE",
+      "message": "GNSS Receiver NOMINAL -> UNAVAILABLE: px4 telemetry",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": true
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 15,
+      "simulation_time": 36.483,
+      "wall_time": "2026-09-20T20:23:50.576521Z",
+      "source": "adapter",
+      "kind": "OBSERVED_EFFECT",
+      "event_type": "state_change",
+      "severity": "medium",
+      "subsystem": "navigation.estimator",
+      "state_before": "NOMINAL",
+      "state_after": "DEGRADED",
+      "message": "Navigation Estimator NOMINAL -> DEGRADED: px4 telemetry",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 16,
+      "simulation_time": 36.483,
+      "wall_time": "2026-09-20T20:23:50.576582Z",
+      "source": "engine",
+      "kind": "EXPECTATION_RESULT",
+      "event_type": "expectation_passed",
+      "severity": "info",
+      "subsystem": "navigation.estimator",
+      "state_before": null,
+      "state_after": "DEGRADED",
+      "message": "Expected Navigation Estimator DEGRADED within 3s: observed (DEGRADED)",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "expected_state": "DEGRADED",
+        "within": "3s",
+        "elapsed": 1.437,
+        "passed": true
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 17,
+      "simulation_time": 39.21,
+      "wall_time": "2026-09-20T20:23:53.303229Z",
+      "source": "adapter",
+      "kind": "SYSTEM_RESPONSE",
+      "event_type": "px4_status",
+      "severity": "medium",
+      "subsystem": "flight_control.core",
+      "state_before": null,
+      "state_after": null,
+      "message": "CRITICAL: Failsafe activated\t",
+      "scenario_event_id": null,
+      "metadata": {
+        "safe_state": true
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 18,
+      "simulation_time": 39.514,
+      "wall_time": "2026-09-20T20:23:53.607296Z",
+      "source": "adapter",
+      "kind": "SYSTEM_RESPONSE",
+      "event_type": "mode_land",
+      "severity": "medium",
+      "subsystem": "flight_control.core",
+      "state_before": null,
+      "state_after": null,
+      "message": "PX4 flight mode MISSION -> LAND",
+      "scenario_event_id": null,
+      "metadata": {
+        "safe_state": true
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 19,
+      "simulation_time": 75.065,
+      "wall_time": "2026-09-20T20:24:29.169764Z",
+      "source": "scenario",
+      "kind": "INJECTION_CLEARED",
+      "event_type": "injection_cleared",
+      "severity": "info",
+      "subsystem": "navigation.gnss",
+      "state_before": null,
+      "state_after": null,
+      "message": "GNSS Receiver: 'unavailable' cleared (duration elapsed)",
+      "scenario_event_id": "gnss-loss",
+      "metadata": {
+        "reason": "duration elapsed",
+        "applied": true,
+        "mechanism": "px4:param EKF2_GPS_CTRL=0"
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 20,
+      "simulation_time": 75.178,
+      "wall_time": "2026-09-20T20:24:29.271323Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "navigation.gnss",
+      "state_before": "UNAVAILABLE",
+      "state_after": "NOMINAL",
+      "message": "GNSS Receiver UNAVAILABLE -> NOMINAL (after 40.0s)",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": 40.009
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 21,
+      "simulation_time": 77.5,
+      "wall_time": "2026-09-20T20:24:31.593742Z",
+      "source": "adapter",
+      "kind": "RECOVERY",
+      "event_type": "recovered",
+      "severity": "info",
+      "subsystem": "navigation.estimator",
+      "state_before": "DEGRADED",
+      "state_after": "NOMINAL",
+      "message": "Navigation Estimator DEGRADED -> NOMINAL (after 41.0s)",
+      "scenario_event_id": null,
+      "metadata": {
+        "reason": "px4 telemetry",
+        "direct": false,
+        "fault_duration": 41.017
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 22,
+      "simulation_time": 77.5,
+      "wall_time": "2026-09-20T20:24:31.593786Z",
+      "source": "adapter",
+      "kind": "SYSTEM_RESPONSE",
+      "event_type": "mode_mission",
+      "severity": "info",
+      "subsystem": "flight_control.core",
+      "state_before": null,
+      "state_after": null,
+      "message": "PX4 flight mode LAND -> MISSION",
+      "scenario_event_id": null,
+      "metadata": {
+        "safe_state": false
+      }
+    },
+    {
+      "run_id": "fd4d6136-da06-4272-9830-2cafed02eb37",
+      "sequence": 23,
+      "simulation_time": 180.012,
+      "wall_time": "2026-09-20T20:26:14.105379Z",
+      "source": "engine",
+      "kind": "MISSION",
+      "event_type": "mission_timeout",
+      "severity": "high",
+      "subsystem": null,
+      "state_before": null,
+      "state_after": null,
+      "message": "Mission timeout reached (180s)",
+      "scenario_event_id": null,
+      "metadata": {
+        "progress": 0.8571
+      }
+    }
+  ],
+  "subsystem_timeline": [
+    {
+      "subsystem": "actuation.motors",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "communications.c2",
+      "state": "NOMINAL",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "communications.telemetry",
+      "state": "NOMINAL",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "external.gcs",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "flight_control.core",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 0.505
+    },
+    {
+      "subsystem": "flight_control.core",
+      "state": "OPERATIONAL",
+      "start": 0.505,
+      "end": 180.012
+    },
+    {
+      "subsystem": "mission.compute",
+      "state": "OPERATIONAL",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "mission.planner",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "mission.services",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "navigation.estimator",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 0.505
+    },
+    {
+      "subsystem": "navigation.estimator",
+      "state": "DEGRADED",
+      "start": 0.505,
+      "end": 1.514
+    },
+    {
+      "subsystem": "navigation.estimator",
+      "state": "NOMINAL",
+      "start": 1.514,
+      "end": 36.483
+    },
+    {
+      "subsystem": "navigation.estimator",
+      "state": "DEGRADED",
+      "start": 36.483,
+      "end": 77.5
+    },
+    {
+      "subsystem": "navigation.estimator",
+      "state": "NOMINAL",
+      "start": 77.5,
+      "end": 180.012
+    },
+    {
+      "subsystem": "navigation.gnss",
+      "state": "NOMINAL",
+      "start": 0.0,
+      "end": 35.169
+    },
+    {
+      "subsystem": "navigation.gnss",
+      "state": "UNAVAILABLE",
+      "start": 35.169,
+      "end": 75.178
+    },
+    {
+      "subsystem": "navigation.gnss",
+      "state": "NOMINAL",
+      "start": 75.178,
+      "end": 180.012
+    },
+    {
+      "subsystem": "network.companion_link",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "power.battery",
+      "state": "NOMINAL",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "power.bus",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "security.gateway",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "sensors.barometer",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 180.012
+    },
+    {
+      "subsystem": "sensors.imu",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 0.505
+    },
+    {
+      "subsystem": "sensors.imu",
+      "state": "NOMINAL",
+      "start": 0.505,
+      "end": 180.012
+    },
+    {
+      "subsystem": "sensors.magnetometer",
+      "state": "UNKNOWN",
+      "start": 0.0,
+      "end": 0.505
+    },
+    {
+      "subsystem": "sensors.magnetometer",
+      "state": "NOMINAL",
+      "start": 0.505,
+      "end": 180.012
+    }
+  ],
+  "planned_path": {
+    "origin": {
+      "latitude": 47.3979712,
+      "longitude": 8.5461639,
+      "altitude_msl": 0.22700001299381256
+    },
+    "waypoints": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 30.0
+      },
+      {
+        "x": 90.0,
+        "y": 30.0,
+        "z": 30.0
+      },
+      {
+        "x": 150.0,
+        "y": 110.0,
+        "z": 30.0
+      },
+      {
+        "x": 80.0,
+        "y": 170.0,
+        "z": 40.0
+      },
+      {
+        "x": -30.0,
+        "y": 130.0,
+        "z": 40.0
+      },
+      {
+        "x": -50.0,
+        "y": 40.0,
+        "z": 30.0
+      },
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 30.0
+      }
+    ],
+    "safe_zone": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "safe_zone_radius": 15.0
+  },
+  "actual_path": [
+    {
+      "t": 0.0,
+      "x": -0.008,
+      "y": -0.022,
+      "z": 0.0
+    },
+    {
+      "t": 0.202,
+      "x": -0.008,
+      "y": -0.022,
+      "z": 0.0
+    },
+    {
+      "t": 0.505,
+      "x": -0.015,
+      "y": -0.022,
+      "z": 0.002
+    },
+    {
+      "t": 0.806,
+      "x": -0.015,
+      "y": -0.011,
+      "z": 0.003
+    },
+    {
+      "t": 1.11,
+      "x": -0.015,
+      "y": 0.0,
+      "z": 0.003
+    },
+    {
+      "t": 1.412,
+      "x": -0.015,
+      "y": 0.0,
+      "z": 0.003
+    },
+    {
+      "t": 1.715,
+      "x": -0.008,
+      "y": 0.0,
+      "z": 0.004
+    },
+    {
+      "t": 2.019,
+      "x": -0.008,
+      "y": 0.0,
+      "z": 0.005
+    },
+    {
+      "t": 2.321,
+      "x": -0.015,
+      "y": -0.011,
+      "z": 0.008
+    },
+    {
+      "t": 2.624,
+      "x": -0.008,
+      "y": -0.022,
+      "z": 0.012
+    },
+    {
+      "t": 2.928,
+      "x": -0.008,
+      "y": -0.022,
+      "z": 0.011
+    },
+    {
+      "t": 3.231,
+      "x": 0.0,
+      "y": -0.022,
+      "z": 0.008
+    },
+    {
+      "t": 3.535,
+      "x": 0.008,
+      "y": -0.022,
+      "z": 0.007
+    },
+    {
+      "t": 3.839,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 0.004
+    },
+    {
+      "t": 4.142,
+      "x": 0.023,
+      "y": -0.011,
+      "z": -0.002
+    },
+    {
+      "t": 4.445,
+      "x": 0.023,
+      "y": -0.011,
+      "z": 0.005
+    },
+    {
+      "t": 4.747,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 0.092
+    },
+    {
+      "t": 5.05,
+      "x": 0.008,
+      "y": -0.022,
+      "z": 0.267
+    },
+    {
+      "t": 5.354,
+      "x": 0.0,
+      "y": -0.033,
+      "z": 0.526
+    },
+    {
+      "t": 5.658,
+      "x": 0.008,
+      "y": -0.033,
+      "z": 0.843
+    },
+    {
+      "t": 5.96,
+      "x": 0.008,
+      "y": -0.033,
+      "z": 1.2
+    },
+    {
+      "t": 6.263,
+      "x": 0.0,
+      "y": -0.033,
+      "z": 1.553
+    },
+    {
+      "t": 6.566,
+      "x": -0.008,
+      "y": -0.033,
+      "z": 1.911
+    },
+    {
+      "t": 6.869,
+      "x": 0.0,
+      "y": -0.022,
+      "z": 2.29
+    },
+    {
+      "t": 7.172,
+      "x": 0.008,
+      "y": -0.011,
+      "z": 2.669
+    },
+    {
+      "t": 7.476,
+      "x": 0.008,
+      "y": 0.0,
+      "z": 3.072
+    },
+    {
+      "t": 7.779,
+      "x": 0.008,
+      "y": 0.011,
+      "z": 3.506
+    },
+    {
+      "t": 8.082,
+      "x": 0.008,
+      "y": 0.022,
+      "z": 3.914
+    },
+    {
+      "t": 8.384,
+      "x": 0.015,
+      "y": 0.022,
+      "z": 4.339
+    },
+    {
+      "t": 8.687,
+      "x": 0.015,
+      "y": 0.022,
+      "z": 4.756
+    },
+    {
+      "t": 8.989,
+      "x": 0.023,
+      "y": 0.011,
+      "z": 5.189
+    },
+    {
+      "t": 9.291,
+      "x": 0.03,
+      "y": 0.011,
+      "z": 5.615
+    },
+    {
+      "t": 9.595,
+      "x": 0.03,
+      "y": -0.011,
+      "z": 6.055
+    },
+    {
+      "t": 9.899,
+      "x": 0.03,
+      "y": -0.022,
+      "z": 6.488
+    },
+    {
+      "t": 10.201,
+      "x": 0.038,
+      "y": -0.044,
+      "z": 6.961
+    },
+    {
+      "t": 10.504,
+      "x": 0.038,
+      "y": -0.044,
+      "z": 7.41
+    },
+    {
+      "t": 10.705,
+      "x": 0.038,
+      "y": -0.044,
+      "z": 7.706
+    },
+    {
+      "t": 11.008,
+      "x": 0.03,
+      "y": -0.044,
+      "z": 8.142
+    },
+    {
+      "t": 11.311,
+      "x": 0.023,
+      "y": -0.044,
+      "z": 8.59
+    },
+    {
+      "t": 11.614,
+      "x": 0.015,
+      "y": -0.044,
+      "z": 9.025
+    },
+    {
+      "t": 11.916,
+      "x": 0.015,
+      "y": -0.044,
+      "z": 9.473
+    },
+    {
+      "t": 12.219,
+      "x": 0.015,
+      "y": -0.033,
+      "z": 9.916
+    },
+    {
+      "t": 12.523,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 10.411
+    },
+    {
+      "t": 12.825,
+      "x": 0.015,
+      "y": -0.011,
+      "z": 11.01
+    },
+    {
+      "t": 13.128,
+      "x": 0.023,
+      "y": -0.011,
+      "z": 11.806
+    },
+    {
+      "t": 13.43,
+      "x": 0.03,
+      "y": 0.0,
+      "z": 12.714
+    },
+    {
+      "t": 13.735,
+      "x": 0.03,
+      "y": 0.0,
+      "z": 13.566
+    },
+    {
+      "t": 14.039,
+      "x": 0.038,
+      "y": 0.0,
+      "z": 14.42
+    },
+    {
+      "t": 14.341,
+      "x": 0.038,
+      "y": 0.011,
+      "z": 15.34
+    },
+    {
+      "t": 14.643,
+      "x": 0.03,
+      "y": 0.011,
+      "z": 16.203
+    },
+    {
+      "t": 14.946,
+      "x": 0.023,
+      "y": 0.0,
+      "z": 17.092
+    },
+    {
+      "t": 15.25,
+      "x": 0.023,
+      "y": 0.0,
+      "z": 17.959
+    },
+    {
+      "t": 15.554,
+      "x": 0.015,
+      "y": -0.011,
+      "z": 18.855
+    },
+    {
+      "t": 15.856,
+      "x": 0.015,
+      "y": -0.033,
+      "z": 19.728
+    },
+    {
+      "t": 16.159,
+      "x": 0.008,
+      "y": -0.044,
+      "z": 20.63
+    },
+    {
+      "t": 16.461,
+      "x": 0.015,
+      "y": -0.056,
+      "z": 21.579
+    },
+    {
+      "t": 16.764,
+      "x": 0.015,
+      "y": -0.044,
+      "z": 22.46
+    },
+    {
+      "t": 17.067,
+      "x": 0.023,
+      "y": -0.044,
+      "z": 23.366
+    },
+    {
+      "t": 17.369,
+      "x": 0.023,
+      "y": -0.033,
+      "z": 24.187
+    },
+    {
+      "t": 17.674,
+      "x": 0.03,
+      "y": -0.033,
+      "z": 24.921
+    },
+    {
+      "t": 17.978,
+      "x": 0.03,
+      "y": -0.033,
+      "z": 25.553
+    },
+    {
+      "t": 18.281,
+      "x": 0.023,
+      "y": -0.033,
+      "z": 26.156
+    },
+    {
+      "t": 18.584,
+      "x": 0.008,
+      "y": -0.033,
+      "z": 26.665
+    },
+    {
+      "t": 18.887,
+      "x": 0.008,
+      "y": -0.033,
+      "z": 27.102
+    },
+    {
+      "t": 19.19,
+      "x": 0.015,
+      "y": -0.033,
+      "z": 27.496
+    },
+    {
+      "t": 19.495,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 27.831
+    },
+    {
+      "t": 19.799,
+      "x": 0.015,
+      "y": -0.011,
+      "z": 28.132
+    },
+    {
+      "t": 20.102,
+      "x": 0.015,
+      "y": -0.011,
+      "z": 28.404
+    },
+    {
+      "t": 20.404,
+      "x": 0.015,
+      "y": 0.0,
+      "z": 28.621
+    },
+    {
+      "t": 20.706,
+      "x": 0.015,
+      "y": -0.011,
+      "z": 28.81
+    },
+    {
+      "t": 21.009,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 28.98
+    },
+    {
+      "t": 21.211,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 29.08
+    },
+    {
+      "t": 21.515,
+      "x": 0.015,
+      "y": -0.022,
+      "z": 29.214
+    },
+    {
+      "t": 21.819,
+      "x": 0.008,
+      "y": -0.022,
+      "z": 29.326
+    },
+    {
+      "t": 22.122,
+      "x": 0.015,
+      "y": 0.022,
+      "z": 29.435
+    },
+    {
+      "t": 22.425,
+      "x": 0.151,
+      "y": 0.145,
+      "z": 29.54
+    },
+    {
+      "t": 22.727,
+      "x": 0.519,
+      "y": 0.378,
+      "z": 29.636
+    },
+    {
+      "t": 23.03,
+      "x": 1.189,
+      "y": 0.734,
+      "z": 29.705
+    },
+    {
+      "t": 23.332,
+      "x": 2.108,
+      "y": 1.179,
+      "z": 29.755
+    },
+    {
+      "t": 23.635,
+      "x": 3.312,
+      "y": 1.646,
+      "z": 29.796
+    },
+    {
+      "t": 23.938,
+      "x": 4.719,
+      "y": 2.09,
+      "z": 29.834
+    },
+    {
+      "t": 24.24,
+      "x": 6.45,
+      "y": 2.557,
+      "z": 29.859
+    },
+    {
+      "t": 24.544,
+      "x": 8.189,
+      "y": 3.036,
+      "z": 29.874
+    },
+    {
+      "t": 24.846,
+      "x": 9.845,
+      "y": 3.525,
+      "z": 29.891
+    },
+    {
+      "t": 25.15,
+      "x": 11.471,
+      "y": 4.025,
+      "z": 29.912
+    },
+    {
+      "t": 25.454,
+      "x": 13.029,
+      "y": 4.503,
+      "z": 29.931
+    },
+    {
+      "t": 25.758,
+      "x": 14.64,
+      "y": 4.993,
+      "z": 29.949
+    },
+    {
+      "t": 26.061,
+      "x": 16.363,
+      "y": 5.526,
+      "z": 29.962
+    },
+    {
+      "t": 26.364,
+      "x": 17.989,
+      "y": 6.038,
+      "z": 29.968
+    },
+    {
+      "t": 26.667,
+      "x": 19.69,
+      "y": 6.583,
+      "z": 29.969
+    },
+    {
+      "t": 26.97,
+      "x": 21.354,
+      "y": 7.128,
+      "z": 29.968
+    },
+    {
+      "t": 27.273,
+      "x": 23.07,
+      "y": 7.695,
+      "z": 29.965
+    },
+    {
+      "t": 27.578,
+      "x": 24.741,
+      "y": 8.251,
+      "z": 29.965
+    },
+    {
+      "t": 27.88,
+      "x": 26.547,
+      "y": 8.862,
+      "z": 29.968
+    },
+    {
+      "t": 28.182,
+      "x": 28.263,
+      "y": 9.44,
+      "z": 29.975
+    },
+    {
+      "t": 28.485,
+      "x": 29.934,
+      "y": 9.996,
+      "z": 29.982
+    },
+    {
+      "t": 28.787,
+      "x": 31.658,
+      "y": 10.575,
+      "z": 29.988
+    },
+    {
+      "t": 29.088,
+      "x": 33.329,
+      "y": 11.131,
+      "z": 29.993
+    },
+    {
+      "t": 29.391,
+      "x": 35.052,
+      "y": 11.709,
+      "z": 29.995
+    },
+    {
+      "t": 29.695,
+      "x": 36.731,
+      "y": 12.276,
+      "z": 29.998
+    },
+    {
+      "t": 29.999,
+      "x": 38.462,
+      "y": 12.865,
+      "z": 29.996
+    },
+    {
+      "t": 30.302,
+      "x": 40.283,
+      "y": 13.488,
+      "z": 29.994
+    },
+    {
+      "t": 30.605,
+      "x": 41.977,
+      "y": 14.055,
+      "z": 29.995
+    },
+    {
+      "t": 30.907,
+      "x": 43.708,
+      "y": 14.633,
+      "z": 29.993
+    },
+    {
+      "t": 31.209,
+      "x": 45.394,
+      "y": 15.2,
+      "z": 29.996
+    },
+    {
+      "t": 31.511,
+      "x": 47.14,
+      "y": 15.779,
+      "z": 30.0
+    },
+    {
+      "t": 31.715,
+      "x": 48.284,
+      "y": 16.157,
+      "z": 30.002
+    },
+    {
+      "t": 32.017,
+      "x": 49.978,
+      "y": 16.713,
+      "z": 30.004
+    },
+    {
+      "t": 32.32,
+      "x": 51.799,
+      "y": 17.324,
+      "z": 30.004
+    },
+    {
+      "t": 32.623,
+      "x": 53.531,
+      "y": 17.902,
+      "z": 30.003
+    },
+    {
+      "t": 32.924,
+      "x": 55.217,
+      "y": 18.458,
+      "z": 30.003
+    },
+    {
+      "t": 33.227,
+      "x": 56.94,
+      "y": 19.037,
+      "z": 30.002
+    },
+    {
+      "t": 33.529,
+      "x": 58.626,
+      "y": 19.593,
+      "z": 30.0
+    },
+    {
+      "t": 33.831,
+      "x": 60.35,
+      "y": 20.16,
+      "z": 29.997
+    },
+    {
+      "t": 34.138,
+      "x": 62.021,
+      "y": 20.716,
+      "z": 29.997
+    },
+    {
+      "t": 34.441,
+      "x": 63.835,
+      "y": 21.316,
+      "z": 29.995
+    },
+    {
+      "t": 34.744,
+      "x": 65.558,
+      "y": 21.894,
+      "z": 29.996
+    },
+    {
+      "t": 35.046,
+      "x": 67.244,
+      "y": 22.461,
+      "z": 30.0
+    },
+    {
+      "t": 35.371,
+      "x": 69.074,
+      "y": 23.062,
+      "z": 30.002
+    },
+    {
+      "t": 35.674,
+      "x": 70.812,
+      "y": 23.629,
+      "z": 30.002
+    },
+    {
+      "t": 35.978,
+      "x": 72.506,
+      "y": 24.174,
+      "z": 30.001
+    },
+    {
+      "t": 36.281,
+      "x": 74.327,
+      "y": 24.763,
+      "z": 30.001
+    },
+    {
+      "t": 36.584,
+      "x": 76.066,
+      "y": 25.33,
+      "z": 29.999
+    },
+    {
+      "t": 36.886,
+      "x": 77.752,
+      "y": 25.875,
+      "z": 29.998
+    },
+    {
+      "t": 37.189,
+      "x": 79.483,
+      "y": 26.442,
+      "z": 29.998
+    },
+    {
+      "t": 37.494,
+      "x": 81.154,
+      "y": 26.987,
+      "z": 30.0
+    },
+    {
+      "t": 37.796,
+      "x": 82.757,
+      "y": 27.543,
+      "z": 30.002
+    },
+    {
+      "t": 38.1,
+      "x": 84.27,
+      "y": 28.11,
+      "z": 30.004
+    },
+    {
+      "t": 38.403,
+      "x": 85.497,
+      "y": 28.61,
+      "z": 30.004
+    },
+    {
+      "t": 38.706,
+      "x": 86.596,
+      "y": 29.089,
+      "z": 30.001
+    },
+    {
+      "t": 39.008,
+      "x": 87.567,
+      "y": 29.489,
+      "z": 30.001
+    },
+    {
+      "t": 39.311,
+      "x": 88.545,
+      "y": 29.845,
+      "z": 29.949
+    },
+    {
+      "t": 39.615,
+      "x": 89.486,
+      "y": 30.156,
+      "z": 29.751
+    },
+    {
+      "t": 39.917,
+      "x": 90.427,
+      "y": 30.456,
+      "z": 29.524
+    },
+    {
+      "t": 40.22,
+      "x": 91.39,
+      "y": 30.768,
+      "z": 29.285
+    },
+    {
+      "t": 40.522,
+      "x": 92.264,
+      "y": 31.046,
+      "z": 29.067
+    },
+    {
+      "t": 40.825,
+      "x": 93.129,
+      "y": 31.324,
+      "z": 28.844
+    },
+    {
+      "t": 41.128,
+      "x": 93.95,
+      "y": 31.59,
+      "z": 28.629
+    },
+    {
+      "t": 41.431,
+      "x": 94.77,
+      "y": 31.868,
+      "z": 28.41
+    },
+    {
+      "t": 41.734,
+      "x": 95.553,
+      "y": 32.135,
+      "z": 28.196
+    },
+    {
+      "t": 42.038,
+      "x": 96.336,
+      "y": 32.402,
+      "z": 27.976
+    },
+    {
+      "t": 42.339,
+      "x": 97.081,
+      "y": 32.669,
+      "z": 27.761
+    },
+    {
+      "t": 42.54,
+      "x": 97.63,
+      "y": 32.858,
+      "z": 27.599
+    },
+    {
+      "t": 42.843,
+      "x": 98.338,
+      "y": 33.125,
+      "z": 27.389
+    },
+    {
+      "t": 43.145,
+      "x": 99.053,
+      "y": 33.392,
+      "z": 27.175
+    },
+    {
+      "t": 43.447,
+      "x": 99.738,
+      "y": 33.659,
+      "z": 26.964
+    },
+    {
+      "t": 43.75,
+      "x": 100.423,
+      "y": 33.937,
+      "z": 26.747
+    },
+    {
+      "t": 44.054,
+      "x": 101.07,
+      "y": 34.204,
+      "z": 26.535
+    },
+    {
+      "t": 44.358,
+      "x": 101.725,
+      "y": 34.482,
+      "z": 26.319
+    },
+    {
+      "t": 44.66,
+      "x": 102.35,
+      "y": 34.76,
+      "z": 26.111
+    },
+    {
+      "t": 44.963,
+      "x": 103.012,
+      "y": 35.06,
+      "z": 25.885
+    },
+    {
+      "t": 45.266,
+      "x": 103.637,
+      "y": 35.36,
+      "z": 25.675
+    },
+    {
+      "t": 45.569,
+      "x": 104.224,
+      "y": 35.66,
+      "z": 25.469
+    },
+    {
+      "t": 45.872,
+      "x": 104.826,
+      "y": 35.972,
+      "z": 25.256
+    },
+    {
+      "t": 46.176,
+      "x": 105.398,
+      "y": 36.283,
+      "z": 25.047
+    },
+    {
+      "t": 46.479,
+      "x": 105.977,
+      "y": 36.616,
+      "z": 24.833
+    },
+    {
+      "t": 46.782,
+      "x": 106.572,
+      "y": 36.972,
+      "z": 24.606
+    },
+    {
+      "t": 47.085,
+      "x": 107.122,
+      "y": 37.317,
+      "z": 24.397
+    },
+    {
+      "t": 47.387,
+      "x": 107.671,
+      "y": 37.684,
+      "z": 24.183
+    },
+    {
+      "t": 47.69,
+      "x": 108.205,
+      "y": 38.051,
+      "z": 23.974
+    },
+    {
+      "t": 47.994,
+      "x": 108.74,
+      "y": 38.44,
+      "z": 23.76
+    },
+    {
+      "t": 48.298,
+      "x": 109.259,
+      "y": 38.829,
+      "z": 23.552
+    },
+    {
+      "t": 48.601,
+      "x": 109.816,
+      "y": 39.274,
+      "z": 23.327
+    },
+    {
+      "t": 48.903,
+      "x": 110.328,
+      "y": 39.708,
+      "z": 23.115
+    },
+    {
+      "t": 49.206,
+      "x": 110.832,
+      "y": 40.152,
+      "z": 22.907
+    },
+    {
+      "t": 49.509,
+      "x": 111.337,
+      "y": 40.62,
+      "z": 22.694
+    },
+    {
+      "t": 49.812,
+      "x": 111.826,
+      "y": 41.098,
+      "z": 22.486
+    },
+    {
+      "t": 50.115,
+      "x": 112.323,
+      "y": 41.609,
+      "z": 22.273
+    },
+    {
+      "t": 50.418,
+      "x": 112.804,
+      "y": 42.132,
+      "z": 22.065
+    },
+    {
+      "t": 50.721,
+      "x": 113.316,
+      "y": 42.71,
+      "z": 21.841
+    },
+    {
+      "t": 51.023,
+      "x": 113.798,
+      "y": 43.288,
+      "z": 21.628
+    },
+    {
+      "t": 51.327,
+      "x": 114.257,
+      "y": 43.878,
+      "z": 21.421
+    },
+    {
+      "t": 51.63,
+      "x": 114.731,
+      "y": 44.5,
+      "z": 21.208
+    },
+    {
+      "t": 51.934,
+      "x": 115.183,
+      "y": 45.123,
+      "z": 21.0
+    },
+    {
+      "t": 52.236,
+      "x": 115.649,
+      "y": 45.801,
+      "z": 20.787
+    },
+    {
+      "t": 52.54,
+      "x": 116.131,
+      "y": 46.535,
+      "z": 20.563
+    },
+    {
+      "t": 52.842,
+      "x": 116.568,
+      "y": 47.258,
+      "z": 20.356
+    },
+    {
+      "t": 53.043,
+      "x": 116.861,
+      "y": 47.747,
+      "z": 20.215
+    },
+    {
+      "t": 53.346,
+      "x": 117.305,
+      "y": 48.525,
+      "z": 20.003
+    },
+    {
+      "t": 53.649,
+      "x": 117.734,
+      "y": 49.315,
+      "z": 19.795
+    },
+    {
+      "t": 53.952,
+      "x": 118.171,
+      "y": 50.149,
+      "z": 19.582
+    },
+    {
+      "t": 54.256,
+      "x": 118.585,
+      "y": 50.983,
+      "z": 19.375
+    },
+    {
+      "t": 54.56,
+      "x": 119.029,
+      "y": 51.939,
+      "z": 19.151
+    },
+    {
+      "t": 54.862,
+      "x": 119.45,
+      "y": 52.862,
+      "z": 18.938
+    },
+    {
+      "t": 55.165,
+      "x": 119.849,
+      "y": 53.807,
+      "z": 18.73
+    },
+    {
+      "t": 55.468,
+      "x": 120.256,
+      "y": 54.808,
+      "z": 18.517
+    },
+    {
+      "t": 55.771,
+      "x": 120.64,
+      "y": 55.82,
+      "z": 18.31
+    },
+    {
+      "t": 56.075,
+      "x": 121.031,
+      "y": 56.887,
+      "z": 18.097
+    },
+    {
+      "t": 56.379,
+      "x": 121.407,
+      "y": 57.966,
+      "z": 17.89
+    },
+    {
+      "t": 56.682,
+      "x": 121.806,
+      "y": 59.156,
+      "z": 17.665
+    },
+    {
+      "t": 56.985,
+      "x": 122.175,
+      "y": 60.334,
+      "z": 17.452
+    },
+    {
+      "t": 57.288,
+      "x": 122.521,
+      "y": 61.524,
+      "z": 17.245
+    },
+    {
+      "t": 57.591,
+      "x": 122.875,
+      "y": 62.77,
+      "z": 17.032
+    },
+    {
+      "t": 57.895,
+      "x": 123.214,
+      "y": 64.026,
+      "z": 16.825
+    },
+    {
+      "t": 58.199,
+      "x": 123.545,
+      "y": 65.349,
+      "z": 16.612
+    },
+    {
+      "t": 58.501,
+      "x": 123.891,
+      "y": 66.784,
+      "z": 16.388
+    },
+    {
+      "t": 58.803,
+      "x": 124.2,
+      "y": 68.151,
+      "z": 16.181
+    },
+    {
+      "t": 59.106,
+      "x": 124.508,
+      "y": 69.597,
+      "z": 15.968
+    },
+    {
+      "t": 59.409,
+      "x": 124.794,
+      "y": 71.042,
+      "z": 15.76
+    },
+    {
+      "t": 59.712,
+      "x": 125.08,
+      "y": 72.566,
+      "z": 15.547
+    },
+    {
+      "t": 60.015,
+      "x": 125.351,
+      "y": 74.1,
+      "z": 15.34
+    },
+    {
+      "t": 60.318,
+      "x": 125.615,
+      "y": 75.702,
+      "z": 15.127
+    },
+    {
+      "t": 60.62,
+      "x": 125.878,
+      "y": 77.436,
+      "z": 14.903
+    },
+    {
+      "t": 60.923,
+      "x": 126.119,
+      "y": 79.082,
+      "z": 14.696
+    },
+    {
+      "t": 61.226,
+      "x": 126.345,
+      "y": 80.816,
+      "z": 14.483
+    },
+    {
+      "t": 61.529,
+      "x": 126.556,
+      "y": 82.54,
+      "z": 14.275
+    },
+    {
+      "t": 61.831,
+      "x": 126.766,
+      "y": 84.352,
+      "z": 14.062
+    },
+    {
+      "t": 62.134,
+      "x": 126.947,
+      "y": 86.154,
+      "z": 13.855
+    },
+    {
+      "t": 62.438,
+      "x": 127.135,
+      "y": 88.033,
+      "z": 13.642
+    },
+    {
+      "t": 62.741,
+      "x": 127.308,
+      "y": 90.079,
+      "z": 13.418
+    },
+    {
+      "t": 63.043,
+      "x": 127.451,
+      "y": 92.003,
+      "z": 13.211
+    },
+    {
+      "t": 63.346,
+      "x": 127.594,
+      "y": 94.015,
+      "z": 12.998
+    },
+    {
+      "t": 63.548,
+      "x": 127.677,
+      "y": 95.35,
+      "z": 12.858
+    },
+    {
+      "t": 63.851,
+      "x": 127.79,
+      "y": 97.373,
+      "z": 12.651
+    },
+    {
+      "t": 64.155,
+      "x": 127.896,
+      "y": 99.497,
+      "z": 12.438
+    },
+    {
+      "t": 64.458,
+      "x": 127.986,
+      "y": 101.588,
+      "z": 12.23
+    },
+    {
+      "t": 64.76,
+      "x": 128.061,
+      "y": 103.901,
+      "z": 12.006
+    },
+    {
+      "t": 65.063,
+      "x": 128.121,
+      "y": 106.136,
+      "z": 11.794
+    },
+    {
+      "t": 65.366,
+      "x": 128.174,
+      "y": 108.337,
+      "z": 11.586
+    },
+    {
+      "t": 65.669,
+      "x": 128.204,
+      "y": 110.639,
+      "z": 11.373
+    },
+    {
+      "t": 65.97,
+      "x": 128.227,
+      "y": 112.918,
+      "z": 11.166
+    },
+    {
+      "t": 66.275,
+      "x": 128.234,
+      "y": 115.298,
+      "z": 10.953
+    },
+    {
+      "t": 66.579,
+      "x": 128.227,
+      "y": 117.644,
+      "z": 10.746
+    },
+    {
+      "t": 66.881,
+      "x": 128.204,
+      "y": 120.224,
+      "z": 10.522
+    },
+    {
+      "t": 67.184,
+      "x": 128.174,
+      "y": 122.704,
+      "z": 10.309
+    },
+    {
+      "t": 67.488,
+      "x": 128.121,
+      "y": 125.15,
+      "z": 10.102
+    },
+    {
+      "t": 67.79,
+      "x": 128.069,
+      "y": 127.707,
+      "z": 9.889
+    },
+    {
+      "t": 68.094,
+      "x": 128.001,
+      "y": 130.209,
+      "z": 9.682
+    },
+    {
+      "t": 68.399,
+      "x": 127.918,
+      "y": 132.822,
+      "z": 9.47
+    },
+    {
+      "t": 68.702,
+      "x": 127.813,
+      "y": 135.613,
+      "z": 9.246
+    },
+    {
+      "t": 69.005,
+      "x": 127.715,
+      "y": 138.215,
+      "z": 9.038
+    },
+    {
+      "t": 69.308,
+      "x": 127.602,
+      "y": 140.928,
+      "z": 8.826
+    },
+    {
+      "t": 69.611,
+      "x": 127.482,
+      "y": 143.586,
+      "z": 8.619
+    },
+    {
+      "t": 69.915,
+      "x": 127.346,
+      "y": 146.355,
+      "z": 8.406
+    },
+    {
+      "t": 70.219,
+      "x": 127.211,
+      "y": 149.068,
+      "z": 8.199
+    },
+    {
+      "t": 70.521,
+      "x": 127.045,
+      "y": 152.037,
+      "z": 7.975
+    },
+    {
+      "t": 70.824,
+      "x": 126.894,
+      "y": 154.872,
+      "z": 7.762
+    },
+    {
+      "t": 71.127,
+      "x": 126.729,
+      "y": 157.674,
+      "z": 7.555
+    },
+    {
+      "t": 71.43,
+      "x": 126.556,
+      "y": 160.565,
+      "z": 7.342
+    },
+    {
+      "t": 71.732,
+      "x": 126.39,
+      "y": 163.412,
+      "z": 7.135
+    },
+    {
+      "t": 72.036,
+      "x": 126.21,
+      "y": 166.348,
+      "z": 6.923
+    },
+    {
+      "t": 72.34,
+      "x": 126.006,
+      "y": 169.483,
+      "z": 6.699
+    },
+    {
+      "t": 72.642,
+      "x": 125.818,
+      "y": 172.385,
+      "z": 6.492
+    },
+    {
+      "t": 72.944,
+      "x": 125.622,
+      "y": 175.399,
+      "z": 6.279
+    },
+    {
+      "t": 73.248,
+      "x": 125.434,
+      "y": 178.357,
+      "z": 6.072
+    },
+    {
+      "t": 73.551,
+      "x": 125.239,
+      "y": 181.415,
+      "z": 5.86
+    },
+    {
+      "t": 73.855,
+      "x": 125.043,
+      "y": 184.417,
+      "z": 5.653
+    },
+    {
+      "t": 74.158,
+      "x": 124.847,
+      "y": 187.519,
+      "z": 5.44
+    },
+    {
+      "t": 74.36,
+      "x": 124.704,
+      "y": 189.732,
+      "z": 5.289
+    },
+    {
+      "t": 74.662,
+      "x": 124.516,
+      "y": 192.879,
+      "z": 5.077
+    },
+    {
+      "t": 74.965,
+      "x": 124.328,
+      "y": 195.948,
+      "z": 4.87
+    },
+    {
+      "t": 75.279,
+      "x": 124.132,
+      "y": 199.128,
+      "z": 4.657
+    },
+    {
+      "t": 75.582,
+      "x": 123.944,
+      "y": 202.497,
+      "z": 4.434
+    },
+    {
+      "t": 75.885,
+      "x": 123.763,
+      "y": 205.622,
+      "z": 4.227
+    },
+    {
+      "t": 76.187,
+      "x": 94.349,
+      "y": -7.739,
+      "z": 3.966
+    },
+    {
+      "t": 76.49,
+      "x": 93.972,
+      "y": -10.408,
+      "z": 3.46
+    },
+    {
+      "t": 76.794,
+      "x": 93.807,
+      "y": -12.154,
+      "z": 3.06
+    },
+    {
+      "t": 77.096,
+      "x": 93.724,
+      "y": -13.51,
+      "z": 2.815
+    },
+    {
+      "t": 77.4,
+      "x": 93.671,
+      "y": -14.867,
+      "z": 2.577
+    },
+    {
+      "t": 77.701,
+      "x": 93.626,
+      "y": -16.079,
+      "z": 2.414
+    },
+    {
+      "t": 78.004,
+      "x": 93.596,
+      "y": -17.057,
+      "z": 2.527
+    },
+    {
+      "t": 78.307,
+      "x": 93.558,
+      "y": -17.702,
+      "z": 2.833
+    },
+    {
+      "t": 78.61,
+      "x": 93.506,
+      "y": -17.936,
+      "z": 3.274
+    },
+    {
+      "t": 78.914,
+      "x": 93.43,
+      "y": -17.847,
+      "z": 3.902
+    },
+    {
+      "t": 79.217,
+      "x": 93.37,
+      "y": -17.535,
+      "z": 4.689
+    },
+    {
+      "t": 79.52,
+      "x": 93.34,
+      "y": -17.057,
+      "z": 5.577
+    },
+    {
+      "t": 79.822,
+      "x": 93.347,
+      "y": -16.457,
+      "z": 6.475
+    },
+    {
+      "t": 80.126,
+      "x": 93.4,
+      "y": -15.879,
+      "z": 7.303
+    },
+    {
+      "t": 80.429,
+      "x": 93.49,
+      "y": -15.345,
+      "z": 8.175
+    },
+    {
+      "t": 80.731,
+      "x": 93.596,
+      "y": -14.956,
+      "z": 9.041
+    },
+    {
+      "t": 81.035,
+      "x": 93.701,
+      "y": -14.744,
+      "z": 9.918
+    },
+    {
+      "t": 81.338,
+      "x": 93.792,
+      "y": -14.667,
+      "z": 10.762
+    },
+    {
+      "t": 81.64,
+      "x": 93.852,
+      "y": -14.578,
+      "z": 11.68
+    },
+    {
+      "t": 81.942,
+      "x": 93.874,
+      "y": -14.444,
+      "z": 12.561
+    },
+    {
+      "t": 82.246,
+      "x": 93.867,
+      "y": -14.255,
+      "z": 13.423
+    },
+    {
+      "t": 82.549,
+      "x": 93.844,
+      "y": -14.055,
+      "z": 14.31
+    },
+    {
+      "t": 82.851,
+      "x": 93.822,
+      "y": -13.877,
+      "z": 15.176
+    },
+    {
+      "t": 83.155,
+      "x": 93.799,
+      "y": -13.744,
+      "z": 16.065
+    },
+    {
+      "t": 83.459,
+      "x": 93.784,
+      "y": -13.644,
+      "z": 16.934
+    },
+    {
+      "t": 83.762,
+      "x": 93.776,
+      "y": -13.577,
+      "z": 17.878
+    },
+    {
+      "t": 84.065,
+      "x": 93.776,
+      "y": -13.532,
+      "z": 18.776
+    },
+    {
+      "t": 84.368,
+      "x": 93.776,
+      "y": -13.521,
+      "z": 19.652
+    },
+    {
+      "t": 84.67,
+      "x": 93.776,
+      "y": -13.51,
+      "z": 20.556
+    },
+    {
+      "t": 84.872,
+      "x": 93.769,
+      "y": -13.51,
+      "z": 21.151
+    },
+    {
+      "t": 85.178,
+      "x": 93.769,
+      "y": -13.51,
+      "z": 22.033
+    },
+    {
+      "t": 85.481,
+      "x": 93.761,
+      "y": -13.499,
+      "z": 22.987
+    },
+    {
+      "t": 85.783,
+      "x": 93.761,
+      "y": -13.499,
+      "z": 23.869
+    },
+    {
+      "t": 86.086,
+      "x": 93.761,
+      "y": -13.499,
+      "z": 24.628
+    },
+    {
+      "t": 86.389,
+      "x": 93.746,
+      "y": -13.499,
+      "z": 25.317
+    },
+    {
+      "t": 86.691,
+      "x": 93.731,
+      "y": -13.51,
+      "z": 25.911
+    },
+    {
+      "t": 86.994,
+      "x": 93.709,
+      "y": -13.521,
+      "z": 26.453
+    },
+    {
+      "t": 87.298,
+      "x": 93.701,
+      "y": -13.532,
+      "z": 26.915
+    },
+    {
+      "t": 87.601,
+      "x": 93.694,
+      "y": -13.532,
+      "z": 27.351
+    },
+    {
+      "t": 87.904,
+      "x": 93.686,
+      "y": -13.532,
+      "z": 27.711
+    },
+    {
+      "t": 88.207,
+      "x": 93.686,
+      "y": -13.555,
+      "z": 28.016
+    },
+    {
+      "t": 88.51,
+      "x": 93.686,
+      "y": -13.566,
+      "z": 28.287
+    },
+    {
+      "t": 88.814,
+      "x": 93.694,
+      "y": -13.577,
+      "z": 28.52
+    },
+    {
+      "t": 89.116,
+      "x": 93.694,
+      "y": -13.588,
+      "z": 28.731
+    },
+    {
+      "t": 89.419,
+      "x": 93.694,
+      "y": -13.588,
+      "z": 28.911
+    },
+    {
+      "t": 89.722,
+      "x": 93.694,
+      "y": -13.588,
+      "z": 29.08
+    },
+    {
+      "t": 90.025,
+      "x": 93.694,
+      "y": -13.588,
+      "z": 29.216
+    },
+    {
+      "t": 90.328,
+      "x": 93.694,
+      "y": -13.588,
+      "z": 29.352
+    },
+    {
+      "t": 90.63,
+      "x": 93.754,
+      "y": -13.544,
+      "z": 29.582
+    },
+    {
+      "t": 90.934,
+      "x": 93.935,
+      "y": -13.332,
+      "z": 29.87
+    },
+    {
+      "t": 91.238,
+      "x": 94.251,
+      "y": -12.821,
+      "z": 30.206
+    },
+    {
+      "t": 91.54,
+      "x": 94.68,
+      "y": -11.942,
+      "z": 30.564
+    },
+    {
+      "t": 91.843,
+      "x": 95.101,
+      "y": -10.875,
+      "z": 30.791
+    },
+    {
+      "t": 92.146,
+      "x": 95.568,
+      "y": -9.585,
+      "z": 30.825
+    },
+    {
+      "t": 92.448,
+      "x": 96.072,
+      "y": -8.173,
+      "z": 30.593
+    },
+    {
+      "t": 92.751,
+      "x": 96.689,
+      "y": -6.605,
+      "z": 30.183
+    },
+    {
+      "t": 93.054,
+      "x": 97.397,
+      "y": -5.026,
+      "z": 29.756
+    },
+    {
+      "t": 93.358,
+      "x": 98.157,
+      "y": -3.447,
+      "z": 29.397
+    },
+    {
+      "t": 93.66,
+      "x": 98.887,
+      "y": -1.968,
+      "z": 29.204
+    },
+    {
+      "t": 93.962,
+      "x": 99.662,
+      "y": -0.378,
+      "z": 29.259
+    },
+    {
+      "t": 94.265,
+      "x": 100.393,
+      "y": 1.168,
+      "z": 29.594
+    },
+    {
+      "t": 94.568,
+      "x": 101.108,
+      "y": 2.691,
+      "z": 30.063
+    },
+    {
+      "t": 94.871,
+      "x": 101.845,
+      "y": 4.281,
+      "z": 30.592
+    },
+    {
+      "t": 95.173,
+      "x": 102.56,
+      "y": 5.849,
+      "z": 31.075
+    },
+    {
+      "t": 95.375,
+      "x": 103.05,
+      "y": 6.916,
+      "z": 31.338
+    },
+    {
+      "t": 95.679,
+      "x": 103.795,
+      "y": 8.54,
+      "z": 31.579
+    },
+    {
+      "t": 95.982,
+      "x": 104.585,
+      "y": 10.241,
+      "z": 31.556
+    },
+    {
+      "t": 96.285,
+      "x": 105.315,
+      "y": 11.82,
+      "z": 31.313
+    },
+    {
+      "t": 96.587,
+      "x": 106.075,
+      "y": 13.443,
+      "z": 30.932
+    },
+    {
+      "t": 96.89,
+      "x": 106.813,
+      "y": 15.045,
+      "z": 30.539
+    },
+    {
+      "t": 97.194,
+      "x": 107.573,
+      "y": 16.701,
+      "z": 30.162
+    },
+    {
+      "t": 97.496,
+      "x": 108.303,
+      "y": 18.314,
+      "z": 29.779
+    },
+    {
+      "t": 97.8,
+      "x": 109.086,
+      "y": 20.06,
+      "z": 29.394
+    },
+    {
+      "t": 98.102,
+      "x": 109.839,
+      "y": 21.727,
+      "z": 29.205
+    },
+    {
+      "t": 98.404,
+      "x": 110.569,
+      "y": 23.362,
+      "z": 29.281
+    },
+    {
+      "t": 98.707,
+      "x": 111.321,
+      "y": 25.052,
+      "z": 29.64
+    },
+    {
+      "t": 99.01,
+      "x": 112.059,
+      "y": 26.687,
+      "z": 30.123
+    },
+    {
+      "t": 99.314,
+      "x": 112.812,
+      "y": 28.355,
+      "z": 30.652
+    },
+    {
+      "t": 99.617,
+      "x": 113.549,
+      "y": 29.978,
+      "z": 31.127
+    },
+    {
+      "t": 99.92,
+      "x": 114.332,
+      "y": 31.735,
+      "z": 31.496
+    },
+    {
+      "t": 100.223,
+      "x": 115.077,
+      "y": 33.392,
+      "z": 31.611
+    },
+    {
+      "t": 100.525,
+      "x": 115.8,
+      "y": 34.993,
+      "z": 31.482
+    },
+    {
+      "t": 100.828,
+      "x": 116.545,
+      "y": 36.628,
+      "z": 31.161
+    },
+    {
+      "t": 101.13,
+      "x": 117.275,
+      "y": 38.218,
+      "z": 30.772
+    },
+    {
+      "t": 101.435,
+      "x": 118.028,
+      "y": 39.875,
+      "z": 30.388
+    },
+    {
+      "t": 101.738,
+      "x": 118.773,
+      "y": 41.487,
+      "z": 30.025
+    },
+    {
+      "t": 102.041,
+      "x": 119.571,
+      "y": 43.233,
+      "z": 29.612
+    },
+    {
+      "t": 102.344,
+      "x": 120.331,
+      "y": 44.901,
+      "z": 29.302
+    },
+    {
+      "t": 102.647,
+      "x": 121.069,
+      "y": 46.535,
+      "z": 29.206
+    },
+    {
+      "t": 102.95,
+      "x": 121.836,
+      "y": 48.203,
+      "z": 29.397
+    },
+    {
+      "t": 103.254,
+      "x": 122.574,
+      "y": 49.838,
+      "z": 29.808
+    },
+    {
+      "t": 103.558,
+      "x": 123.327,
+      "y": 51.505,
+      "z": 30.321
+    },
+    {
+      "t": 103.861,
+      "x": 124.117,
+      "y": 53.24,
+      "z": 30.869
+    },
+    {
+      "t": 104.163,
+      "x": 124.84,
+      "y": 54.841,
+      "z": 31.298
+    },
+    {
+      "t": 104.466,
+      "x": 125.585,
+      "y": 56.487,
+      "z": 31.569
+    },
+    {
+      "t": 104.768,
+      "x": 126.307,
+      "y": 58.077,
+      "z": 31.587
+    },
+    {
+      "t": 105.071,
+      "x": 127.068,
+      "y": 59.723,
+      "z": 31.377
+    },
+    {
+      "t": 105.375,
+      "x": 127.813,
+      "y": 61.324,
+      "z": 31.025
+    },
+    {
+      "t": 105.679,
+      "x": 128.58,
+      "y": 62.981,
+      "z": 30.623
+    },
+    {
+      "t": 105.881,
+      "x": 129.115,
+      "y": 64.159,
+      "z": 30.355
+    },
+    {
+      "t": 106.183,
+      "x": 129.875,
+      "y": 65.827,
+      "z": 29.976
+    },
+    {
+      "t": 106.486,
+      "x": 130.613,
+      "y": 67.451,
+      "z": 29.586
+    },
+    {
+      "t": 106.789,
+      "x": 131.365,
+      "y": 69.119,
+      "z": 29.272
+    },
+    {
+      "t": 107.092,
+      "x": 132.103,
+      "y": 70.731,
+      "z": 29.181
+    },
+    {
+      "t": 107.395,
+      "x": 132.863,
+      "y": 72.41,
+      "z": 29.385
+    },
+    {
+      "t": 107.699,
+      "x": 133.601,
+      "y": 74.045,
+      "z": 29.808
+    },
+    {
+      "t": 108.002,
+      "x": 134.391,
+      "y": 75.813,
+      "z": 30.361
+    },
+    {
+      "t": 108.304,
+      "x": 135.144,
+      "y": 77.481,
+      "z": 30.887
+    },
+    {
+      "t": 108.606,
+      "x": 135.881,
+      "y": 79.093,
+      "z": 31.321
+    },
+    {
+      "t": 108.908,
+      "x": 136.634,
+      "y": 80.75,
+      "z": 31.59
+    },
+    {
+      "t": 109.21,
+      "x": 137.372,
+      "y": 82.351,
+      "z": 31.603
+    },
+    {
+      "t": 109.515,
+      "x": 138.124,
+      "y": 83.974,
+      "z": 31.39
+    },
+    {
+      "t": 109.817,
+      "x": 138.847,
+      "y": 85.564,
+      "z": 31.039
+    },
+    {
+      "t": 110.12,
+      "x": 139.6,
+      "y": 87.199,
+      "z": 30.635
+    },
+    {
+      "t": 110.423,
+      "x": 140.398,
+      "y": 88.945,
+      "z": 30.234
+    },
+    {
+      "t": 110.726,
+      "x": 141.135,
+      "y": 90.557,
+      "z": 29.85
+    },
+    {
+      "t": 111.028,
+      "x": 141.895,
+      "y": 92.225,
+      "z": 29.462
+    },
+    {
+      "t": 111.331,
+      "x": 142.633,
+      "y": 93.86,
+      "z": 29.219
+    },
+    {
+      "t": 111.635,
+      "x": 143.393,
+      "y": 95.528,
+      "z": 29.219
+    },
+    {
+      "t": 111.94,
+      "x": 144.199,
+      "y": 97.296,
+      "z": 29.545
+    },
+    {
+      "t": 112.243,
+      "x": 144.944,
+      "y": 98.908,
+      "z": 30.017
+    },
+    {
+      "t": 112.545,
+      "x": 145.681,
+      "y": 100.542,
+      "z": 30.557
+    },
+    {
+      "t": 112.848,
+      "x": 146.351,
+      "y": 102.032,
+      "z": 31.062
+    },
+    {
+      "t": 113.151,
+      "x": 146.999,
+      "y": 103.4,
+      "z": 31.471
+    },
+    {
+      "t": 113.455,
+      "x": 147.578,
+      "y": 104.612,
+      "z": 31.677
+    },
+    {
+      "t": 113.758,
+      "x": 148.128,
+      "y": 105.746,
+      "z": 31.64
+    },
+    {
+      "t": 114.06,
+      "x": 148.654,
+      "y": 106.814,
+      "z": 31.385
+    },
+    {
+      "t": 114.363,
+      "x": 149.076,
+      "y": 107.659,
+      "z": 31.041
+    },
+    {
+      "t": 114.666,
+      "x": 149.422,
+      "y": 108.393,
+      "z": 30.681
+    },
+    {
+      "t": 114.968,
+      "x": 149.678,
+      "y": 109.016,
+      "z": 30.349
+    },
+    {
+      "t": 115.271,
+      "x": 149.776,
+      "y": 109.616,
+      "z": 30.003
+    },
+    {
+      "t": 115.575,
+      "x": 149.595,
+      "y": 110.194,
+      "z": 29.76
+    },
+    {
+      "t": 115.879,
+      "x": 149.106,
+      "y": 110.728,
+      "z": 29.725
+    },
+    {
+      "t": 116.181,
+      "x": 148.353,
+      "y": 111.251,
+      "z": 29.966
+    },
+    {
+      "t": 116.483,
+      "x": 147.503,
+      "y": 111.784,
+      "z": 30.436
+    },
+    {
+      "t": 116.685,
+      "x": 146.81,
+      "y": 112.251,
+      "z": 30.884
+    },
+    {
+      "t": 116.988,
+      "x": 145.568,
+      "y": 113.196,
+      "z": 31.682
+    },
+    {
+      "t": 117.291,
+      "x": 144.214,
+      "y": 114.353,
+      "z": 32.472
+    },
+    {
+      "t": 117.595,
+      "x": 142.806,
+      "y": 115.62,
+      "z": 33.268
+    },
+    {
+      "t": 117.899,
+      "x": 141.519,
+      "y": 116.81,
+      "z": 34.021
+    },
+    {
+      "t": 118.202,
+      "x": 140.187,
+      "y": 118.011,
+      "z": 34.763
+    },
+    {
+      "t": 118.504,
+      "x": 138.93,
+      "y": 119.134,
+      "z": 35.4
+    },
+    {
+      "t": 118.807,
+      "x": 137.673,
+      "y": 120.235,
+      "z": 35.96
+    },
+    {
+      "t": 119.109,
+      "x": 136.356,
+      "y": 121.392,
+      "z": 36.472
+    },
+    {
+      "t": 119.412,
+      "x": 135.038,
+      "y": 122.548,
+      "z": 36.909
+    },
+    {
+      "t": 119.716,
+      "x": 133.684,
+      "y": 123.738,
+      "z": 37.305
+    },
+    {
+      "t": 120.019,
+      "x": 132.366,
+      "y": 124.894,
+      "z": 37.649
+    },
+    {
+      "t": 120.32,
+      "x": 130.944,
+      "y": 126.151,
+      "z": 37.979
+    },
+    {
+      "t": 120.623,
+      "x": 129.589,
+      "y": 127.34,
+      "z": 38.25
+    },
+    {
+      "t": 120.926,
+      "x": 128.257,
+      "y": 128.486,
+      "z": 38.48
+    },
+    {
+      "t": 121.228,
+      "x": 126.879,
+      "y": 129.664,
+      "z": 38.686
+    },
+    {
+      "t": 121.531,
+      "x": 125.532,
+      "y": 130.821,
+      "z": 38.862
+    },
+    {
+      "t": 121.835,
+      "x": 124.14,
+      "y": 132.011,
+      "z": 39.015
+    },
+    {
+      "t": 122.138,
+      "x": 122.785,
+      "y": 133.167,
+      "z": 39.142
+    },
+    {
+      "t": 122.441,
+      "x": 121.332,
+      "y": 134.412,
+      "z": 39.267
+    },
+    {
+      "t": 122.744,
+      "x": 119.955,
+      "y": 135.613,
+      "z": 39.375
+    },
+    {
+      "t": 123.047,
+      "x": 118.607,
+      "y": 136.781,
+      "z": 39.463
+    },
+    {
+      "t": 123.349,
+      "x": 117.23,
+      "y": 137.993,
+      "z": 39.541
+    },
+    {
+      "t": 123.652,
+      "x": 115.89,
+      "y": 139.16,
+      "z": 39.61
+    },
+    {
+      "t": 123.955,
+      "x": 114.498,
+      "y": 140.35,
+      "z": 39.669
+    },
+    {
+      "t": 124.258,
+      "x": 113.143,
+      "y": 141.507,
+      "z": 39.718
+    },
+    {
+      "t": 124.561,
+      "x": 111.668,
+      "y": 142.752,
+      "z": 39.763
+    },
+    {
+      "t": 124.863,
+      "x": 110.283,
+      "y": 143.92,
+      "z": 39.801
+    },
+    {
+      "t": 125.166,
+      "x": 108.928,
+      "y": 145.065,
+      "z": 39.832
+    },
+    {
+      "t": 125.468,
+      "x": 107.551,
+      "y": 146.244,
+      "z": 39.856
+    },
+    {
+      "t": 125.77,
+      "x": 106.211,
+      "y": 147.4,
+      "z": 39.875
+    },
+    {
+      "t": 126.074,
+      "x": 104.826,
+      "y": 148.59,
+      "z": 39.897
+    },
+    {
+      "t": 126.376,
+      "x": 103.471,
+      "y": 149.757,
+      "z": 39.917
+    },
+    {
+      "t": 126.682,
+      "x": 102.011,
+      "y": 151.014,
+      "z": 39.936
+    },
+    {
+      "t": 126.985,
+      "x": 100.626,
+      "y": 152.215,
+      "z": 39.948
+    },
+    {
+      "t": 127.187,
+      "x": 99.723,
+      "y": 152.993,
+      "z": 39.955
+    },
+    {
+      "t": 127.489,
+      "x": 98.398,
+      "y": 154.138,
+      "z": 39.963
+    },
+    {
+      "t": 127.792,
+      "x": 97.036,
+      "y": 155.317,
+      "z": 39.971
+    },
+    {
+      "t": 128.095,
+      "x": 95.696,
+      "y": 156.462,
+      "z": 39.98
+    },
+    {
+      "t": 128.4,
+      "x": 94.243,
+      "y": 157.719,
+      "z": 39.985
+    },
+    {
+      "t": 128.702,
+      "x": 92.866,
+      "y": 158.909,
+      "z": 39.989
+    },
+    {
+      "t": 129.005,
+      "x": 91.511,
+      "y": 160.076,
+      "z": 39.991
+    },
+    {
+      "t": 129.307,
+      "x": 90.126,
+      "y": 161.288,
+      "z": 39.99
+    },
+    {
+      "t": 129.609,
+      "x": 88.786,
+      "y": 162.456,
+      "z": 39.985
+    },
+    {
+      "t": 129.912,
+      "x": 87.461,
+      "y": 163.601,
+      "z": 39.985
+    },
+    {
+      "t": 130.216,
+      "x": 86.31,
+      "y": 164.602,
+      "z": 39.983
+    },
+    {
+      "t": 130.52,
+      "x": 85.294,
+      "y": 165.503,
+      "z": 39.98
+    },
+    {
+      "t": 130.822,
+      "x": 84.368,
+      "y": 166.325,
+      "z": 39.977
+    },
+    {
+      "t": 131.125,
+      "x": 83.623,
+      "y": 167.004,
+      "z": 39.977
+    },
+    {
+      "t": 131.428,
+      "x": 82.945,
+      "y": 167.626,
+      "z": 39.981
+    },
+    {
+      "t": 131.73,
+      "x": 82.343,
+      "y": 168.171,
+      "z": 39.983
+    },
+    {
+      "t": 132.035,
+      "x": 81.741,
+      "y": 168.716,
+      "z": 40.0
+    },
+    {
+      "t": 132.339,
+      "x": 81.094,
+      "y": 169.228,
+      "z": 40.078
+    },
+    {
+      "t": 132.641,
+      "x": 80.326,
+      "y": 169.65,
+      "z": 40.083
+    },
+    {
+      "t": 132.944,
+      "x": 79.558,
+      "y": 169.872,
+      "z": 39.892
+    },
+    {
+      "t": 133.247,
+      "x": 78.813,
+      "y": 169.85,
+      "z": 39.534
+    },
+    {
+      "t": 133.55,
+      "x": 78.053,
+      "y": 169.55,
+      "z": 39.143
+    },
+    {
+      "t": 133.852,
+      "x": 77.263,
+      "y": 169.061,
+      "z": 38.877
+    },
+    {
+      "t": 134.155,
+      "x": 76.292,
+      "y": 168.405,
+      "z": 38.791
+    },
+    {
+      "t": 134.459,
+      "x": 75.148,
+      "y": 167.671,
+      "z": 38.967
+    },
+    {
+      "t": 134.762,
+      "x": 73.672,
+      "y": 166.915,
+      "z": 39.521
+    },
+    {
+      "t": 135.064,
+      "x": 72.122,
+      "y": 166.325,
+      "z": 40.251
+    },
+    {
+      "t": 135.367,
+      "x": 70.504,
+      "y": 165.803,
+      "z": 41.037
+    },
+    {
+      "t": 135.669,
+      "x": 68.75,
+      "y": 165.269,
+      "z": 41.837
+    },
+    {
+      "t": 135.971,
+      "x": 67.056,
+      "y": 164.713,
+      "z": 42.54
+    },
+    {
+      "t": 136.276,
+      "x": 65.363,
+      "y": 164.124,
+      "z": 43.097
+    },
+    {
+      "t": 136.58,
+      "x": 63.745,
+      "y": 163.534,
+      "z": 43.404
+    },
+    {
+      "t": 136.883,
+      "x": 61.998,
+      "y": 162.901,
+      "z": 43.492
+    },
+    {
+      "t": 137.186,
+      "x": 60.327,
+      "y": 162.3,
+      "z": 43.382
+    },
+    {
+      "t": 137.49,
+      "x": 58.687,
+      "y": 161.722,
+      "z": 43.11
+    },
+    {
+      "t": 137.691,
+      "x": 57.573,
+      "y": 161.333,
+      "z": 42.871
+    },
+    {
+      "t": 137.994,
+      "x": 55.871,
+      "y": 160.732,
+      "z": 42.492
+    },
+    {
+      "t": 138.298,
+      "x": 54.208,
+      "y": 160.143,
+      "z": 42.131
+    },
+    {
+      "t": 138.601,
+      "x": 52.402,
+      "y": 159.509,
+      "z": 41.716
+    },
+    {
+      "t": 138.904,
+      "x": 50.686,
+      "y": 158.898,
+      "z": 41.3
+    },
+    {
+      "t": 139.207,
+      "x": 49.007,
+      "y": 158.297,
+      "z": 40.882
+    },
+    {
+      "t": 139.51,
+      "x": 47.291,
+      "y": 157.686,
+      "z": 40.448
+    },
+    {
+      "t": 139.814,
+      "x": 45.612,
+      "y": 157.085,
+      "z": 40.018
+    },
+    {
+      "t": 140.118,
+      "x": 43.889,
+      "y": 156.474,
+      "z": 39.582
+    },
+    {
+      "t": 140.42,
+      "x": 42.067,
+      "y": 155.829,
+      "z": 39.267
+    },
+    {
+      "t": 140.723,
+      "x": 40.374,
+      "y": 155.228,
+      "z": 39.219
+    },
+    {
+      "t": 141.026,
+      "x": 38.643,
+      "y": 154.605,
+      "z": 39.479
+    },
+    {
+      "t": 141.328,
+      "x": 36.964,
+      "y": 154.005,
+      "z": 40.035
+    },
+    {
+      "t": 141.63,
+      "x": 35.256,
+      "y": 153.382,
+      "z": 40.77
+    },
+    {
+      "t": 141.932,
+      "x": 33.6,
+      "y": 152.782,
+      "z": 41.562
+    },
+    {
+      "t": 142.236,
+      "x": 31.899,
+      "y": 152.17,
+      "z": 42.369
+    },
+    {
+      "t": 142.539,
+      "x": 30.25,
+      "y": 151.57,
+      "z": 43.06
+    },
+    {
+      "t": 142.842,
+      "x": 28.466,
+      "y": 150.925,
+      "z": 43.59
+    },
+    {
+      "t": 143.145,
+      "x": 26.765,
+      "y": 150.302,
+      "z": 43.827
+    },
+    {
+      "t": 143.447,
+      "x": 25.109,
+      "y": 149.713,
+      "z": 43.852
+    },
+    {
+      "t": 143.75,
+      "x": 23.401,
+      "y": 149.101,
+      "z": 43.69
+    },
+    {
+      "t": 144.053,
+      "x": 21.745,
+      "y": 148.501,
+      "z": 43.377
+    },
+    {
+      "t": 144.356,
+      "x": 20.051,
+      "y": 147.889,
+      "z": 42.993
+    },
+    {
+      "t": 144.659,
+      "x": 18.388,
+      "y": 147.278,
+      "z": 42.635
+    },
+    {
+      "t": 144.961,
+      "x": 16.589,
+      "y": 146.622,
+      "z": 42.233
+    },
+    {
+      "t": 145.264,
+      "x": 14.888,
+      "y": 146.01,
+      "z": 41.827
+    },
+    {
+      "t": 145.567,
+      "x": 13.225,
+      "y": 145.398,
+      "z": 41.413
+    },
+    {
+      "t": 145.87,
+      "x": 11.516,
+      "y": 144.787,
+      "z": 40.975
+    },
+    {
+      "t": 146.172,
+      "x": 9.845,
+      "y": 144.186,
+      "z": 40.535
+    },
+    {
+      "t": 146.475,
+      "x": 8.121,
+      "y": 143.575,
+      "z": 40.082
+    },
+    {
+      "t": 146.778,
+      "x": 6.45,
+      "y": 142.986,
+      "z": 39.654
+    },
+    {
+      "t": 147.081,
+      "x": 4.637,
+      "y": 142.341,
+      "z": 39.323
+    },
+    {
+      "t": 147.383,
+      "x": 2.905,
+      "y": 141.74,
+      "z": 39.242
+    },
+    {
+      "t": 147.686,
+      "x": 1.227,
+      "y": 141.14,
+      "z": 39.453
+    },
+    {
+      "t": 147.989,
+      "x": -0.504,
+      "y": 140.517,
+      "z": 39.991
+    },
+    {
+      "t": 148.291,
+      "x": -2.183,
+      "y": 139.917,
+      "z": 40.698
+    },
+    {
+      "t": 148.495,
+      "x": -3.312,
+      "y": 139.505,
+      "z": 41.225
+    },
+    {
+      "t": 148.799,
+      "x": -5.02,
+      "y": 138.894,
+      "z": 42.042
+    },
+    {
+      "t": 149.101,
+      "x": -6.812,
+      "y": 138.238,
+      "z": 42.837
+    },
+    {
+      "t": 149.405,
+      "x": -8.46,
+      "y": 137.626,
+      "z": 43.417
+    },
+    {
+      "t": 149.708,
+      "x": -10.154,
+      "y": 137.014,
+      "z": 43.77
+    },
+    {
+      "t": 150.011,
+      "x": -11.81,
+      "y": 136.414,
+      "z": 43.885
+    },
+    {
+      "t": 150.314,
+      "x": -13.511,
+      "y": 135.813,
+      "z": 43.812
+    },
+    {
+      "t": 150.617,
+      "x": -15.167,
+      "y": 135.235,
+      "z": 43.567
+    },
+    {
+      "t": 150.919,
+      "x": -16.868,
+      "y": 134.646,
+      "z": 43.205
+    },
+    {
+      "t": 151.221,
+      "x": -18.659,
+      "y": 134.012,
+      "z": 42.806
+    },
+    {
+      "t": 151.525,
+      "x": -20.292,
+      "y": 133.434,
+      "z": 42.442
+    },
+    {
+      "t": 151.828,
+      "x": -21.843,
+      "y": 132.878,
+      "z": 42.043
+    },
+    {
+      "t": 152.131,
+      "x": -23.175,
+      "y": 132.389,
+      "z": 41.631
+    },
+    {
+      "t": 152.435,
+      "x": -24.372,
+      "y": 131.977,
+      "z": 41.192
+    },
+    {
+      "t": 152.739,
+      "x": -25.403,
+      "y": 131.644,
+      "z": 40.761
+    },
+    {
+      "t": 153.041,
+      "x": -26.397,
+      "y": 131.355,
+      "z": 40.293
+    },
+    {
+      "t": 153.344,
+      "x": -27.224,
+      "y": 131.121,
+      "z": 39.845
+    },
+    {
+      "t": 153.647,
+      "x": -27.977,
+      "y": 130.899,
+      "z": 39.452
+    },
+    {
+      "t": 153.951,
+      "x": -28.752,
+      "y": 130.61,
+      "z": 39.178
+    },
+    {
+      "t": 154.254,
+      "x": -29.475,
+      "y": 130.176,
+      "z": 39.128
+    },
+    {
+      "t": 154.558,
+      "x": -30.092,
+      "y": 129.598,
+      "z": 39.353
+    },
+    {
+      "t": 154.861,
+      "x": -30.566,
+      "y": 128.886,
+      "z": 39.933
+    },
+    {
+      "t": 155.163,
+      "x": -30.845,
+      "y": 128.174,
+      "z": 40.647
+    },
+    {
+      "t": 155.466,
+      "x": -30.995,
+      "y": 127.396,
+      "z": 41.455
+    },
+    {
+      "t": 155.769,
+      "x": -31.101,
+      "y": 126.54,
+      "z": 42.244
+    },
+    {
+      "t": 156.072,
+      "x": -31.274,
+      "y": 125.539,
+      "z": 42.958
+    },
+    {
+      "t": 156.376,
+      "x": -31.522,
+      "y": 124.449,
+      "z": 43.458
+    },
+    {
+      "t": 156.68,
+      "x": -31.838,
+      "y": 123.16,
+      "z": 43.722
+    },
+    {
+      "t": 156.982,
+      "x": -32.162,
+      "y": 121.814,
+      "z": 43.749
+    },
+    {
+      "t": 157.285,
+      "x": -32.486,
+      "y": 120.38,
+      "z": 43.589
+    },
+    {
+      "t": 157.587,
+      "x": -32.824,
+      "y": 118.79,
+      "z": 43.269
+    },
+    {
+      "t": 157.89,
+      "x": -33.156,
+      "y": 117.099,
+      "z": 42.89
+    },
+    {
+      "t": 158.192,
+      "x": -33.517,
+      "y": 115.276,
+      "z": 42.505
+    },
+    {
+      "t": 158.496,
+      "x": -33.878,
+      "y": 113.519,
+      "z": 42.126
+    },
+    {
+      "t": 158.8,
+      "x": -34.292,
+      "y": 111.651,
+      "z": 41.692
+    },
+    {
+      "t": 159.001,
+      "x": -34.556,
+      "y": 110.506,
+      "z": 41.411
+    },
+    {
+      "t": 159.303,
+      "x": -34.985,
+      "y": 108.76,
+      "z": 40.975
+    },
+    {
+      "t": 159.605,
+      "x": -35.414,
+      "y": 107.058,
+      "z": 40.544
+    },
+    {
+      "t": 159.908,
+      "x": -35.85,
+      "y": 105.279,
+      "z": 40.096
+    },
+    {
+      "t": 160.21,
+      "x": -36.279,
+      "y": 103.545,
+      "z": 39.657
+    },
+    {
+      "t": 160.514,
+      "x": -36.701,
+      "y": 101.754,
+      "z": 39.207
+    },
+    {
+      "t": 160.817,
+      "x": -37.115,
+      "y": 100.02,
+      "z": 38.768
+    },
+    {
+      "t": 161.12,
+      "x": -37.559,
+      "y": 98.152,
+      "z": 38.29
+    },
+    {
+      "t": 161.422,
+      "x": -37.965,
+      "y": 96.362,
+      "z": 37.832
+    },
+    {
+      "t": 161.725,
+      "x": -38.342,
+      "y": 94.616,
+      "z": 37.389
+    },
+    {
+      "t": 162.028,
+      "x": -38.725,
+      "y": 92.837,
+      "z": 36.936
+    },
+    {
+      "t": 162.33,
+      "x": -39.087,
+      "y": 91.091,
+      "z": 36.493
+    },
+    {
+      "t": 162.635,
+      "x": -39.456,
+      "y": 89.312,
+      "z": 36.036
+    },
+    {
+      "t": 162.938,
+      "x": -39.817,
+      "y": 87.577,
+      "z": 35.59
+    },
+    {
+      "t": 163.241,
+      "x": -40.208,
+      "y": 85.698,
+      "z": 35.102
+    },
+    {
+      "t": 163.543,
+      "x": -40.577,
+      "y": 83.93,
+      "z": 34.642
+    },
+    {
+      "t": 163.847,
+      "x": -40.938,
+      "y": 82.195,
+      "z": 34.195
+    },
+    {
+      "t": 164.15,
+      "x": -41.315,
+      "y": 80.416,
+      "z": 33.742
+    },
+    {
+      "t": 164.454,
+      "x": -41.676,
+      "y": 78.67,
+      "z": 33.302
+    },
+    {
+      "t": 164.758,
+      "x": -42.052,
+      "y": 76.88,
+      "z": 32.847
+    },
+    {
+      "t": 165.061,
+      "x": -42.451,
+      "y": 75.001,
+      "z": 32.363
+    },
+    {
+      "t": 165.363,
+      "x": -42.828,
+      "y": 73.266,
+      "z": 31.976
+    },
+    {
+      "t": 165.667,
+      "x": -43.219,
+      "y": 71.476,
+      "z": 31.654
+    },
+    {
+      "t": 165.969,
+      "x": -43.603,
+      "y": 69.73,
+      "z": 31.388
+    },
+    {
+      "t": 166.274,
+      "x": -43.979,
+      "y": 67.94,
+      "z": 31.159
+    },
+    {
+      "t": 166.577,
+      "x": -44.34,
+      "y": 66.194,
+      "z": 30.965
+    },
+    {
+      "t": 166.881,
+      "x": -44.724,
+      "y": 64.326,
+      "z": 30.785
+    },
+    {
+      "t": 167.185,
+      "x": -45.086,
+      "y": 62.547,
+      "z": 30.642
+    },
+    {
+      "t": 167.488,
+      "x": -45.454,
+      "y": 60.824,
+      "z": 30.525
+    },
+    {
+      "t": 167.791,
+      "x": -45.831,
+      "y": 59.045,
+      "z": 30.432
+    },
+    {
+      "t": 168.094,
+      "x": -46.207,
+      "y": 57.31,
+      "z": 30.358
+    },
+    {
+      "t": 168.399,
+      "x": -46.598,
+      "y": 55.531,
+      "z": 30.29
+    },
+    {
+      "t": 168.701,
+      "x": -47.005,
+      "y": 53.64,
+      "z": 30.229
+    },
+    {
+      "t": 169.005,
+      "x": -47.381,
+      "y": 51.895,
+      "z": 30.182
+    },
+    {
+      "t": 169.308,
+      "x": -47.75,
+      "y": 50.127,
+      "z": 30.142
+    },
+    {
+      "t": 169.51,
+      "x": -47.991,
+      "y": 49.048,
+      "z": 30.122
+    },
+    {
+      "t": 169.814,
+      "x": -48.33,
+      "y": 47.603,
+      "z": 30.096
+    },
+    {
+      "t": 170.117,
+      "x": -48.668,
+      "y": 46.324,
+      "z": 30.072
+    },
+    {
+      "t": 170.421,
+      "x": -49.015,
+      "y": 45.167,
+      "z": 30.051
+    },
+    {
+      "t": 170.723,
+      "x": -49.308,
+      "y": 44.233,
+      "z": 30.037
+    },
+    {
+      "t": 171.026,
+      "x": -49.564,
+      "y": 43.388,
+      "z": 30.027
+    },
+    {
+      "t": 171.329,
+      "x": -49.767,
+      "y": 42.643,
+      "z": 30.024
+    },
+    {
+      "t": 171.632,
+      "x": -49.925,
+      "y": 41.887,
+      "z": 30.026
+    },
+    {
+      "t": 171.936,
+      "x": -49.986,
+      "y": 41.12,
+      "z": 30.033
+    },
+    {
+      "t": 172.239,
+      "x": -49.805,
+      "y": 40.319,
+      "z": 30.043
+    },
+    {
+      "t": 172.543,
+      "x": -49.323,
+      "y": 39.663,
+      "z": 30.026
+    },
+    {
+      "t": 172.845,
+      "x": -48.668,
+      "y": 39.163,
+      "z": 30.001
+    },
+    {
+      "t": 173.148,
+      "x": -47.916,
+      "y": 38.74,
+      "z": 29.996
+    },
+    {
+      "t": 173.45,
+      "x": -47.058,
+      "y": 38.284,
+      "z": 30.016
+    },
+    {
+      "t": 173.754,
+      "x": -45.944,
+      "y": 37.617,
+      "z": 30.044
+    },
+    {
+      "t": 174.056,
+      "x": -44.641,
+      "y": 36.694,
+      "z": 30.039
+    },
+    {
+      "t": 174.36,
+      "x": -43.083,
+      "y": 35.46,
+      "z": 29.999
+    },
+    {
+      "t": 174.663,
+      "x": -41.593,
+      "y": 34.204,
+      "z": 29.975
+    },
+    {
+      "t": 174.965,
+      "x": -40.238,
+      "y": 33.036,
+      "z": 29.969
+    },
+    {
+      "t": 175.268,
+      "x": -38.936,
+      "y": 31.88,
+      "z": 29.968
+    },
+    {
+      "t": 175.571,
+      "x": -37.687,
+      "y": 30.757,
+      "z": 29.969
+    },
+    {
+      "t": 175.875,
+      "x": -36.392,
+      "y": 29.589,
+      "z": 29.969
+    },
+    {
+      "t": 176.179,
+      "x": -35.09,
+      "y": 28.433,
+      "z": 29.969
+    },
+    {
+      "t": 176.481,
+      "x": -33.645,
+      "y": 27.165,
+      "z": 29.969
+    },
+    {
+      "t": 176.783,
+      "x": -32.237,
+      "y": 25.975,
+      "z": 29.964
+    },
+    {
+      "t": 177.086,
+      "x": -30.86,
+      "y": 24.83,
+      "z": 29.963
+    },
+    {
+      "t": 177.388,
+      "x": -29.445,
+      "y": 23.673,
+      "z": 29.972
+    },
+    {
+      "t": 177.691,
+      "x": -28.067,
+      "y": 22.561,
+      "z": 29.983
+    },
+    {
+      "t": 177.994,
+      "x": -26.652,
+      "y": 21.405,
+      "z": 29.994
+    },
+    {
+      "t": 178.295,
+      "x": -25.283,
+      "y": 20.282,
+      "z": 29.999
+    },
+    {
+      "t": 178.599,
+      "x": -23.792,
+      "y": 19.059,
+      "z": 29.997
+    },
+    {
+      "t": 178.902,
+      "x": -22.37,
+      "y": 17.902,
+      "z": 29.99
+    },
+    {
+      "t": 179.204,
+      "x": -20.985,
+      "y": 16.779,
+      "z": 29.99
+    },
+    {
+      "t": 179.507,
+      "x": -19.555,
+      "y": 15.623,
+      "z": 29.996
+    },
+    {
+      "t": 179.81,
+      "x": -18.177,
+      "y": 14.522,
+      "z": 30.0
+    },
+    {
+      "t": 180.012,
+      "x": -17.244,
+      "y": 13.766,
+      "z": 30.001
+    }
+  ],
+  "topology": {
+    "id": "multirotor-companion-v1",
+    "name": "Multirotor with companion computer",
+    "vehicle_class": "multirotor",
+    "components": [
+      {
+        "id": "external.gcs",
+        "name": "Ground Control Station",
+        "domain": "external",
+        "category": "Service",
+        "trust_zone": "external",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Operator ground station issuing commands over the C2 link."
+      },
+      {
+        "id": "communications.c2",
+        "name": "C2 Datalink",
+        "domain": "communications",
+        "category": "Communications",
+        "trust_zone": "external",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Command and control link between the ground station and the vehicle."
+      },
+      {
+        "id": "communications.telemetry",
+        "name": "Telemetry Gateway",
+        "domain": "communications",
+        "category": "Communications",
+        "trust_zone": "mission",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Onboard gateway forwarding telemetry to the ground and commands onboard."
+      },
+      {
+        "id": "mission.compute",
+        "name": "Mission Computer",
+        "domain": "mission_compute",
+        "category": "Compute",
+        "trust_zone": "mission",
+        "healthy_state": "OPERATIONAL",
+        "critical": false,
+        "description": "Companion computer hosting mission planning and autonomy services."
+      },
+      {
+        "id": "mission.planner",
+        "name": "Mission Planner Process",
+        "domain": "mission_compute",
+        "category": "Process",
+        "trust_zone": "mission",
+        "healthy_state": "OPERATIONAL",
+        "critical": false,
+        "description": "Process sequencing waypoints and issuing setpoints to the flight core."
+      },
+      {
+        "id": "mission.services",
+        "name": "Mission Services",
+        "domain": "mission_compute",
+        "category": "Service",
+        "trust_zone": "mission",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Auxiliary onboard services (payload, logging, perception)."
+      },
+      {
+        "id": "network.companion_link",
+        "name": "Companion Link",
+        "domain": "mission_compute",
+        "category": "Network",
+        "trust_zone": "mission",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Onboard network link between the mission computer and the flight core."
+      },
+      {
+        "id": "security.gateway",
+        "name": "Command Gateway",
+        "domain": "flight_control",
+        "category": "Security boundary",
+        "trust_zone": "flight_critical",
+        "healthy_state": "OPERATIONAL",
+        "critical": false,
+        "description": "Policy enforcement point validating mission commands before they reach the flight core. Fails closed."
+      },
+      {
+        "id": "navigation.gnss",
+        "name": "GNSS Receiver",
+        "domain": "navigation",
+        "category": "Navigation",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "Satellite positioning source used to aid the navigation estimator."
+      },
+      {
+        "id": "navigation.estimator",
+        "name": "Navigation Estimator",
+        "domain": "navigation",
+        "category": "Navigation",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": "State estimator fusing GNSS, inertial, barometric and magnetic data."
+      },
+      {
+        "id": "sensors.barometer",
+        "name": "Barometer",
+        "domain": "navigation",
+        "category": "Sensors",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": ""
+      },
+      {
+        "id": "sensors.magnetometer",
+        "name": "Magnetometer",
+        "domain": "navigation",
+        "category": "Sensors",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": ""
+      },
+      {
+        "id": "sensors.imu",
+        "name": "Inertial Measurement Unit",
+        "domain": "flight_control",
+        "category": "Sensors",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": true,
+        "description": "Primary attitude sensing for the flight core."
+      },
+      {
+        "id": "flight_control.core",
+        "name": "Flight Core",
+        "domain": "flight_control",
+        "category": "Compute",
+        "trust_zone": "flight_critical",
+        "healthy_state": "OPERATIONAL",
+        "critical": true,
+        "description": "Flight controller running attitude and position control loops."
+      },
+      {
+        "id": "actuation.motors",
+        "name": "Motors and ESCs",
+        "domain": "actuation",
+        "category": "Power",
+        "trust_zone": "flight_critical",
+        "healthy_state": "OPERATIONAL",
+        "critical": true,
+        "description": ""
+      },
+      {
+        "id": "power.battery",
+        "name": "Battery",
+        "domain": "power",
+        "category": "Power",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": ""
+      },
+      {
+        "id": "power.bus",
+        "name": "Power Distribution",
+        "domain": "power",
+        "category": "Power",
+        "trust_zone": "flight_critical",
+        "healthy_state": "NOMINAL",
+        "critical": false,
+        "description": ""
+      }
+    ],
+    "dependencies": [
+      {
+        "provider": "external.gcs",
+        "dependent": "communications.c2",
+        "relation": "commands",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "communications.c2",
+        "dependent": "communications.telemetry",
+        "relation": "depends_on",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "communications.telemetry",
+        "dependent": "mission.compute",
+        "relation": "depends_on",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "mission.compute",
+        "dependent": "mission.planner",
+        "relation": "hosts",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "mission.compute",
+        "dependent": "mission.services",
+        "relation": "hosts",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "mission.planner",
+        "dependent": "network.companion_link",
+        "relation": "depends_on",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "network.companion_link",
+        "dependent": "security.gateway",
+        "relation": "depends_on",
+        "crosses_trust_boundary": true
+      },
+      {
+        "provider": "security.gateway",
+        "dependent": "flight_control.core",
+        "relation": "commands",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "navigation.gnss",
+        "dependent": "navigation.estimator",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "sensors.barometer",
+        "dependent": "navigation.estimator",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "sensors.magnetometer",
+        "dependent": "navigation.estimator",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "sensors.imu",
+        "dependent": "navigation.estimator",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "sensors.imu",
+        "dependent": "flight_control.core",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "navigation.estimator",
+        "dependent": "flight_control.core",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "navigation.estimator",
+        "dependent": "mission.planner",
+        "relation": "aids",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "flight_control.core",
+        "dependent": "actuation.motors",
+        "relation": "drives",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "power.battery",
+        "dependent": "power.bus",
+        "relation": "supplies",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "power.bus",
+        "dependent": "actuation.motors",
+        "relation": "supplies",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "power.bus",
+        "dependent": "flight_control.core",
+        "relation": "supplies",
+        "crosses_trust_boundary": false
+      },
+      {
+        "provider": "power.bus",
+        "dependent": "mission.compute",
+        "relation": "supplies",
+        "crosses_trust_boundary": false
+      }
+    ],
+    "trust_boundaries": [
+      {
+        "id": "mission-flight",
+        "name": "Mission / Flight-critical boundary",
+        "upstream_zone": "mission",
+        "downstream_zone": "flight_critical",
+        "enforcement_point": "security.gateway",
+        "description": "Commands from the mission computer are validated by the command gateway before reaching the flight core. The flight core keeps full control authority if everything upstream fails."
+      },
+      {
+        "id": "external-mission",
+        "name": "External / Mission boundary",
+        "upstream_zone": "external",
+        "downstream_zone": "mission",
+        "enforcement_point": "communications.telemetry",
+        "description": "Ground commands enter the vehicle through the telemetry gateway."
+      }
+    ]
+  },
+  "artifacts": [],
+  "provenance": {
+    "software_version": "0.1.0",
+    "scenario_api_version": "resilient-uas.dev/v1alpha1",
+    "protocol_version": "1",
+    "scenario_hash": "sha256:c9386c00a2d386c7816297e490890ec71da4c6f60e288805c973f3fa1fd9dc94",
+    "scenario_version": "1",
+    "adapter": "px4-gazebo",
+    "adapter_version": "0.1.0 (mavsdk-grpc 3.17.4)",
+    "target_configuration": {},
+    "seed": 7,
+    "speed": 1.0,
+    "git_commit": null,
+    "image_versions": {},
+    "runner_id": "sim-harness",
+    "environment": {
+      "software_version": "0.1.0",
+      "execution": "sim-harness"
+    },
+    "started_at": "2026-09-20T20:23:12.616108Z",
+    "ended_at": "2026-09-20T20:26:14.123582Z",
+    "score_profile": "default",
+    "data_origin": "PX4 SITL simulation (software in the loop, no hardware)"
+  }
+}
