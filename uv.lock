@@ -1200,6 +1200,7 @@ dependencies = [
     { name = "reslab-adapter-px4" },
     { name = "reslab-adapter-replay" },
     { name = "reslab-core" },
+    { name = "reslab-platform" },
     { name = "structlog" },
 ]
 
@@ -1214,6 +1215,7 @@ requires-dist = [
     { name = "reslab-adapter-px4", editable = "adapters/px4-gazebo" },
     { name = "reslab-adapter-replay", editable = "adapters/replay" },
     { name = "reslab-core", editable = "packages/core" },
+    { name = "reslab-platform", editable = "packages/platform" },
     { name = "structlog", specifier = "==26.1.0" },
 ]
 

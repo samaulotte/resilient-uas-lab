@@ -76,6 +76,21 @@ class TelemetryMessage(ProtocolMessage):
     samples: list[TelemetrySample] = Field(min_length=1, max_length=500)
 
 
+class RunFinishedMessage(ProtocolMessage):
+    """Final word of the runner: the run is over and no more messages will follow."""
+
+    type: Literal["run_finished"] = "run_finished"
+    run_id: str
+    outcome: Literal["completed", "failed", "cancelled"]
+    reason: str = ""
+    runner_id: str
+    simulation_time: float = 0.0
+    event_count: int = 0
+    sample_count: int = 0
+    mission_complete: bool = False
+    final_component_states: dict[str, str] = Field(default_factory=dict)
+
+
 class ArtifactMessage(ProtocolMessage):
     """Small artifact produced by the runner, carried inline (base64)."""
 

@@ -67,6 +67,8 @@ ignore = [
   "RUF012", # mutable class attributes handled by pydantic
   "B008",   # FastAPI/Typer dependency defaults
   "S104",   # binding 0.0.0.0 inside containers is intentional
+  "ASYNC109", # explicit timeout parameters are part of our public signatures
+  "ASYNC240", # tiny health-marker file writes are acceptable in async code
 ]
 
 [tool.ruff.lint.per-file-ignores]

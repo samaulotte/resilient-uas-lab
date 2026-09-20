@@ -239,7 +239,7 @@ def _domain_availability(
         dt = max(0.0, nxt.t - current.t)
         if all(current.health.get(c, ComponentState.UNKNOWN).is_healthy for c in components):
             healthy_time += dt
-    return min(1.0, healthy_time / total)
+    return round(min(1.0, healthy_time / total), 6)
 
 
 def _weighted_integrity(samples: Sequence[TelemetrySample], component: str, total: float) -> float:
@@ -253,7 +253,7 @@ def _weighted_integrity(samples: Sequence[TelemetrySample], component: str, tota
             score += dt
         elif state.is_impaired:
             score += 0.5 * dt
-    return min(1.0, score / total)
+    return round(min(1.0, score / total), 6)
 
 
 def compute_metrics(
