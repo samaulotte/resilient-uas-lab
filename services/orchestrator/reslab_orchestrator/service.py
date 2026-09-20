@@ -44,7 +44,8 @@ log = get_logger(__name__)
 MESSAGES = Counter("reslab_orchestrator_messages_total", "Bus messages processed", ["type"])
 RUNS_COMPLETED = Counter("reslab_orchestrator_runs_finalized_total", "Runs finalized", ["state"])
 ACTIVE_RUNS = Gauge("reslab_orchestrator_active_runs", "Runs in a non-terminal state")
-HEALTH_FILE = Path("/tmp/reslab-orchestrator-healthy")  # noqa: S108 - container-local marker
+# Container-local liveness marker on a private tmpfs (see infra/docker/healthcheck.py).
+HEALTH_FILE = Path("/tmp/reslab-orchestrator-healthy")  # noqa: S108  # nosec B108
 
 
 class OrchestratorService:

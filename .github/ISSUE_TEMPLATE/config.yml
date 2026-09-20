@@ -1,0 +1,4 @@
+# Security reports must not be filed as issues: use "Report a vulnerability" under the
+# repository Security tab (see SECURITY.md). Blank issues are disabled so that every
+# report carries the information needed to reproduce it.
+blank_issues_enabled: false

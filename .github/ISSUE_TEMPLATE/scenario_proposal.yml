@@ -1,0 +1,39 @@
+name: Scenario proposal
+description: Contribute a new starter scenario to the library
+title: "scenario: "
+labels: [scenario, needs-triage]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Scenario name
+      description: Lowercase, hyphen separated (this becomes the file name under scenarios/)
+      placeholder: battery-sag-on-climb
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Resilience hypothesis
+      description: What behaviour of the autonomous system does this scenario test, and what would a pass or a fail tell an engineer?
+    validations:
+      required: true
+  - type: textarea
+    id: yaml
+    attributes:
+      label: Scenario document
+      description: Paste the `resilient-uas.dev/v1alpha1` YAML. `reslab scenario validate` must accept it.
+      render: yaml
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: The scenario passes on the mock adapter (`reslab run <file> --local`)
+          required: true
+        - label: Expectations and assertions describe observable system behaviour, not implementation details
+          required: true
+        - label: No RF, electromagnetic or weapon parameters are modelled (effects only)
+          required: true

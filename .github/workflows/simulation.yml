@@ -1,0 +1,100 @@
+name: Simulation (PX4 SITL)
+
+# The PX4 SITL / Gazebo profile is heavy (multi-gigabyte image, several minutes of
+# simulated flight per scenario) and is therefore not part of the required CI checks.
+# It runs nightly and on demand. A failure here is a signal to investigate, not a
+# merge blocker, until the profile has proven stable on hosted runners.
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Scenario to execute against the simulator
+        default: gnss-loss
+        type: choice
+        options:
+          - gnss-loss
+          - sensor-failure
+          - datalink-loss
+          - mission-compute-restart
+          - compound-degradation
+      speed:
+        description: Simulation speed factor requested from the runner
+        default: "1"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: simulation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  px4-sitl:
+    name: PX4 SITL scenario run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SCENARIO: ${{ inputs.scenario || 'gnss-loss' }}
+      SPEED: ${{ inputs.speed || '1' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
+      - name: Install the command line interface
+        run: uv sync --frozen --package reslab-cli
+      - name: Free disk space for the simulator image
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: Start the platform with the simulation profile
+        run: |
+          cp .env.example .env
+          echo "RESLAB_GIT_COMMIT=${GITHUB_SHA}" >> .env
+          docker compose --profile sim up --build -d --wait --wait-timeout 600
+          docker compose --profile sim ps
+      - name: Wait for the simulation runner to register
+        run: |
+          for _ in $(seq 1 90); do
+            if curl -sf http://localhost:8080/api/v1/system | grep -q '"px4-gazebo"'; then
+              echo "simulation runner online"; exit 0
+            fi
+            sleep 5
+          done
+          echo "no runner advertising the px4-gazebo adapter registered in time"
+          docker compose --profile sim logs --no-color --tail=200 runner-sim px4-sim
+          exit 1
+      - name: Execute the scenario
+        run: |
+          mkdir -p artifacts/simulation
+          # The CLI follows the run and exits non-zero when the benchmark is not passed.
+          timeout 1800 uv run reslab run "$SCENARIO" --adapter px4-gazebo --speed "$SPEED" \
+            --api http://localhost:8080 --wait | tee artifacts/simulation/run.log
+      - name: Download the report
+        if: always()
+        run: |
+          run_id="$(curl -sf 'http://localhost:8080/api/v1/runs?limit=1' | python3 -c 'import json,sys; runs=json.load(sys.stdin)["runs"]; print(runs[0]["id"] if runs else "")')"
+          if [ -n "$run_id" ]; then
+            uv run reslab report "$run_id" --api http://localhost:8080 \
+              -o artifacts/simulation/report.json --html artifacts/simulation/report.html || true
+          fi
+      - name: Simulator and runner logs
+        if: always()
+        run: docker compose --profile sim logs --no-color --tail=500 runner-sim px4-sim > artifacts/simulation/logs.txt || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: simulation-${{ env.SCENARIO }}
+          path: artifacts/simulation/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Stop the platform
+        if: always()
+        run: docker compose --profile sim down -v --remove-orphans

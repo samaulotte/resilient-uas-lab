@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a capability, metric, adapter or scenario
+title: "feat: "
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What resilience question can you not answer with the platform today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How should it work? For scenario or schema changes, sketch the YAML. For metrics, define the measurement precisely.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Scenario schema
+        - Fault catalogue (new effect)
+        - Metrics or scoring
+        - Adapter (new target system)
+        - Mission Control UI
+        - Reports and comparison
+        - CLI and CI integration
+        - Deployment and operations
+        - Documentation
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: The project simulates the effects of degradation on autonomous systems. It never implements or documents attack techniques, RF interference, spoofing signal generation or weapon parameters.
+      options:
+        - label: This proposal stays within the defensive, effects-only scope described in docs/threat-model.md
+          required: true

@@ -1,0 +1,51 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "build(actions)"
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      python-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "build(python)"
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      javascript-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "build(web)"
+
+  - package-ecosystem: docker
+    directories:
+      - /infra/docker
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "build(images)"
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "build(compose)"

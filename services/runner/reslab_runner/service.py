@@ -43,7 +43,8 @@ RUNS_FINISHED = Counter(
     "reslab_runner_runs_finished_total", "Runs finished by this runner", ["outcome"]
 )
 ACTIVE_RUNS = Gauge("reslab_runner_active_runs", "Runs currently executing")
-HEALTH_FILE = Path("/tmp/reslab-runner-healthy")  # noqa: S108 - container-local marker
+# Container-local liveness marker on a private tmpfs (see infra/docker/healthcheck.py).
+HEALTH_FILE = Path("/tmp/reslab-runner-healthy")  # noqa: S108  # nosec B108
 
 
 class RunnerService:

@@ -1,0 +1,267 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  UV_VERSION: "0.8.17"
+  PNPM_VERSION: "10.28.0"
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  python:
+    name: Python lint and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+      - name: Ruff lint
+        run: uv run ruff check --output-format=github .
+      - name: Ruff format
+        run: uv run ruff format --check .
+      - name: Unit tests
+        run: uv run pytest -q --junitxml=artifacts/junit-python.xml
+      - name: Published schemas match the models
+        run: RESLAB_LOG_LEVEL=WARNING uv run python scripts/export_schemas.py --check
+      - name: Scenario catalogue validates
+        run: |
+          for f in scenarios/*.yaml; do
+            uv run reslab scenario validate "$f"
+          done
+      - name: Starter scenarios pass in-process
+        run: scripts/run_scenarios_local.sh artifacts/reports
+      - name: Resilience regression check
+        run: |
+          uv run reslab regression check --candidate artifacts/reports \
+            --thresholds regression-thresholds.yaml
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: python-reports
+          path: artifacts/
+          retention-days: 14
+
+  web:
+    name: Web lint, typecheck, unit tests and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Generated client matches the OpenAPI document
+        run: |
+          pnpm gen:client
+          git diff --exit-code -- packages/client/src/schema.d.ts
+      - name: Prettier
+        run: pnpm format:check
+      - name: ESLint
+        run: pnpm --filter @reslab/web lint
+      - name: Typecheck
+        run: pnpm -r typecheck
+      - name: Unit tests
+        run: pnpm --filter @reslab/web test
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  images:
+    name: Container images build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [python, web]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build Python service image (api)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/python-service.Dockerfile
+          build-args: |
+            SERVICE=api
+            VERSION=${{ github.ref_name }}
+            GIT_COMMIT=${{ github.sha }}
+          push: false
+          load: true
+          tags: resilient-uas-lab/api:ci
+          cache-from: type=gha,scope=python
+          cache-to: type=gha,scope=python,mode=max
+      - name: Build web image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/web.Dockerfile
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            GIT_COMMIT=${{ github.sha }}
+          push: false
+          load: true
+          tags: resilient-uas-lab/web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: Images run as an unprivileged user
+        run: |
+          for image in resilient-uas-lab/api:ci resilient-uas-lab/web:ci; do
+            user="$(docker inspect --format '{{.Config.User}}' "$image")"
+            echo "$image runs as '$user'"
+            case "$user" in
+              ""|root|0|0:0) echo "image must not run as root"; exit 1 ;;
+            esac
+          done
+
+  integration:
+    name: Mock pipeline integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [python]
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: reslab
+          POSTGRES_PASSWORD: reslab
+          POSTGRES_DB: reslab
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U reslab -d reslab"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+      objectstore:
+        image: rustfs/rustfs:1.0.0
+        env:
+          RUSTFS_ACCESS_KEY: reslab
+          RUSTFS_SECRET_KEY: reslab-secret
+        ports: ["9000:9000"]
+        options: >-
+          --health-cmd "curl -sf -o /dev/null http://127.0.0.1:9000/health/live"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      RESLAB_DATABASE_URL: postgresql+asyncpg://reslab:reslab@localhost:5432/reslab
+      RESLAB_NATS_URL: nats://localhost:4222
+      RESLAB_S3_ENDPOINT_URL: http://localhost:9000
+      RESLAB_S3_ACCESS_KEY: reslab
+      RESLAB_S3_SECRET_KEY: reslab-secret
+      RESLAB_S3_BUCKET: reslab-artifacts
+      RESLAB_SCENARIOS_DIR: ${{ github.workspace }}/scenarios
+      RESLAB_ORCHESTRATOR_METRICS_PORT: "0"
+      RESLAB_RUNNER_METRICS_PORT: "0"
+      RESLAB_LOG_FORMAT: console
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+      - name: Start NATS JetStream with the repository configuration
+        run: |
+          docker run -d --name nats -p 4222:4222 -p 8222:8222 \
+            -v "$PWD/infra/nats/nats.conf:/etc/nats/nats.conf:ro" \
+            nats:2.15.0-alpine -c /etc/nats/nats.conf
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8222/healthz >/dev/null && exit 0
+            sleep 1
+          done
+          docker logs nats
+          exit 1
+      - name: Integration tests
+        run: RESLAB_INTEGRATION=1 uv run pytest tests/integration -q -m integration
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: integration-artifacts
+          path: artifacts/integration/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  e2e:
+    name: End-to-end (Compose stack + Playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: [python, web]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Start the platform
+        run: |
+          cp .env.example .env
+          echo "RESLAB_GIT_COMMIT=${GITHUB_SHA}" >> .env
+          docker compose up --build -d --wait --wait-timeout 300
+          docker compose ps
+      - name: Platform is ready
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -sf http://localhost:8080/readyz | grep -q '"ready"'; then exit 0; fi
+            sleep 2
+          done
+          curl -s http://localhost:8080/readyz || true
+          exit 1
+      - name: Playwright
+        run: pnpm exec playwright test -c tests/e2e/playwright.config.ts
+        env:
+          RESLAB_E2E_BASE_URL: http://localhost:8080
+          CI: "true"
+      - name: Platform logs
+        if: failure()
+        run: docker compose logs --no-color --tail=300
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Stop the platform
+        if: always()
+        run: docker compose down -v --remove-orphans

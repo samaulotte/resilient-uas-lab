@@ -47,7 +47,8 @@ class PlatformSettings(BaseSettings):
     scenarios_dir: Path = Path("./scenarios")
 
     # API
-    api_host: str = "0.0.0.0"
+    # Bound inside the container; the gateway is the only published endpoint.
+    api_host: str = "0.0.0.0"  # nosec B104
     api_port: int = 8000
     api_cors_origins: str = Field(
         default="http://localhost:3000,http://localhost:8080",

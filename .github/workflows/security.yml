@@ -1,0 +1,195 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly rescan so newly published advisories surface without a code change.
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  dependency-review:
+    name: Dependency review (pull requests)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
+  python-audit:
+    name: Python dependency audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
+      - name: Export the locked dependency set
+        run: uv export --all-packages --frozen --no-dev --no-emit-workspace --format requirements.txt -o requirements.lock.txt
+      - name: pip-audit against the lock
+        run: uvx pip-audit --strict --requirement requirements.lock.txt --disable-pip
+      - name: Bandit (application code)
+        run: uvx bandit -q -r packages/core packages/platform packages/cli adapters services -x '*/tests/*' -ll
+
+  web-audit:
+    name: JavaScript dependency audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "10.28.0"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: pnpm audit (production dependencies, high and above)
+        run: pnpm audit --prod --audit-level high
+
+  secrets:
+    name: Secret scanning
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: /language:${{ matrix.language }}
+
+  containers:
+    name: Container images (Dockerfile lint, vulnerability scan, SBOM)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compose file and Dockerfiles do not mount the Docker socket or run privileged
+        run: |
+          set -eu
+          if grep -rn "docker.sock" compose.yaml infra/; then
+            echo "the Docker socket must never be mounted"; exit 1
+          fi
+          if grep -n "privileged: *true" compose.yaml; then
+            echo "privileged containers are not allowed"; exit 1
+          fi
+          # Every image must be pinned by digest.
+          if grep -nE "^\s+image:" compose.yaml | grep -v "@sha256:"; then
+            echo "all images must be pinned by digest"; exit 1
+          fi
+          echo "compose policy checks passed"
+      - name: Dockerfile misconfiguration scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra/docker
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the API image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/python-service.Dockerfile
+          build-args: SERVICE=api
+          push: false
+          load: true
+          tags: resilient-uas-lab/api:scan
+          cache-from: type=gha,scope=python
+      - name: Build the web image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: infra/docker/web.Dockerfile
+          push: false
+          load: true
+          tags: resilient-uas-lab/web:scan
+          cache-from: type=gha,scope=web
+      - name: Vulnerability scan (API image)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: resilient-uas-lab/api:scan
+          format: sarif
+          output: trivy-api.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+      - name: Vulnerability scan (web image)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: resilient-uas-lab/web:scan
+          format: sarif
+          output: trivy-web.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+      - uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        if: always()
+        with:
+          sarif_file: trivy-api.sarif
+          category: trivy-api
+      - uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        if: always()
+        with:
+          sarif_file: trivy-web.sarif
+          category: trivy-web
+      - name: SBOM (API image)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: resilient-uas-lab/api:scan
+          format: spdx-json
+          artifact-name: sbom-api.spdx.json
+          upload-artifact: true
+      - name: SBOM (web image)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: resilient-uas-lab/web:scan
+          format: spdx-json
+          artifact-name: sbom-web.spdx.json
+          upload-artifact: true

@@ -1,0 +1,65 @@
+name: Bug report
+description: Something behaves differently from what the documentation says
+title: "bug: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. Please do not include credentials,
+        `.env` files or private keys in the report. Security issues go through
+        GitHub Security Advisories, not the issue tracker.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `reslab --version` or the image tag / commit you are running
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Mission Control (web)
+        - API
+        - Orchestrator
+        - Runner
+        - Mock adapter
+        - PX4 / Gazebo adapter
+        - Replay adapter
+        - Scenario schema / validation
+        - Metrics, scoring or report
+        - CLI
+        - Docker / Compose / deployment
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Commands, scenario YAML, run identifier. A minimal scenario file is ideal.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Docker / Compose versions, browser (for UI issues)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Output of `docker compose logs api orchestrator runner` or the report.json excerpt. Redact anything sensitive.
+      render: text
