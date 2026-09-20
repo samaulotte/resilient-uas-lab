@@ -1,0 +1,55 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: resource-pressure
+  description: >
+    Sustained CPU and memory pressure on the mission computer, followed by a
+    mission services outage. Planning slows down but the mission must continue
+    and the flight-critical domain must stay isolated.
+  version: "1"
+  tags: [compute, service]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 200s
+
+simulation:
+  seed: 17
+
+events:
+  - id: compute-pressure
+    at: 20s
+    inject:
+      subsystem: mission.compute
+      effect: resource_pressure
+      duration: 50s
+      parameters:
+        load: 0.85
+    expect:
+      - subsystem: mission.planner
+        state: DEGRADED
+        within: 2s
+  - id: services-outage
+    at: 45s
+    inject:
+      subsystem: mission.services
+      effect: unavailable
+      duration: 20s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: mission.continuity >= 0.95
+    severity: high
+    description: Resource pressure must not force the vehicle into hold
+  - expression: mission.completed == true
+    severity: medium

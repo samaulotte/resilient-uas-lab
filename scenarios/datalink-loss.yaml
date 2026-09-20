@@ -1,0 +1,65 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: datalink-loss
+  description: >
+    The C2 datalink degrades (latency, then packet loss) before being lost
+    completely. Local autonomy must take over and the mission must complete
+    without ground supervision.
+  version: "1"
+  tags: [communications]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+
+recovery:
+  datalink_loss: continue
+
+simulation:
+  seed: 11
+
+events:
+  - id: c2-latency
+    at: 20s
+    inject:
+      subsystem: communications.c2
+      effect: latency
+      duration: 15s
+      parameters:
+        latency_ms: 900
+  - id: c2-packet-loss
+    at: 35s
+    inject:
+      subsystem: communications.c2
+      effect: packet_loss
+      duration: 10s
+      parameters:
+        loss_ratio: 0.4
+  - id: c2-loss
+    at: 50s
+    inject:
+      subsystem: communications.c2
+      effect: unavailable
+    expect:
+      - subsystem: mission.compute
+        state: OPERATIONAL
+        within: 1s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: compute.availability == 1.0
+    severity: high
+    description: Losing the ground link must not disturb onboard compute
+  - expression: mission.completed == true
+    severity: medium

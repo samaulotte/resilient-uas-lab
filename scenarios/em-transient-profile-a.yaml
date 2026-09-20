@@ -1,0 +1,52 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: em-transient-profile-a
+  description: >
+    Abstract electromagnetic transient, consequence profile A. The profile only
+    describes what subsystems experience during the transient: intermittent
+    navigation sensing, a mission computer restart and a telemetry outage,
+    while flight control is expected to remain operational. No physical source
+    parameter is modelled or accepted (see docs/em-resilience.md).
+  version: "1"
+  tags: [electromagnetic, consequence-profile, containment]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+
+recovery:
+  gnss_loss: dead_reckoning
+  compute_loss: hold
+
+simulation:
+  seed: 99
+
+profile:
+  name: em-transient-profile-a
+  at: 40s
+  duration: 8s
+  effects:
+    navigation.gnss: intermittent
+    mission.compute: restart
+    communications.telemetry: unavailable
+    flight_control.core: operational
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: recovery.mission_compute < 10s
+    severity: high
+  - expression: recovery.success_rate == 1.0
+    severity: high
+  - expression: mission.completed == true
+    severity: medium

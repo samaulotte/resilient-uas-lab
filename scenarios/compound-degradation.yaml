@@ -1,0 +1,89 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: compound-degradation
+  description: >
+    Validate fault containment and recovery during sequential navigation,
+    communications and compute degradation. GNSS aiding is lost first, then the
+    C2 datalink, then the mission computer restarts while the vehicle is enroute.
+    The flight-critical domain must remain untouched and the mission must complete.
+  version: "1"
+  tags: [demo, navigation, communications, compute, containment]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+  altitude: 30
+  cruise_speed: 6.0
+
+recovery:
+  gnss_loss: dead_reckoning
+  datalink_loss: continue
+  compute_loss: hold
+  hold_timeout: 60s
+  max_dead_reckoning: 120s
+
+simulation:
+  seed: 42
+  speed: 1.0
+
+events:
+  - id: gnss-loss
+    at: 30s
+    description: GNSS receiver stops delivering fixes for the rest of the mission
+    inject:
+      subsystem: navigation.gnss
+      effect: unavailable
+    expect:
+      - subsystem: navigation.estimator
+        state: DEGRADED
+        within: 3s
+      - subsystem: flight_control.core
+        state: OPERATIONAL
+        within: 1s
+
+  - id: c2-loss
+    at: 45s
+    description: Command and control datalink lost for the rest of the mission
+    inject:
+      subsystem: communications.c2
+      effect: unavailable
+    expect:
+      - subsystem: mission.compute
+        state: OPERATIONAL
+        within: 1s
+
+  - id: mission-compute-restart
+    at: 60s
+    description: Companion computer reboots while enroute
+    inject:
+      subsystem: mission.compute
+      effect: restart
+    expect:
+      - subsystem: mission.compute
+        state: RECOVERED
+        within: 10s
+      - subsystem: flight_control.core
+        state: OPERATIONAL
+        within: 1s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+    description: The flight core never leaves an operational state
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+    description: No fault propagates across the mission/flight trust boundary
+  - expression: recovery.mission_compute < 10s
+    severity: high
+  - expression: mission.completion >= 0.80
+    severity: medium
+  - expression: mission.completed == true
+    severity: medium

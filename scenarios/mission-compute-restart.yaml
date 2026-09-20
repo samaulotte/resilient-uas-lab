@@ -1,0 +1,55 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: mission-compute-restart
+  description: >
+    The companion computer restarts while the vehicle is enroute. The flight
+    core must hold position autonomously, the mission planner must come back
+    and the mission must resume within the recovery budget.
+  version: "1"
+  tags: [compute, recovery]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+
+recovery:
+  compute_loss: hold
+  hold_timeout: 30s
+
+simulation:
+  seed: 5
+
+events:
+  - id: mission-compute-restart
+    at: 40s
+    inject:
+      subsystem: mission.compute
+      effect: restart
+    expect:
+      - subsystem: flight_control.core
+        state: OPERATIONAL
+        within: 1s
+      - subsystem: mission.compute
+        state: RECOVERED
+        within: 10s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: recovery.mission_compute < 6s
+    severity: high
+    description: Restart budget for the companion computer
+  - expression: recovery.success_rate == 1.0
+    severity: high
+  - expression: mission.completed == true
+    severity: medium

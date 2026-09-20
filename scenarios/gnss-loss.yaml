@@ -1,0 +1,53 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: gnss-loss
+  description: >
+    Complete loss of GNSS aiding while enroute. The navigation estimator must
+    degrade gracefully to dead reckoning and the mission must continue under the
+    declared recovery policy without affecting flight control.
+  version: "1"
+  tags: [navigation]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+
+recovery:
+  gnss_loss: dead_reckoning
+  max_dead_reckoning: 120s
+
+simulation:
+  seed: 7
+
+events:
+  - id: gnss-loss
+    at: 35s
+    inject:
+      subsystem: navigation.gnss
+      effect: unavailable
+      duration: 40s
+    expect:
+      - subsystem: navigation.estimator
+        state: DEGRADED
+        within: 3s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: navigation.integrity >= 0.70
+    severity: medium
+  - expression: recovery.navigation_estimator < 5s
+    severity: high
+    description: The estimator re-acquires GNSS aiding promptly once fixes return
+  - expression: mission.completion >= 0.90
+    severity: medium

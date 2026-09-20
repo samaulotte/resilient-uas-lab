@@ -1,0 +1,52 @@
+apiVersion: resilient-uas.dev/v1alpha1
+kind: ResilienceScenario
+
+metadata:
+  name: sensor-failure
+  description: >
+    A barometer becomes erroneous and the magnetometer output gets stuck. The
+    estimator must reject the faulty sensors, degrade its integrity and keep
+    the flight core fully operational.
+  version: "1"
+  tags: [sensors, navigation]
+
+target:
+  adapter: mock
+  vehicle: x500
+
+mission:
+  type: waypoint
+  timeout: 180s
+
+simulation:
+  seed: 23
+
+events:
+  - id: baro-erroneous
+    at: 25s
+    inject:
+      subsystem: sensors.barometer
+      effect: erroneous
+      duration: 30s
+    expect:
+      - subsystem: navigation.estimator
+        state: DEGRADED
+        within: 3s
+  - id: mag-stuck
+    at: 40s
+    inject:
+      subsystem: sensors.magnetometer
+      effect: stuck
+      duration: 25s
+
+assertions:
+  - expression: flight_control.available == true
+    severity: critical
+  - expression: safety.loss_of_control == false
+    severity: critical
+  - expression: containment.flight_domain_affected == false
+    severity: critical
+  - expression: recovery.navigation_estimator < 5s
+    severity: high
+  - expression: mission.completed == true
+    severity: medium
