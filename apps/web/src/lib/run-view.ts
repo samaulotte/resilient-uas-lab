@@ -176,7 +176,10 @@ export function liveRecoveryKpis(events: readonly RunEvent[]): LiveRecoveryKpis 
       event.kind === "OBSERVED_EFFECT" &&
       event.subsystem &&
       event.state_after &&
-      !isHealthy(event.state_after)
+      !isHealthy(event.state_after) &&
+      // UNKNOWN is an observability gap (link down, not yet observed), not a fault, so it
+      // must not count as an observed fault or, later, as a recovery.
+      event.state_after !== "UNKNOWN"
     ) {
       faults.add(`${event.subsystem}@${event.simulation_time}`);
     }
@@ -185,6 +188,12 @@ export function liveRecoveryKpis(events: readonly RunEvent[]): LiveRecoveryKpis 
   let recovered = 0;
   for (const event of events) {
     if (event.kind !== "RECOVERY") continue;
+    // Only a return from a genuinely impaired state is a recovery; a component coming back
+    // from UNKNOWN (or with no prior fault state recorded) is regaining observation, not
+    // recovering from a fault.
+    if (!event.state_before || isHealthy(event.state_before) || event.state_before === "UNKNOWN") {
+      continue;
+    }
     recovered += 1;
     const duration = eventMetadataNumber(event, "fault_duration");
     if (duration !== null) durations.push(duration);
