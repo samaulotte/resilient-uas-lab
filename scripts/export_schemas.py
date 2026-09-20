@@ -28,7 +28,9 @@ def _dump(data: dict) -> str:
 def generate() -> dict[str, str]:
     scenario_version = SCENARIO_API_VERSION.rsplit("/", 1)[1]
     files: dict[str, str] = {
-        f"scenario.{scenario_version}.schema.json": _dump(ResilienceScenario.model_json_schema(by_alias=True)),
+        f"scenario.{scenario_version}.schema.json": _dump(
+            ResilienceScenario.model_json_schema(by_alias=True)
+        ),
         f"report.v{REPORT_SCHEMA_VERSION}.schema.json": _dump(ResilienceReport.model_json_schema()),
         "telemetry-sample.schema.json": _dump(TelemetrySample.model_json_schema()),
         "run-event.schema.json": _dump(RunEvent.model_json_schema()),
