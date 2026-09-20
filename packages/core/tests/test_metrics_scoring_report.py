@@ -238,6 +238,48 @@ def test_incomplete_run_is_inconclusive() -> None:
     assert score.result is BenchmarkResult.INCONCLUSIVE
 
 
+def test_unevaluable_critical_assertion_is_inconclusive() -> None:
+    # A critical assertion whose metric was never observed makes the whole benchmark
+    # inconclusive, not passed: we cannot claim a safety property we could not measure.
+    from reslab_core.analysis.assertions import evaluate_assertion
+    from reslab_core.scenario.model import Assertion
+    from reslab_core.states import AssertionOutcome, Severity
+
+    events, samples = _synthetic_run()
+    metrics = compute_metrics(events=events, samples=samples)
+    # The navigation estimator never faulted in this run, so its recovery time was never
+    # observed: a critical assertion on it cannot be evaluated.
+    unmeasured = evaluate_assertion(
+        Assertion(expression="recovery.navigation_estimator < 10s", severity=Severity.CRITICAL),
+        metrics.assertion_context(),
+    )
+    assert unmeasured.outcome is AssertionOutcome.NOT_EVALUATED
+    score = compute_score(metrics, [unmeasured])
+    assert score.result is BenchmarkResult.INCONCLUSIVE
+    assert "could not be evaluated" in score.reason
+
+
+def test_positive_failure_beats_unevaluable_assertion() -> None:
+    # When one critical assertion fails outright and another cannot be evaluated, the run
+    # has failed: positive evidence of failure wins over an observability gap.
+    from reslab_core.analysis.assertions import evaluate_assertion
+    from reslab_core.scenario.model import Assertion
+    from reslab_core.states import Severity
+
+    events, samples = _synthetic_run(fc_fails=True)
+    metrics = compute_metrics(events=events, samples=samples)
+    failed = evaluate_assertion(
+        Assertion(expression="flight_control.available == true", severity=Severity.CRITICAL),
+        metrics.assertion_context(),
+    )
+    unmeasured = evaluate_assertion(
+        Assertion(expression="recovery.mission_compute < 10s", severity=Severity.CRITICAL),
+        metrics.assertion_context(),
+    )
+    score = compute_score(metrics, [failed, unmeasured])
+    assert score.result is BenchmarkResult.FAILED
+
+
 def test_report_build_and_render(tmp_path) -> None:
     scenario = load_scenario(SCENARIO)
     events, samples = _synthetic_run()

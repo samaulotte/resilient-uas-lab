@@ -450,6 +450,9 @@ def compute_metrics(
             and e.subsystem
             and e.state_after is not None
             and not e.state_after.is_healthy
+            # Losing observation of a component (UNKNOWN) is not fault propagation; it is
+            # an observability gap. Only positively observed impairment counts.
+            and e.state_after is not ComponentState.UNKNOWN
         }
     )
     propagated = [c for c in affected if c not in injected]
@@ -500,16 +503,30 @@ def compute_metrics(
     # ------------------------------------------------------------- safety
     time_in_state = _time_in_state(samples)
     fc_states = time_in_state.get("flight_control.core", {})
-    fc_unhealthy_time = sum(v for s, v in fc_states.items() if not s.is_healthy)
+    # UNKNOWN is an observability gap (link down, not yet observed), not an impairment of
+    # the flight core: it must never count against flight-control availability.
+    fc_unhealthy_time = sum(
+        v for s, v in fc_states.items() if not s.is_healthy and s is not ComponentState.UNKNOWN
+    )
     fc_failed_event = any(
         e.kind is EventKind.OBSERVED_EFFECT
         and e.subsystem == "flight_control.core"
         and e.state_after is not None
         and not e.state_after.is_healthy
+        and e.state_after is not ComponentState.UNKNOWN
         for e in events
     )
-    loss_of_control = any(not s.flight.control_authority for s in samples) or any(
+    # Loss of control requires a positive observation: the flight core observed FAILED, or
+    # control authority reported lost while the vehicle is armed and its mode is known.
+    # A disarmed vehicle on the ground, or a mode we cannot observe (UNKNOWN), is not a
+    # loss of control.
+    loss_of_control = any(
         s.health.get("flight_control.core") is ComponentState.FAILED for s in samples
+    ) or any(
+        (not s.flight.control_authority)
+        and s.flight.armed
+        and s.flight.mode is not FlightMode.UNKNOWN
+        for s in samples
     )
     flight_control_available = fc_unhealthy_time <= 0.0 and not fc_failed_event
     safety = SafetyMetrics(
