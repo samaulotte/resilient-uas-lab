@@ -10,10 +10,11 @@ dependencies = [
   "typer==0.27.2",
   "httpx==0.28.1",
   "rich==15.0.0",
+  "pyyaml==6.0.3",
 ]
 
 [project.scripts]
-reslab = "reslab_cli.main:app"
+reslab = "reslab_cli.main:main"
 
 [build-system]
 requires = ["hatchling==1.27.0"]

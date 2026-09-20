@@ -1,0 +1,34 @@
+# Resilience regression thresholds.
+#
+# Used by `reslab regression check --candidate <reports> --baseline <reports> --thresholds
+# regression-thresholds.yaml` (see .github/workflows/ci.yml). Reports are matched by
+# scenario name. Every rule is optional; unspecified rules fall back to the defaults
+# documented in docs/development.md.
+#
+# Rule types per metric:
+#   equals        candidate value must equal this literal
+#   max / min     absolute limits on the candidate value
+#   increase_max  candidate - baseline must not exceed this (lower-is-better metrics)
+#   decrease_max  baseline - candidate must not exceed this (higher-is-better metrics)
+
+# The candidate benchmark result must be "passed" (hard gates).
+require_passed: true
+
+# Maximum allowed drop of the resilience score (points) against the baseline.
+score_drop_max: 5.0
+
+metrics:
+  recovery.mttr:
+    max: 6.0
+    increase_max: 2.0
+  recovery.success_rate:
+    min: 1.0
+  mission.completion:
+    min: 0.80
+    decrease_max: 0.05
+  containment.flight_domain_affected:
+    equals: false
+  safety.loss_of_control:
+    equals: false
+  time.failed:
+    max: 0.0

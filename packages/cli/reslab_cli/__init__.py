@@ -1,1 +1,1 @@
-"""reslab command line interface for Resilient UAS Lab."""
+"""`reslab` command line interface."""
