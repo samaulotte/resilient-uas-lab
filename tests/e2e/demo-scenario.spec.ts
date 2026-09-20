@@ -53,10 +53,12 @@ test.describe("Resilient UAS Lab demo journey", () => {
     expect(ready.ok()).toBeTruthy();
     await page.goto("/");
     await expect(page).toHaveURL(/\/mission-control/);
-    await expect(page.getByRole("link", { name: "RESILIENT UAS LAB" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Home" })).toContainText("RESILIENT UAS LAB");
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
-    await expect(page.getByRole("status")).toContainText(/PLATFORM NOMINAL|NO RUNNER ONLINE/);
-    await expect(page.getByRole("button", { name: /run demo scenario/i })).toBeVisible();
+    await expect(page.getByTestId("platform-status")).toContainText(
+      /PLATFORM NOMINAL|NO RUNNER ONLINE/,
+    );
+    await expect(page.getByRole("button", { name: /run demo scenario/i }).first()).toBeVisible();
   });
 
   test("demo scenario runs live to completion with a report", async ({ page, request }) => {
@@ -66,7 +68,11 @@ test.describe("Resilient UAS Lab demo journey", () => {
       .or(page.getByRole("button", { name: "10x" }))
       .first()
       .click();
-    await page.getByRole("button", { name: /run demo scenario/i }).click();
+    // The toolbar and the empty state both offer the demo; either one queues the same run.
+    await page
+      .getByRole("button", { name: /run demo scenario/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/run=/, { timeout: 30_000 });
     const runId = runIdFromUrl(page);
 
@@ -85,7 +91,7 @@ test.describe("Resilient UAS Lab demo journey", () => {
     const run = await waitForTerminal(request, runId);
     expect(run.state).toBe("COMPLETED");
     expect(run.result).toBe("passed");
-    await expect(page.getByTestId("run-state")).toHaveText("COMPLETED", { timeout: 60_000 });
+    await expect(page.getByTestId("run-state")).toContainText("COMPLETED", { timeout: 60_000 });
     await expect(page.getByTestId("resilience-score")).toContainText(/\d+\.\d/, {
       timeout: 60_000,
     });
