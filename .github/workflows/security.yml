@@ -112,20 +112,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Compose file and Dockerfiles do not mount the Docker socket or run privileged
-        run: |
-          set -eu
-          if grep -rn "docker.sock" compose.yaml infra/; then
-            echo "the Docker socket must never be mounted"; exit 1
-          fi
-          if grep -n "privileged: *true" compose.yaml; then
-            echo "privileged containers are not allowed"; exit 1
-          fi
-          # Every image must be pinned by digest.
-          if grep -nE "^\s+image:" compose.yaml | grep -v "@sha256:"; then
-            echo "all images must be pinned by digest"; exit 1
-          fi
-          echo "compose policy checks passed"
+      - name: Container hardening policy (security/policies)
+        run: security/policies/check_compose_policy.sh
       - name: Dockerfile misconfiguration scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

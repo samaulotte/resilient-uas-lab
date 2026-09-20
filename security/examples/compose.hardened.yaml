@@ -1,0 +1,75 @@
+# Example Compose override for a shared (non-developer) deployment.
+#
+#   docker compose -f compose.yaml -f security/examples/compose.hardened.yaml up -d
+#
+# What it changes compared with the reference stack:
+#   - the gateway terminates TLS for a named host (Caddyfile.tls) and publishes 80/443;
+#   - the object store console is disabled;
+#   - the event bus requires per-service credentials (nats-auth.conf) and every service
+#     connects with its own user;
+#   - PostgreSQL requires SCRAM authentication for network connections.
+#
+# What the operator must provide, outside the repository (for example in `.env` or the
+# platform's secret store): RESLAB_PUBLIC_HOST, POSTGRES_PASSWORD, S3_ACCESS_KEY,
+# S3_SECRET_KEY, NATS_API_PASSWORD, NATS_ORCHESTRATOR_PASSWORD, NATS_RUNNER_PASSWORD,
+# GRAFANA_ADMIN_PASSWORD. Nothing here contains a secret value.
+#
+# `!override` replaces a list instead of merging it with the reference file (Compose v2.24+).
+
+services:
+  gateway:
+    ports: !override
+      - "80:80"
+      - "443:443"
+    volumes: !override
+      - ./security/examples/Caddyfile.tls:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      RESLAB_PUBLIC_HOST: ${RESLAB_PUBLIC_HOST:?set the public host name for TLS}
+
+  api:
+    environment:
+      RESLAB_ENVIRONMENT: production
+      RESLAB_NATS_URL: nats://api:${NATS_API_PASSWORD:?set NATS_API_PASSWORD}@nats:4222
+      RESLAB_API_CORS_ORIGINS: https://${RESLAB_PUBLIC_HOST:?set the public host name for TLS}
+
+  orchestrator:
+    environment:
+      RESLAB_ENVIRONMENT: production
+      RESLAB_NATS_URL: nats://orchestrator:${NATS_ORCHESTRATOR_PASSWORD:?set NATS_ORCHESTRATOR_PASSWORD}@nats:4222
+
+  runner:
+    environment:
+      RESLAB_ENVIRONMENT: production
+      RESLAB_NATS_URL: nats://runner:${NATS_RUNNER_PASSWORD:?set NATS_RUNNER_PASSWORD}@nats:4222
+
+  migrate:
+    environment:
+      RESLAB_NATS_URL: nats://api:${NATS_API_PASSWORD:?set NATS_API_PASSWORD}@nats:4222
+
+  nats:
+    volumes: !override
+      - ./security/examples/nats-auth.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data
+    environment:
+      NATS_API_PASSWORD: ${NATS_API_PASSWORD:?set NATS_API_PASSWORD}
+      NATS_ORCHESTRATOR_PASSWORD: ${NATS_ORCHESTRATOR_PASSWORD:?set NATS_ORCHESTRATOR_PASSWORD}
+      NATS_RUNNER_PASSWORD: ${NATS_RUNNER_PASSWORD:?set NATS_RUNNER_PASSWORD}
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=peer"
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+
+  objectstore:
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      RUSTFS_CONSOLE_ENABLE: "false"
+
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: https://${RESLAB_PUBLIC_HOST:?set the public host name for TLS}/grafana/

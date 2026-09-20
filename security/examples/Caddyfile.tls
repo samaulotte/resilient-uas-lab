@@ -1,0 +1,52 @@
+# Gateway configuration with automatic HTTPS for a shared deployment.
+#
+# Caddy obtains and renews a certificate for RESLAB_PUBLIC_HOST from a public ACME
+# authority, which requires the host name to resolve to this machine and ports 80 and
+# 443 to be reachable. For an internal CA, replace `tls` accordingly or mount your own
+# certificate and key and point `tls` at them (never commit those files).
+{
+	admin off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$RESLAB_PUBLIC_HOST} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	@api path /api/* /healthz /readyz
+	handle @api {
+		reverse_proxy api:8000 {
+			transport http {
+				read_timeout 0
+				write_timeout 0
+			}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# Prometheus metrics stay inside the observability network; do not expose /metrics
+	# publicly. If they must be reachable, protect them with basic_auth or an allow-list.
+	@metrics path /metrics
+	handle @metrics {
+		respond "not found" 404
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

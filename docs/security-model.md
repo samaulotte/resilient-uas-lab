@@ -210,5 +210,7 @@ These are stated here so that nobody deploys with wrong expectations. The
   only from the internal `data` network.
 - Rate limiting is not implemented; the body size limit and pagination caps bound
   individual requests, not request volume.
-- The `security/` directory (`security/policies`, `security/examples`) is reserved for
-  policies and example hardening configurations and contains no files in this release.
+- The `security/examples` configurations (TLS at the gateway, authenticated event bus,
+  SCRAM for PostgreSQL) are examples to adapt, not defaults; the reference stack stays
+  unauthenticated inside its internal networks. The SROS2 policy is written ahead of
+  the ROS 2 adapter and is read by no code in this release.

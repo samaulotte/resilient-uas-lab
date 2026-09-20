@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SROS2 access-control policy for the planned Resilient UAS Lab ROS 2 adapter.
+  Status: example for adapter authors; not read by any code in release 0.1.0.
+  Principle: deny by default, allow only observation topics and lifecycle services.
+-->
+<policy version="0.2.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <enclaves>
+    <enclave path="/reslab/runner">
+      <profiles>
+        <profile ns="/reslab" node="reslab_runner">
+
+          <!-- Announce the abstract effect being realized; informational only. -->
+          <topics publish="ALLOW">
+            <topic>fault/request</topic>
+          </topics>
+
+          <!-- Observe component health and lifecycle state; never command anything. -->
+          <topics subscribe="ALLOW">
+            <topic>/diagnostics</topic>
+            <topic>component_state</topic>
+            <topic>/mission_computer/transition_event</topic>
+            <topic>/mission_planner/transition_event</topic>
+            <topic>/mission_services/transition_event</topic>
+          </topics>
+
+          <!-- Realize effects through lifecycle transitions of non-critical nodes only. -->
+          <services request="ALLOW">
+            <service>/mission_computer/change_state</service>
+            <service>/mission_computer/get_state</service>
+            <service>/mission_planner/change_state</service>
+            <service>/mission_planner/get_state</service>
+            <service>/mission_services/change_state</service>
+            <service>/mission_services/get_state</service>
+          </services>
+
+          <!-- Explicit denials for clarity; the default is deny. -->
+          <topics publish="DENY">
+            <topic>/cmd_vel</topic>
+            <topic>/fmu/in/*</topic>
+            <topic>/mavros/setpoint_raw/*</topic>
+          </topics>
+          <services request="DENY">
+            <service>/flight_controller/*</service>
+            <service>/actuation/*</service>
+          </services>
+
+        </profile>
+      </profiles>
+    </enclave>
+  </enclaves>
+</policy>

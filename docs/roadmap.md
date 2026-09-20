@@ -100,9 +100,9 @@ multirotor topology).
 ### Security hardening beyond the local deployment
 
 Listed in the [security model](security-model.md) as known limitations: TLS at the
-gateway, authentication on NATS and PostgreSQL, rate limiting, and content for the
-`security/policies` and `security/examples` directories, which are reserved and empty
-in this release.
+gateway, authentication on NATS and PostgreSQL and rate limiting are not defaults of the
+reference stack. `security/examples` shows how to enable the first two with a Compose
+override; making them the default, and adding rate limiting at the gateway, is planned.
 
 ### Simulation profile maturity
 

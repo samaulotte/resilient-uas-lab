@@ -12,7 +12,7 @@ BASELINE_DIR ?= artifacts/baseline
 
 .PHONY: help setup dev up down logs ps test test-python test-web test-integration lint format \
         typecheck build e2e demo sim observability report regression schemas gen-client \
-        docker-build clean
+        docker-build policy clean
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -97,6 +97,9 @@ gen-client: schemas ## Regenerate the TypeScript API client from the OpenAPI doc
 
 docker-build: ## Build all container images
 	$(COMPOSE) --profile sim build
+
+policy: ## Check the Compose stack and Dockerfiles against security/policies/container-hardening.md
+	security/policies/check_compose_policy.sh
 
 clean: ## Remove build outputs, caches and local artifacts
 	rm -rf apps/web/.next apps/web/coverage artifacts .reslab

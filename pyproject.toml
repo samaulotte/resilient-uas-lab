@@ -76,6 +76,7 @@ ignore = [
 "tests/**" = ["S", "T20"]
 "packages/cli/**" = ["T20"]
 "scripts/**" = ["T20", "S603", "S607"]
+"security/policies/**" = ["T20"]
 
 [tool.ruff.lint.isort]
 known-first-party = [

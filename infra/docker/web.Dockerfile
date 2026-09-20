@@ -49,8 +49,12 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0
+# The standalone server needs only the node binary: remove the bundled package
+# managers so their dependency trees are not part of the attack surface.
 RUN groupadd --system --gid 10001 reslab \
-    && useradd --system --uid 10001 --gid reslab --home-dir /app --shell /usr/sbin/nologin reslab
+    && useradd --system --uid 10001 --gid reslab --home-dir /app --shell /usr/sbin/nologin reslab \
+    && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    && rm -rf /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=build --chown=reslab:reslab /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=reslab:reslab /repo/apps/web/.next/static ./apps/web/.next/static
