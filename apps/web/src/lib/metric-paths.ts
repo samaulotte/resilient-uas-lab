@@ -115,13 +115,21 @@ export const METRIC_PATH_GROUPS: readonly { group: string; paths: readonly Metri
   {
     group: "Mission",
     paths: [
-      { path: "mission.completion", kind: "ratio", description: "Highest mission progress reached" },
+      {
+        path: "mission.completion",
+        kind: "ratio",
+        description: "Highest mission progress reached",
+      },
       {
         path: "mission.continuity",
         kind: "ratio",
         description: "1 minus the fraction of the run spent holding or diverted",
       },
-      { path: "mission.completed", kind: "bool", description: "Mission reached the COMPLETE phase" },
+      {
+        path: "mission.completed",
+        kind: "bool",
+        description: "Mission reached the COMPLETE phase",
+      },
       { path: "mission.duration", kind: "seconds", description: "Simulation duration of the run" },
     ],
   },

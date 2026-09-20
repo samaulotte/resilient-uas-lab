@@ -52,8 +52,7 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {
+  extends React.HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {
   tone?: Tone;
 }
 
@@ -81,11 +80,7 @@ export function ComponentStateBadge({
   );
 }
 
-export function RunStateBadge({
-  state,
-  size,
-  className,
-}: StateBadgeProps & { state: RunState }) {
+export function RunStateBadge({ state, size, className }: StateBadgeProps & { state: RunState }) {
   const style = RUN_STATE[state];
   return (
     <Badge tone={style.tone} size={size} className={className} title={style.description}>
@@ -127,11 +122,7 @@ export function SeverityBadge({
   );
 }
 
-export function EventKindBadge({
-  kind,
-  size,
-  className,
-}: StateBadgeProps & { kind: EventKind }) {
+export function EventKindBadge({ kind, size, className }: StateBadgeProps & { kind: EventKind }) {
   const style = EVENT_KIND[kind];
   return (
     <Badge
@@ -145,11 +136,7 @@ export function EventKindBadge({
   );
 }
 
-export function FlightModeBadge({
-  mode,
-  size,
-  className,
-}: StateBadgeProps & { mode: FlightMode }) {
+export function FlightModeBadge({ mode, size, className }: StateBadgeProps & { mode: FlightMode }) {
   const style = FLIGHT_MODE[mode];
   return (
     <Badge tone={style.tone} size={size} className={className} title={style.description}>

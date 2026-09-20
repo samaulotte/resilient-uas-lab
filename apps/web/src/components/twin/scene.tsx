@@ -78,10 +78,16 @@ function CameraRig({
       desired.set(extent.center.x, extent.radius * 1.55, extent.center.z + 0.01);
       focus.copy(extent.center);
     } else if (mode === "fpv") {
-      desired.copy(vehicle).addScaledVector(heading, 2.2).add(new THREE.Vector3(0, 1.1, 0));
+      desired
+        .copy(vehicle)
+        .addScaledVector(heading, 2.2)
+        .add(new THREE.Vector3(0, 1.1, 0));
       focus.copy(vehicle).addScaledVector(heading, 60);
     } else {
-      desired.copy(vehicle).addScaledVector(heading, -22).add(new THREE.Vector3(0, 11, 0));
+      desired
+        .copy(vehicle)
+        .addScaledVector(heading, -22)
+        .add(new THREE.Vector3(0, 11, 0));
       focus.copy(vehicle).addScaledVector(heading, 8);
     }
     camera.position.lerp(desired, mode === "fpv" ? Math.min(1, delta * 9) : smoothing);

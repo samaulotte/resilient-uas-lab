@@ -6,11 +6,7 @@ import { Badge, ResultBadge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { InfoTip } from "@/components/ui/tooltip";
 import { formatScore } from "@/lib/format";
-import type {
-  LiveContainmentKpis,
-  LiveMissionKpis,
-  LiveRecoveryKpis,
-} from "@/lib/run-view";
+import type { LiveContainmentKpis, LiveMissionKpis, LiveRecoveryKpis } from "@/lib/run-view";
 import { DOMAIN_ORDER, FLIGHT_MODE, TONE_TEXT, type Tone } from "@/lib/states";
 import { cn, formatDuration, formatPercent } from "@/lib/utils";
 import type { MetricsResponse } from "@reslab/api-client";
@@ -41,7 +37,11 @@ function KpiPanel({
 }
 
 function KpiValue({ value, tone }: { value: string; tone?: Tone }) {
-  return <p className={cn("kpi-value text-[20px]", tone ? TONE_TEXT[tone] : "text-foreground")}>{value}</p>;
+  return (
+    <p className={cn("kpi-value text-[20px]", tone ? TONE_TEXT[tone] : "text-foreground")}>
+      {value}
+    </p>
+  );
 }
 
 function KpiRowItem({ label, value, tone }: { label: string; value: string; tone?: Tone }) {
@@ -102,7 +102,9 @@ export function RecoveryKpi({
 }) {
   const analyzed = metrics !== null;
   const recovered = analyzed ? metrics.metrics.recovery.faults_recovered : live.recovered;
-  const required = analyzed ? metrics.metrics.recovery.faults_requiring_recovery : live.faultsObserved;
+  const required = analyzed
+    ? metrics.metrics.recovery.faults_requiring_recovery
+    : live.faultsObserved;
   const mttr = analyzed ? metrics.metrics.recovery.mean_time_to_recovery : live.meanTimeToRecovery;
   const safeState = analyzed ? metrics.metrics.recovery.time_to_safe_state : live.timeToSafeState;
   const entered = analyzed ? metrics.metrics.recovery.safe_state_entered : live.safeStateEntered;
@@ -117,10 +119,19 @@ export function RecoveryKpi({
         tone={required === 0 ? "dim" : recovered === required ? "ok" : "warn"}
       />
       <KpiRowItem label="Recovered / observed faults" value={`${recovered} of ${required}`} />
-      <KpiRowItem label="Mean time to recovery" value={mttr !== null ? formatDuration(mttr) : "n/a"} />
+      <KpiRowItem
+        label="Mean time to recovery"
+        value={mttr !== null ? formatDuration(mttr) : "n/a"}
+      />
       <KpiRowItem
         label="Time to safe state"
-        value={entered && safeState !== null ? formatDuration(safeState) : entered ? "entered" : "not entered"}
+        value={
+          entered && safeState !== null
+            ? formatDuration(safeState)
+            : entered
+              ? "entered"
+              : "not entered"
+        }
         tone={entered ? "warn" : "dim"}
       />
     </KpiPanel>
@@ -186,7 +197,7 @@ export function ScoreKpi({
       analyzed
       info="Weighted score over the profile dimensions, on a 0 to 100 scale. Hard gates override the number: a violated critical assertion or a loss of control fails the run whatever the score."
     >
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2" data-testid="resilience-score">
         <KpiValue value={formatScore(score.total)} />
         <ResultBadge result={score.result} size="sm" />
       </div>

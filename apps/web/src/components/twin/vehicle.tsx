@@ -89,7 +89,11 @@ export function Vehicle({ feed, reducedMotion }: { feed: TwinFeed; reducedMotion
               <mesh material={armMaterial} position={[x, 0.18, z]}>
                 <cylinderGeometry args={[0.34, 0.34, 0.42, 10]} />
               </mesh>
-              <mesh material={rotorMaterial} position={[x, 0.45, z]} rotation={[-Math.PI / 2, 0, 0]}>
+              <mesh
+                material={rotorMaterial}
+                position={[x, 0.45, z]}
+                rotation={[-Math.PI / 2, 0, 0]}
+              >
                 <circleGeometry args={[ROTOR_RADIUS, 24]} />
               </mesh>
             </group>

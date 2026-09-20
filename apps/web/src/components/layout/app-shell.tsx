@@ -39,7 +39,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-hidden
             className="inline-flex h-6 w-6 items-center justify-center rounded-sm border border-info/50 bg-info-soft"
           >
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" className="text-info">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              className="text-info"
+            >
               <path d="M12 3v18M3 12h18" strokeWidth="1.6" />
               <circle cx="12" cy="12" r="4.5" strokeWidth="1.6" />
             </svg>
@@ -64,7 +71,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Icon size={14} aria-hidden />
                 <span>{label}</span>
                 {active && (
-                  <span aria-hidden className="absolute inset-x-1.5 bottom-0 h-[2px] rounded-full bg-info" />
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-1.5 bottom-0 h-[2px] rounded-full bg-info"
+                  />
                 )}
               </Link>
             );

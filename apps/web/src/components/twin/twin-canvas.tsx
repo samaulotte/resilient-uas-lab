@@ -56,13 +56,7 @@ function Readout({
   );
 }
 
-function OverlayCard({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+function OverlayCard({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div
       className={cn(
@@ -89,9 +83,7 @@ export function TwinCanvas({
   reducedMotion: boolean;
 }) {
   const sample = useFeedSample(feed);
-  const groundSpeed = sample
-    ? Math.hypot(sample.velocity.vx, sample.velocity.vy)
-    : null;
+  const groundSpeed = sample ? Math.hypot(sample.velocity.vx, sample.velocity.vy) : null;
   const navSource = sample?.navigation.source ?? "none";
 
   return (
@@ -146,7 +138,9 @@ export function TwinCanvas({
         />
         <Readout
           label="Satellites"
-          value={sample?.navigation.satellites != null ? String(sample.navigation.satellites) : "n/a"}
+          value={
+            sample?.navigation.satellites != null ? String(sample.navigation.satellites) : "n/a"
+          }
         />
       </OverlayCard>
 

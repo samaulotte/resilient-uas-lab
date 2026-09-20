@@ -7,12 +7,7 @@ import { Play, Radar } from "lucide-react";
 
 import { BlastRadius } from "@/components/mission/blast-radius";
 import { ActiveAlerts, EventFeed, EventLegend } from "@/components/mission/event-feed";
-import {
-  ContainmentKpi,
-  MissionKpi,
-  RecoveryKpi,
-  ScoreKpi,
-} from "@/components/mission/kpi-row";
+import { ContainmentKpi, MissionKpi, RecoveryKpi, ScoreKpi } from "@/components/mission/kpi-row";
 import { StateTimeline } from "@/components/mission/state-timeline";
 import { StatusBar } from "@/components/mission/status-bar";
 import { SystemPanel } from "@/components/mission/system-panel";
@@ -24,7 +19,13 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingPanel, Notice } from "@/components/ui/feedback";
 import { Panel, PanelBody, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRunStream } from "@/hooks/use-run-stream";
 import { useLiveRunThrottled } from "@/hooks/use-live-view";
@@ -49,7 +50,12 @@ import {
   liveRecoveryKpis,
 } from "@/lib/run-view";
 import { ACTIVE_RUN_STATES } from "@/lib/states";
-import { componentMap, componentNameMap, groupByDomain, missionFlightBoundary } from "@/lib/topology";
+import {
+  componentMap,
+  componentNameMap,
+  groupByDomain,
+  missionFlightBoundary,
+} from "@/lib/topology";
 import { shortId } from "@/lib/utils";
 import { useLiveRun } from "@/stores/live-run";
 import { DEMO_SPEEDS, useSettings, type DemoSpeed } from "@/stores/settings";
@@ -278,7 +284,11 @@ export function MissionControlView() {
                     : "No runner is online, so a new run would stay queued. Start a runner, then queue the demo scenario."
                 }
                 action={
-                  <Button variant="primary" onClick={startDemo} disabled={!demoAvailable || !mockOnline}>
+                  <Button
+                    variant="primary"
+                    onClick={startDemo}
+                    disabled={!demoAvailable || !mockOnline}
+                  >
                     <Play size={11} aria-hidden />
                     Run demo scenario
                   </Button>
@@ -342,9 +352,7 @@ export function MissionControlView() {
           the runner.
         </Notice>
       ) : null}
-      {streamError && connection !== "closed" ? (
-        <Notice tone="bad">{streamError}</Notice>
-      ) : null}
+      {streamError && connection !== "closed" ? <Notice tone="bad">{streamError}</Notice> : null}
       {run.state === "CANCELLED" ? (
         <Notice tone="warn">
           This run was cancelled{run.reason ? `: ${run.reason}.` : "."} Metrics are inconclusive.

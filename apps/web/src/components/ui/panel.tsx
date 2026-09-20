@@ -11,10 +11,7 @@ export function Panel({
 export function PanelHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "flex h-7 shrink-0 items-center gap-2 border-b border-border px-3",
-        className,
-      )}
+      className={cn("flex h-7 shrink-0 items-center gap-2 border-b border-border px-3", className)}
       {...props}
     />
   );

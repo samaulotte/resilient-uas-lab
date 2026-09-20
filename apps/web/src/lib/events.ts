@@ -126,7 +126,10 @@ const STATE_WORD: Record<string, string> = {
 };
 
 /** Loud one-line alerts for every component that is not healthy right now. */
-export function activeAlerts(sample: TelemetrySample | null, names: Map<string, string>): ActiveAlert[] {
+export function activeAlerts(
+  sample: TelemetrySample | null,
+  names: Map<string, string>,
+): ActiveAlert[] {
   if (!sample?.health) return [];
   const alerts: ActiveAlert[] = [];
   for (const [id, state] of Object.entries(sample.health)) {

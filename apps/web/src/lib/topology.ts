@@ -14,9 +14,7 @@ export function componentNameMap(topology: SystemTopology | undefined): Map<stri
   return map;
 }
 
-export function componentMap(
-  topology: SystemTopology | undefined,
-): Map<string, TopologyComponent> {
+export function componentMap(topology: SystemTopology | undefined): Map<string, TopologyComponent> {
   const map = new Map<string, TopologyComponent>();
   for (const component of topology?.components ?? []) map.set(component.id, component);
   return map;

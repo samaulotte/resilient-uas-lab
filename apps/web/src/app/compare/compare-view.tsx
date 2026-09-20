@@ -128,6 +128,7 @@ export function CompareView() {
               data.verdict === "mixed" && "border-warn/50",
             )}
             aria-label="Comparison verdict"
+            data-testid="compare-verdict"
           >
             <Badge
               tone={
@@ -158,8 +159,8 @@ export function CompareView() {
                 {data.same_scenario_hash ? "SAME DOCUMENT" : "DIFFERENT DOCUMENT"}
               </Badge>
               <InfoTip label="About comparability">
-                Runs of a different scenario, or of a different version of the same document, do
-                not measure the same thing. The verdict is reported but should be read with that in
+                Runs of a different scenario, or of a different version of the same document, do not
+                measure the same thing. The verdict is reported but should be read with that in
                 mind.
               </InfoTip>
             </div>
@@ -185,7 +186,8 @@ export function CompareView() {
                 <PanelBody className="grid grid-cols-4 gap-2 p-2.5 text-[11.5px]">
                   <span className="text-muted">Scenario</span>
                   <span className="col-span-3 text-foreground">
-                    {run.scenario_name} <span className="mono text-dim">v{run.scenario_version}</span>
+                    {run.scenario_name}{" "}
+                    <span className="mono text-dim">v{run.scenario_version}</span>
                   </span>
                   <span className="text-muted">Adapter</span>
                   <span className="col-span-3 mono text-foreground">
@@ -238,9 +240,7 @@ export function CompareView() {
                       <TD className="mono text-right">
                         {formatMetricValue(metric.candidate, metric.unit)}
                       </TD>
-                      <TD
-                        className={cn("mono text-right", TONE_TEXT[verdictTone(metric.verdict)])}
-                      >
+                      <TD className={cn("mono text-right", TONE_TEXT[verdictTone(metric.verdict)])}>
                         {formatMetricDelta(metric.delta, metric.unit)}
                       </TD>
                       <TD>
@@ -401,11 +401,7 @@ export function CompareView() {
                   ) : (
                     <ul className="flex flex-col divide-y divide-border/70">
                       {events.map((event) => (
-                        <EventRow
-                          key={`${role}-${event.sequence}`}
-                          event={event}
-                          dense
-                        />
+                        <EventRow key={`${role}-${event.sequence}`} event={event} dense />
                       ))}
                     </ul>
                   )}

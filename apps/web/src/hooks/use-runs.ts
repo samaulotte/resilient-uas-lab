@@ -22,7 +22,12 @@ export interface RunFilters {
 }
 
 function hasActive(runs: readonly RunSummary[]): boolean {
-  return runs.some((run) => ACTIVE_RUN_STATES.includes(run.state) || run.state === "CREATED" || run.state === "VALIDATING");
+  return runs.some(
+    (run) =>
+      ACTIVE_RUN_STATES.includes(run.state) ||
+      run.state === "CREATED" ||
+      run.state === "VALIDATING",
+  );
 }
 
 export function useRuns(filters: RunFilters = {}) {
@@ -85,7 +90,9 @@ export function useRunMetrics(runId: string | null, enabled = true) {
     queryKey: ["run-metrics", runId],
     enabled: Boolean(runId) && enabled,
     queryFn: () =>
-      unwrap(api.GET("/api/v1/runs/{run_id}/metrics", { params: { path: { run_id: runId ?? "" } } })),
+      unwrap(
+        api.GET("/api/v1/runs/{run_id}/metrics", { params: { path: { run_id: runId ?? "" } } }),
+      ),
     staleTime: 60_000,
     retry: 0,
   });

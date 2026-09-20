@@ -5,16 +5,17 @@ import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormRow, Input, Label } from "@/components/ui/field";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { isDuration } from "@/lib/duration";
 import type { EventDraft, ExpectationDraft, ParameterDraft } from "@/lib/scenario-document";
 import { cn } from "@/lib/utils";
-import type {
-  CatalogEntry,
-  ComponentState,
-  Effect,
-  EffectDescriptor,
-} from "@reslab/api-client";
+import type { CatalogEntry, ComponentState, Effect, EffectDescriptor } from "@reslab/api-client";
 
 const STATES: readonly ComponentState[] = [
   "NOMINAL",

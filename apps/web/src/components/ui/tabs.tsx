@@ -6,10 +6,7 @@ import { cn } from "@/lib/utils";
 
 export const Tabs = TabsPrimitive.Root;
 
-export function TabsList({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+export function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
       className={cn("flex items-stretch gap-0.5 border-b border-border", className)}
@@ -37,5 +34,7 @@ export function TabsContent({
   className,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
-  return <TabsPrimitive.Content className={cn("focus-visible:outline-none", className)} {...props} />;
+  return (
+    <TabsPrimitive.Content className={cn("focus-visible:outline-none", className)} {...props} />
+  );
 }

@@ -9,7 +9,13 @@ import { ResultBadge, RunStateBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/ui/feedback";
 import { Panel, PanelBody, PanelHeader, PanelTitle } from "@/components/ui/panel";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { useRuns } from "@/hooks/use-runs";
 import { useScenarios } from "@/hooks/use-scenarios";
@@ -132,7 +138,8 @@ export function RunsView() {
         <PanelHeader>
           <PanelTitle>Run history</PanelTitle>
           <span className="ml-auto text-[10px] text-dim">
-            {total === 0 ? "0" : `${offset + 1} to ${Math.min(offset + PAGE_SIZE, total)}`} of {total}
+            {total === 0 ? "0" : `${offset + 1} to ${Math.min(offset + PAGE_SIZE, total)}`} of{" "}
+            {total}
           </span>
         </PanelHeader>
         <PanelBody className="p-0">
@@ -192,7 +199,9 @@ export function RunsView() {
                       <Link href={`/scenarios/${run.scenario_name}`} className="hover:underline">
                         {run.scenario_name}
                       </Link>
-                      <span className="mono ml-1 text-[10px] text-dim">v{run.scenario_version}</span>
+                      <span className="mono ml-1 text-[10px] text-dim">
+                        v{run.scenario_version}
+                      </span>
                     </TD>
                     <TD className="text-muted">{run.adapter}</TD>
                     <TD>

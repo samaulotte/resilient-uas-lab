@@ -81,7 +81,10 @@ export function FaultLibrary({
             <h3 className="panel-title mb-1 text-[9px]">{category}</h3>
             <ul className="flex flex-col gap-1.5">
               {entries.map((entry) => (
-                <li key={entry.subsystem} className="rounded-sm border border-border bg-panel-2 p-1.5">
+                <li
+                  key={entry.subsystem}
+                  className="rounded-sm border border-border bg-panel-2 p-1.5"
+                >
                   <div className="mb-1 flex items-start gap-1">
                     {entry.critical ? (
                       <Tooltip>

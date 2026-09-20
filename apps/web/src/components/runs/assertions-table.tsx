@@ -13,7 +13,9 @@ const OUTCOME_TONE = {
 function formatOperand(value: number | boolean | null): string {
   if (value === null || value === undefined) return "n/a";
   if (typeof value === "boolean") return value ? "true" : "false";
-  return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 /** Assertion outcomes exactly as the analysis evaluated them. */

@@ -16,13 +16,7 @@ import type {
 
 /** Connection state of the run WebSocket, surfaced in the status bar. */
 export type ConnectionStatus =
-  | "idle"
-  | "connecting"
-  | "live"
-  | "stale"
-  | "reconnecting"
-  | "closed"
-  | "error";
+  "idle" | "connecting" | "live" | "stale" | "reconnecting" | "closed" | "error";
 
 export const MAX_EVENTS = 2000;
 export const MAX_SAMPLES = 6000;
@@ -56,8 +50,7 @@ export function mergeSamples(
 ): TelemetrySample[] {
   if (incoming.length === 0) return current as TelemetrySample[];
   const last = current.at(-1);
-  const appendOnly =
-    last !== undefined && incoming.every((sample) => sample.t > (last.t ?? 0));
+  const appendOnly = last !== undefined && incoming.every((sample) => sample.t > (last.t ?? 0));
   const merged = appendOnly
     ? [...current, ...incoming]
     : (() => {
@@ -269,4 +262,3 @@ export function connectionTone(status: ConnectionStatus): "ok" | "warn" | "bad" 
       return "dim";
   }
 }
-

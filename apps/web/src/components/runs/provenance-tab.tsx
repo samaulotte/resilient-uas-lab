@@ -41,7 +41,10 @@ function renderValue(value: unknown): string {
 
 /** Everything needed to reproduce the run, exactly as the platform recorded it. */
 export function ProvenanceTab({ provenance }: { provenance: Record<string, unknown> }) {
-  const keys = [...ORDER.filter((key) => key in provenance), ...Object.keys(provenance).filter((key) => !ORDER.includes(key))];
+  const keys = [
+    ...ORDER.filter((key) => key in provenance),
+    ...Object.keys(provenance).filter((key) => !ORDER.includes(key)),
+  ];
   return (
     <Panel>
       <PanelHeader>

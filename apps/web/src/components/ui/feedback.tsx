@@ -8,11 +8,7 @@ import { cn } from "@/lib/utils";
 
 export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      aria-hidden
-      className={cn("animate-pulse rounded-sm bg-panel-2", className)}
-      {...props}
-    />
+    <div aria-hidden className={cn("animate-pulse rounded-sm bg-panel-2", className)} {...props} />
   );
 }
 
@@ -26,7 +22,13 @@ export function SkeletonRows({ rows = 5, className }: { rows?: number; className
   );
 }
 
-export function LoadingPanel({ label = "Loading", className }: { label?: string; className?: string }) {
+export function LoadingPanel({
+  label = "Loading",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
     <div
       role="status"

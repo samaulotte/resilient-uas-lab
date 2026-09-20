@@ -30,7 +30,7 @@ export function SystemPanel({
     );
   }
   return (
-    <div className={cn("flex flex-col gap-2.5", className)}>
+    <div className={cn("flex flex-col gap-2.5", className)} data-testid="system-panel">
       {groups.map((group) => (
         <section key={group.domain}>
           <h3 className="panel-title mb-1 flex items-center gap-1.5 text-[9px]">
@@ -54,7 +54,11 @@ export function SystemPanel({
                     {component.critical ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span tabIndex={0} className="shrink-0 text-warn" aria-label="Flight critical">
+                          <span
+                            tabIndex={0}
+                            className="shrink-0 text-warn"
+                            aria-label="Flight critical"
+                          >
                             <ShieldAlert size={11} aria-hidden />
                           </span>
                         </TooltipTrigger>

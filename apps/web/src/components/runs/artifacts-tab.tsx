@@ -57,7 +57,10 @@ export function ArtifactsTab({
                   <TD className="text-muted">{artifact.description}</TD>
                   <TD className="mono text-dim">{artifact.content_type}</TD>
                   <TD className="mono text-right">{formatBytes(artifact.size_bytes)}</TD>
-                  <TD className="mono max-w-[180px] truncate text-dim" title={artifact.sha256 ?? ""}>
+                  <TD
+                    className="mono max-w-[180px] truncate text-dim"
+                    title={artifact.sha256 ?? ""}
+                  >
                     {artifact.sha256 ? artifact.sha256.slice(0, 16) : "not recorded"}
                   </TD>
                   <TD className="text-right">

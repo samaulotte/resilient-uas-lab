@@ -55,6 +55,7 @@ export function StateTimeline({
     <div ref={container} className="w-full">
       {width > 0 ? (
         <svg
+          data-testid="state-timeline"
           width={width}
           height={height}
           role="img"
@@ -107,7 +108,14 @@ export function StateTimeline({
                   const label = COMPONENT_STATE[segment.state].label;
                   return (
                     <g key={`${track.subsystem}-${index}`}>
-                      <rect x={x} y={y} width={segmentWidth} height={ROW_HEIGHT} fill={fill} opacity={opacity}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={segmentWidth}
+                        height={ROW_HEIGHT}
+                        fill={fill}
+                        opacity={opacity}
+                      >
                         <title>{`${track.name}: ${label} from ${formatMissionTime(segment.from)} to ${formatMissionTime(segment.to)}`}</title>
                       </rect>
                       {segmentWidth > label.length * 6.2 + 10 ? (

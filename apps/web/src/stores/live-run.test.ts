@@ -94,10 +94,7 @@ describe("mergeEvents", () => {
   });
 
   it("lets the incoming copy win for the same sequence", () => {
-    const merged = mergeEvents(
-      [event(1, { message: "stale" })],
-      [event(1, { message: "fresh" })],
-    );
+    const merged = mergeEvents([event(1, { message: "stale" })], [event(1, { message: "fresh" })]);
     expect(merged).toHaveLength(1);
     expect(merged[0]?.message).toBe("fresh");
   });
@@ -183,7 +180,9 @@ describe("live run store", () => {
       ended_at: "2026-01-01T00:02:30Z",
       mission_complete: true,
     };
-    useLiveRun.getState().applyCompleted({ type: "completed", run: summary, report_available: true });
+    useLiveRun
+      .getState()
+      .applyCompleted({ type: "completed", run: summary, report_available: true });
     const state = useLiveRun.getState();
     expect(state.finished).toBe(true);
     expect(state.status).toBe("closed");

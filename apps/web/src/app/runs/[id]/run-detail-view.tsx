@@ -250,7 +250,9 @@ export function RunDetailView({ runId }: { runId: string }) {
         </div>
 
         {run.reason ? (
-          <Notice tone={run.state === "FAILED" ? "bad" : run.state === "CANCELLED" ? "warn" : "info"}>
+          <Notice
+            tone={run.state === "FAILED" ? "bad" : run.state === "CANCELLED" ? "warn" : "info"}
+          >
             {run.reason}
           </Notice>
         ) : null}
@@ -275,9 +277,7 @@ export function RunDetailView({ runId }: { runId: string }) {
               The summary is produced by the analysis once the run completes.
             </Notice>
           )}
-          {telemetryQuery.isLoading ? null : (
-            <TelemetryChart samples={samples} events={events} />
-          )}
+          {telemetryQuery.isLoading ? null : <TelemetryChart samples={samples} events={events} />}
           {metricsQuery.isLoading && run.state === "COMPLETED" ? (
             <SkeletonRows rows={6} />
           ) : metrics ? (

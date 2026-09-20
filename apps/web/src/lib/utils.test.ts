@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseDuration, toDurationString } from "@/lib/duration";
-import {
-  formatMetricDelta,
-  formatMetricValue,
-  formatScore,
-  verdictTone,
-} from "@/lib/format";
+import { formatMetricDelta, formatMetricValue, formatScore, verdictTone } from "@/lib/format";
 import { formatDuration, formatMissionTime, formatPercent } from "@/lib/utils";
 
 describe("formatMissionTime", () => {

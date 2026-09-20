@@ -63,9 +63,7 @@ export function ScenarioStudio({
 
   const [draft, setDraft] = useState<ScenarioDraft>(() => initialDraft ?? emptyDraft());
   const [yamlMode, setYamlMode] = useState(false);
-  const [rawYaml, setRawYaml] = useState<string>(() =>
-    draftToYaml(initialDraft ?? emptyDraft()),
-  );
+  const [rawYaml, setRawYaml] = useState<string>(() => draftToYaml(initialDraft ?? emptyDraft()));
   const [yamlError, setYamlError] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
@@ -676,7 +674,8 @@ export function ScenarioStudio({
                   ) : null}
                   {validation.data.content_hash ? (
                     <p className="mono text-[10px] text-dim">
-                      content hash {validation.data.content_hash.replace("sha256:", "").slice(0, 16)}
+                      content hash{" "}
+                      {validation.data.content_hash.replace("sha256:", "").slice(0, 16)}
                     </p>
                   ) : null}
                 </div>

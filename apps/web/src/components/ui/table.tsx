@@ -11,7 +11,10 @@ export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTab
 export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn("sticky top-0 z-10 bg-panel-2 text-left [&_th]:border-b [&_th]:border-border", className)}
+      className={cn(
+        "sticky top-0 z-10 bg-panel-2 text-left [&_th]:border-b [&_th]:border-border",
+        className,
+      )}
       {...props}
     />
   );

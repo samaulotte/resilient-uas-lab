@@ -266,10 +266,7 @@ export function parseScenarioDocument(text: string): ScenarioDraft {
         RECOVERY_DEFAULTS.computeLoss,
       ),
       holdTimeout: asString(recovery.hold_timeout, RECOVERY_DEFAULTS.holdTimeout),
-      maxDeadReckoning: asString(
-        recovery.max_dead_reckoning,
-        RECOVERY_DEFAULTS.maxDeadReckoning,
-      ),
+      maxDeadReckoning: asString(recovery.max_dead_reckoning, RECOVERY_DEFAULTS.maxDeadReckoning),
     },
     seed: asNumber(simulation.seed, base.seed),
     speed: asNumber(simulation.speed, base.speed),

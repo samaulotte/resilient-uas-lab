@@ -45,7 +45,11 @@ export function AssertionEditor({
           onClick={() =>
             onChange([
               ...assertions,
-              { expression: "safety.loss_of_control == false", severity: "critical", description: "" },
+              {
+                expression: "safety.loss_of_control == false",
+                severity: "critical",
+                description: "",
+              },
             ])
           }
         >

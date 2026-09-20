@@ -109,7 +109,10 @@ export function EventLegend() {
         <li key={klass} className="flex items-center gap-1" title={EVENT_CLASS[klass].description}>
           <span
             aria-hidden
-            className={cn("inline-block h-2.5 w-0.5", EVENT_CLASS[klass].rail.replace("border-l-", "bg-"))}
+            className={cn(
+              "inline-block h-2.5 w-0.5",
+              EVENT_CLASS[klass].rail.replace("border-l-", "bg-"),
+            )}
           />
           {EVENT_CLASS[klass].label}
         </li>

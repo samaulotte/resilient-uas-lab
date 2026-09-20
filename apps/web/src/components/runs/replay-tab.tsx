@@ -20,7 +20,12 @@ import {
   injectionMarkers,
   liveContainmentKpis,
 } from "@/lib/run-view";
-import { componentMap, componentNameMap, groupByDomain, missionFlightBoundary } from "@/lib/topology";
+import {
+  componentMap,
+  componentNameMap,
+  groupByDomain,
+  missionFlightBoundary,
+} from "@/lib/topology";
 import { formatMissionTime } from "@/lib/utils";
 import { useSettings } from "@/stores/settings";
 import type { PlannedPath, RunEvent, SystemTopology, TelemetrySample } from "@reslab/api-client";

@@ -24,7 +24,9 @@ function useReport(runId: string | null) {
     queryKey: ["report", runId],
     enabled: Boolean(runId),
     queryFn: () =>
-      unwrap(api.GET("/api/v1/runs/{run_id}/report", { params: { path: { run_id: runId ?? "" } } })),
+      unwrap(
+        api.GET("/api/v1/runs/{run_id}/report", { params: { path: { run_id: runId ?? "" } } }),
+      ),
     retry: 0,
     staleTime: 5 * 60_000,
   });

@@ -20,6 +20,10 @@ export interface TwinScene {
 }
 
 /** East-North-Up telemetry to the three.js frame: x east, y up, z south. */
-export function toSceneVector(position: { x: number; y: number; z: number }): [number, number, number] {
+export function toSceneVector(position: {
+  x: number;
+  y: number;
+  z: number;
+}): [number, number, number] {
   return [position.x, position.z, -position.y];
 }

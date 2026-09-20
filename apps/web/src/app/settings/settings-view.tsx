@@ -151,9 +151,7 @@ export function SettingsView() {
               {API_BASE || "same origin as this page"}
             </span>
             <Label>Run stream</Label>
-            <span className="mono break-all text-foreground">
-              {streamUrl("{run_id}")}
-            </span>
+            <span className="mono break-all text-foreground">{streamUrl("{run_id}")}</span>
             <Label>OpenAPI documentation</Label>
             <span>
               <a

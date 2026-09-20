@@ -290,7 +290,9 @@ export function SystemView() {
                             weight === 0 && "opacity-50",
                           )}
                         >
-                          <span className="truncate text-muted">{dimension.replace(/_/g, " ")}</span>
+                          <span className="truncate text-muted">
+                            {dimension.replace(/_/g, " ")}
+                          </span>
                           <span className="mono text-foreground">{weight}</span>
                         </li>
                       ))}
@@ -350,7 +352,9 @@ export function SystemView() {
                       <span className="mono text-[10px] text-dim">{entry.subsystem}</span>
                     </span>
                   </TD>
-                  <TD className="text-muted">{DOMAIN_LABEL[entry.domain as Domain] ?? entry.domain}</TD>
+                  <TD className="text-muted">
+                    {DOMAIN_LABEL[entry.domain as Domain] ?? entry.domain}
+                  </TD>
                   <TD className="text-muted">{entry.category}</TD>
                   <TD className="mono text-muted">{entry.trust_zone}</TD>
                   <TD>

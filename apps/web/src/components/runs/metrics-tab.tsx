@@ -104,7 +104,8 @@ export function MetricsTab({ metrics }: { metrics: MetricsResult }) {
             {
               label: "Control",
               value: formatPercent(availability.control),
-              definition: "Fraction of the run during which the flight core was in a healthy state.",
+              definition:
+                "Fraction of the run during which the flight core was in a healthy state.",
             },
             {
               label: "Navigation integrity",
@@ -200,7 +201,8 @@ export function MetricsTab({ metrics }: { metrics: MetricsResult }) {
               label: "Success rate",
               value:
                 recovery.success_rate === null ? "n/a" : formatPercent(recovery.success_rate, 0),
-              definition: "Recovered divided by required; not defined when no recovery was required.",
+              definition:
+                "Recovered divided by required; not defined when no recovery was required.",
             },
             {
               label: "Time to safe state",

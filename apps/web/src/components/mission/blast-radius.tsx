@@ -181,13 +181,12 @@ export function BlastRadius({
                     aria-label="Policy enforcement point"
                   />
                 ) : null}
-                <span
-                  className={cn("mono shrink-0 text-[9px] tracking-[0.06em]", style.text)}
-                >
+                <span className={cn("mono shrink-0 text-[9px] tracking-[0.06em]", style.text)}>
                   {style.label}
                 </span>
               </div>
-              {index < rows.length - 1 && !(boundary && rows[index + 1]?.domain === "flight_control") ? (
+              {index < rows.length - 1 &&
+              !(boundary && rows[index + 1]?.domain === "flight_control") ? (
                 <span
                   className={cn(
                     "flex h-[9px] items-center justify-center",

@@ -38,7 +38,12 @@ export function PlannedRoute({ path }: { path: PlannedPath | null }) {
             <sphereGeometry args={[0.9, 12, 12]} />
             <meshStandardMaterial color="#6f93ad" emissive="#16222c" />
           </mesh>
-          <SceneLabel text={`WP${index}`} position={[0, 3.2, 0]} color="#9fb3c4" screenHeight={0.034} />
+          <SceneLabel
+            text={`WP${index}`}
+            position={[0, 3.2, 0]}
+            color="#9fb3c4"
+            screenHeight={0.034}
+          />
         </group>
       ))}
     </group>

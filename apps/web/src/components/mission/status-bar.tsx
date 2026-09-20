@@ -95,7 +95,7 @@ export function StatusBar({
         </Link>
       </Cell>
 
-      <div className="flex items-center gap-2 px-3 py-1.5">
+      <div className="flex items-center gap-2 px-3 py-1.5" data-testid="run-state">
         <RunStateBadge state={run.state} size="sm" />
         {run.result ? <ResultBadge result={run.result} size="sm" /> : null}
         {run.resilience_score !== null ? (
@@ -106,7 +106,9 @@ export function StatusBar({
       </div>
 
       <Cell label="Simulation time">
-        <span className="mono">{formatMissionTime(simulationTime)}</span>
+        <span className="mono" data-testid="simulation-time">
+          {formatMissionTime(simulationTime)}
+        </span>
       </Cell>
 
       <Cell label="Speed" title="Simulation speed factor">
