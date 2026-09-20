@@ -661,7 +661,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mavsdk"
+name = "mavsdk-grpc"
 version = "3.17.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
@@ -669,15 +669,15 @@ dependencies = [
     { name = "protobuf" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/03/b2d836e98b5dcc1278d30052f455472d7407271b9ca696df817bfc6df62e/mavsdk-3.17.4-py3-none-linux_armv6l.whl", hash = "sha256:21303ace95191a65043959f1cd5649b7c483696a1edbc848d236c417602312c2", size = 16589619, upload-time = "2026-09-17T01:58:34.302Z" },
-    { url = "https://files.pythonhosted.org/packages/cb/ea/3ab5cd4594408a301db502f3c33c5d30da1ac17a6747b485be6adc205467/mavsdk-3.17.4-py3-none-linux_armv7l.whl", hash = "sha256:2b19a2b691cc48ca28fd853a60217d5ed880c0c15ad3f1de6c33ffdb4af53a94", size = 16589913, upload-time = "2026-09-17T01:58:01.677Z" },
-    { url = "https://files.pythonhosted.org/packages/f9/4b/db61fa7282bbbb8fa0a838c190602aa78994c89baaa0351a2e6c95c5bacc/mavsdk-3.17.4-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:313b10626c8ad441a5b2a0066aa0e809f4781bbc19dfc08b4768f30053ec38c1", size = 12222696, upload-time = "2026-09-17T01:58:33.95Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/48/770b7e475caf871f92b32766035e76da96aa074a9ca8da88970b3eeba557/mavsdk-3.17.4-py3-none-macosx_14_0_arm64.whl", hash = "sha256:b2be501209410bc876a218eceb9ca2d0eb0e42a5d991da182c984a1a83de3fbc", size = 11685897, upload-time = "2026-09-17T01:58:13.272Z" },
-    { url = "https://files.pythonhosted.org/packages/49/f5/83e89191beda78d9571364eebb4e1f66f4127c9c78fdf5890db71be04eb6/mavsdk-3.17.4-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:89ad14c04681b364c5a9ebe53898463b0c53d1ce70ca2eaf4fb23cac6885879b", size = 15247717, upload-time = "2026-09-17T01:58:23.491Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/5c/f709d9de0cecd675f3c65adf9b83e0a703cde1d154598924c49e320b7721/mavsdk-3.17.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:f202d396efa77271d7a5e1cc3a1e66cd036b585b8cdb54de9732ba358a8ace2b", size = 18235103, upload-time = "2026-09-17T01:57:58.949Z" },
-    { url = "https://files.pythonhosted.org/packages/15/9f/8d9e12f27f7063ac14575ad7c7732b4b4701893fe540faa4ccc74d89460a/mavsdk-3.17.4-py3-none-win32.whl", hash = "sha256:74b43ebbdec23d7e51f7308ef4ccd13a15983a9aacd614765f37c65910e5545e", size = 12146325, upload-time = "2026-09-17T01:58:38.455Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/62/b6643cdfeb2bb98b7ec62e2653cfbd3e5fdcc69e227ceecb154e6a3c7b34/mavsdk-3.17.4-py3-none-win_amd64.whl", hash = "sha256:708356857d2f245d2026bcada4c3f02debca9464d1d2cd1e69c3d76c666db932", size = 14341954, upload-time = "2026-09-17T01:58:16.699Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/0c/6e2d3b23712a1241a8f315d78627b895cf0f5852e7455c5053918ab12205/mavsdk-3.17.4-py3-none-win_arm64.whl", hash = "sha256:36ed82bc50334df2ef51b84135c12aac52dd13df8a77147f6c12d41cb7615fa6", size = 14284373, upload-time = "2026-09-17T01:58:35.225Z" },
+    { url = "https://files.pythonhosted.org/packages/55/00/67a72d9531d221b689a1b0cca750fe42efc8d74043c2d7a61072e64c148f/mavsdk_grpc-3.17.4-py3-none-linux_armv6l.whl", hash = "sha256:f95cce3e46dc6e5b7a6f9a70fa6dbbf3219f7455c9e845b705cae4000a19f0a1", size = 16590656, upload-time = "2026-09-17T01:58:38.434Z" },
+    { url = "https://files.pythonhosted.org/packages/44/aa/903ce1e29d4d5f687ba9aed5a37f1245d44b3d6ebec2433e3464f9e8c9eb/mavsdk_grpc-3.17.4-py3-none-linux_armv7l.whl", hash = "sha256:35a46494e3f0e67efe4f44210ab16dbe7b42824c074644a2847ae43b76b82b97", size = 16590951, upload-time = "2026-09-17T01:58:04.556Z" },
+    { url = "https://files.pythonhosted.org/packages/43/86/060dfb67ef1062080f7abd20d75377710e34be60494fb690104520c14963/mavsdk_grpc-3.17.4-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:f7b3d4a94122506ebc6ded40efe0764e1fab4fb53a6fa0ad8787e15114a151ad", size = 12223783, upload-time = "2026-09-17T01:58:31.862Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/fd/4c5a245e1d714c6461e457b767f3ff20d4b88868793fa4a9984da2324b29/mavsdk_grpc-3.17.4-py3-none-macosx_14_0_arm64.whl", hash = "sha256:c36a5f1ca7239d1194c36f460b3fe520138de47e805410238184d4e5759ac14e", size = 11686987, upload-time = "2026-09-17T01:58:11.224Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/12/e23f51a1d01a95aae913c78e79ee03b517bfb264e2ff6a7aef4cb0d16cb4/mavsdk_grpc-3.17.4-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:7e6f6ef37ae8999abc5321890269f8aba5f1145dd3492143ad2b9ae2804c478b", size = 15248792, upload-time = "2026-09-17T01:58:25.835Z" },
+    { url = "https://files.pythonhosted.org/packages/21/6f/e1c49d6a38fc24a6ed0872f47990c70befc8120d059dbf7464109d977739/mavsdk_grpc-3.17.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:56e68d41df730f801a7651402450ffb9372dc54cc1567d082b62ce0af13eddd0", size = 18236139, upload-time = "2026-09-17T01:58:01.266Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/6e/07d40f3e31deebd9007b0a7d89f56570ac1c66e3051722989544a05e83c9/mavsdk_grpc-3.17.4-py3-none-win32.whl", hash = "sha256:105fbdee95efc7bf377a06dc9f4649ed423e6eade3a7ad0e200197158017527d", size = 12147348, upload-time = "2026-09-17T01:58:41.442Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/ea/375aea00d862664dc24f43b70581e3372373c32c90d9f8dfaf71960c4215/mavsdk_grpc-3.17.4-py3-none-win_amd64.whl", hash = "sha256:af059f030177aa3622a1c145f1298a21eabef36ebc31b6c268ab04fb6f1b415a", size = 14342977, upload-time = "2026-09-17T01:58:18.898Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/62/63e7780ee28d3ffc2f66c08abc06bd872c06b557137c67033cf98649e572/mavsdk_grpc-3.17.4-py3-none-win_arm64.whl", hash = "sha256:b61660f91352c55370b8fe9699fb5858f98b61e26c01d9eae30fd91ac95c7324", size = 14285395, upload-time = "2026-09-17T01:58:39.206Z" },
 ]
 
 [[package]]
@@ -1058,14 +1058,14 @@ name = "reslab-adapter-px4"
 version = "0.1.0"
 source = { editable = "adapters/px4-gazebo" }
 dependencies = [
-    { name = "mavsdk" },
+    { name = "mavsdk-grpc" },
     { name = "reslab-adapter-mock" },
     { name = "reslab-core" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "mavsdk", specifier = "==3.17.4" },
+    { name = "mavsdk-grpc", specifier = "==3.17.4" },
     { name = "reslab-adapter-mock", editable = "adapters/mock" },
     { name = "reslab-core", editable = "packages/core" },
 ]

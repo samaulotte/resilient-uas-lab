@@ -1,8 +1,8 @@
 """MAVLink transport abstraction.
 
-`PX4Link` is the narrow interface the adapter needs. `MavsdkLink` implements it with
-MAVSDK-Python (imported lazily so that runners without simulation support never load
-it). Tests use an in-memory fake.
+`PX4Link` is the narrow interface the adapter needs. `MavsdkLink` implements it with the
+MAVSDK gRPC Python wrapper (`mavsdk-grpc`, imported lazily so that runners without
+simulation support never load it). Tests use an in-memory fake.
 """
 
 from __future__ import annotations
@@ -122,14 +122,14 @@ class MavsdkLink:
         return self._snapshot
 
     async def connect(self, timeout: float) -> None:
-        from mavsdk import System
+        from mavsdk_grpc import System
 
         try:
             import importlib.metadata as metadata
 
-            self._version = f"mavsdk-python {metadata.version('mavsdk')}"
+            self._version = f"mavsdk-grpc {metadata.version('mavsdk-grpc')}"
         except Exception:
-            self._version = "mavsdk-python"
+            self._version = "mavsdk-grpc"
         self._system = System()
         await self._system.connect(system_address=self.address)
 
@@ -170,7 +170,7 @@ class MavsdkLink:
         await self._system.param.set_param_int(name, value)
 
     async def upload_mission(self, waypoints: list[GeodeticWaypoint], rtl: bool) -> None:
-        from mavsdk.mission import MissionItem, MissionPlan
+        from mavsdk_grpc.mission import MissionItem, MissionPlan
 
         items = [
             MissionItem(
@@ -201,9 +201,9 @@ class MavsdkLink:
     async def inject_failure(
         self, unit: FailureUnit, failure_type: FailureType, instance: int = 0
     ) -> tuple[bool, str]:
-        from mavsdk.failure import FailureError
-        from mavsdk.failure import FailureType as MavsdkFailureType
-        from mavsdk.failure import FailureUnit as MavsdkFailureUnit
+        from mavsdk_grpc.failure import FailureError
+        from mavsdk_grpc.failure import FailureType as MavsdkFailureType
+        from mavsdk_grpc.failure import FailureUnit as MavsdkFailureUnit
 
         try:
             await self._system.failure.inject(

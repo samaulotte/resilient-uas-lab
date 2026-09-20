@@ -7,7 +7,7 @@ license = "Apache-2.0"
 dependencies = [
   "reslab-core",
   "reslab-adapter-mock",
-  "mavsdk==3.17.4",
+  "mavsdk-grpc==3.17.4",
 ]
 
 [build-system]
