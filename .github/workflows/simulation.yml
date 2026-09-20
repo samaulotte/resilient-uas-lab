@@ -20,10 +20,6 @@ on:
           - datalink-loss
           - mission-compute-restart
           - compound-degradation
-      speed:
-        description: Simulation speed factor requested from the runner
-        default: "1"
-        type: string
 
 permissions:
   contents: read
@@ -39,7 +35,6 @@ jobs:
     timeout-minutes: 60
     env:
       SCENARIO: ${{ inputs.scenario || 'gnss-loss' }}
-      SPEED: ${{ inputs.speed || '1' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -71,20 +66,54 @@ jobs:
           echo "no runner advertising the px4-gazebo adapter registered in time"
           docker compose --profile sim logs --no-color --tail=200 runner-sim px4-sim
           exit 1
-      - name: Execute the scenario
+      - name: Execute the scenario against PX4 SITL
         run: |
           mkdir -p artifacts/simulation
-          # The CLI follows the run and exits non-zero when the benchmark is not passed.
-          timeout 1800 uv run reslab run "$SCENARIO" --adapter px4-gazebo --speed "$SPEED" \
-            --api http://localhost:8080 --wait | tee artifacts/simulation/run.log
-      - name: Download the report
+          # Speed stays 1 for PX4: the scenario timeline is compared against the real
+          # simulation clock, so faster-than-real event timing would desync the run.
+          run_id="$(curl -sf -X POST http://localhost:8080/api/v1/runs \
+            -H 'content-type: application/json' \
+            -d "{\"scenario_name\":\"${SCENARIO}\",\"adapter\":\"px4-gazebo\",\"label\":\"sitl-ci\"}" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+          echo "run_id=$run_id" | tee -a "$GITHUB_ENV"
+          echo "queued run $run_id"
+          deadline=$(( $(date +%s) + 1500 ))
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            state="$(curl -sf http://localhost:8080/api/v1/runs/$run_id \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["state"])')"
+            echo "  state=$state"
+            case "$state" in COMPLETED|FAILED|CANCELLED) break ;; esac
+            sleep 10
+          done
+      - name: Download the report and events
         if: always()
         run: |
-          run_id="$(curl -sf 'http://localhost:8080/api/v1/runs?limit=1' | python3 -c 'import json,sys; runs=json.load(sys.stdin)["runs"]; print(runs[0]["id"] if runs else "")')"
           if [ -n "$run_id" ]; then
             uv run reslab report "$run_id" --api http://localhost:8080 \
               -o artifacts/simulation/report.json --html artifacts/simulation/report.html || true
+            curl -sf "http://localhost:8080/api/v1/runs/$run_id/events?limit=5000" \
+              > artifacts/simulation/events.json || true
           fi
+      - name: A fault was actually applied and the run did not fail
+        run: |
+          python3 - "$run_id" <<'PY'
+          import json, sys, urllib.request
+          run_id = sys.argv[1]
+          base = "http://localhost:8080/api/v1/runs/" + run_id
+          run = json.load(urllib.request.urlopen(base))
+          events = json.load(urllib.request.urlopen(base + "/events?limit=5000"))["events"]
+          applied = [e for e in events if e["kind"] == "INJECTION_APPLIED"]
+          rejected = [e for e in events if e["kind"] == "INJECTION_REJECTED"]
+          print(f"state={run['state']} result={run['result']} "
+                f"applied={len(applied)} rejected={len(rejected)}")
+          if run["state"] != "COMPLETED":
+              sys.exit(f"run did not complete: {run['state']} ({run.get('reason')})")
+          if not applied:
+              sys.exit("no fault injection was applied: PX4 realised nothing to observe")
+          if run["result"] in ("failed", "inconclusive"):
+              sys.exit(f"benchmark result is {run['result']}")
+          print("PX4 SITL scenario passed with a real injected fault")
+          PY
       - name: Simulator and runner logs
         if: always()
         run: docker compose --profile sim logs --no-color --tail=500 runner-sim px4-sim > artifacts/simulation/logs.txt || true
