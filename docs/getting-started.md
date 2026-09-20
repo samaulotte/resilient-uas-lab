@@ -316,6 +316,16 @@ docker compose down -v              # also removes database, bus and artifact vo
 
 ## Where things can go wrong
 
+- `Bind for 127.0.0.1:8080 failed: port is already allocated` when the gateway starts:
+  another program listens on 8080 (`lsof -nP -iTCP:8080 -sTCP:LISTEN` shows which).
+  Either stop it or set `RESLAB_GATEWAY_PORT=8090` (any free port) in `.env` and run
+  `docker compose up -d` again; Mission Control is then at that port and the CLI needs
+  `--api http://localhost:8090`.
+- `command not found: uv`: the `reslab` command and the in-process mock need
+  [uv](https://docs.astral.sh/uv/getting-started/installation/) (`brew install uv` on
+  macOS, or the upstream install script). The Docker demo does not need it: press
+  **Run demo scenario** in Mission Control, or `make demo` falls back to a plain API
+  call when uv is absent.
 - `cannot reach the API at http://localhost:8080`: the stack is not up, or the gateway
   port was changed (`RESLAB_GATEWAY_PORT`). Pass `--api` or use `--local`.
 - A run stays `QUEUED` and then fails with `no runner accepted the job within 300s`:

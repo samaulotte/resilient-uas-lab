@@ -31,6 +31,7 @@ dev: ## Run API, orchestrator, runner and web dev server against local infrastru
 	@echo "  NEXT_PUBLIC_API_BASE=http://localhost:8000 $(PNPM) --filter @reslab/web dev"
 
 up: ## Start the platform (control plane, Mission Control, mock runner)
+	@test -f .env || { cp .env.example .env && echo "created .env from .env.example"; }
 	$(COMPOSE) up --build -d
 	@echo "Mission Control: http://localhost:$${RESLAB_GATEWAY_PORT:-8080}"
 
@@ -74,8 +75,19 @@ build: ## Build the web application
 e2e: ## Run Playwright end-to-end tests against the running platform (RESLAB_E2E_BASE_URL, default http://localhost:8080)
 	$(PNPM) exec playwright test -c tests/e2e/playwright.config.ts
 
-demo: ## Queue the compound-degradation demo scenario on the running platform
-	$(UV) run reslab run compound-degradation --api $${RESLAB_API_URL:-http://localhost:8080}
+demo: ## Queue the compound-degradation demo scenario on the running platform (uses the CLI when uv is installed, curl otherwise)
+	@api="$${RESLAB_API_URL:-http://localhost:$${RESLAB_GATEWAY_PORT:-8080}}"; \
+	if command -v $(UV) >/dev/null 2>&1; then \
+	  $(UV) run reslab run compound-degradation --api "$$api"; \
+	else \
+	  echo "uv not found: queueing the demo through the API at $$api (install uv for the CLI: https://docs.astral.sh/uv/getting-started/installation/)"; \
+	  response="$$(curl -sf -X POST "$$api/api/v1/runs" -H 'content-type: application/json' \
+	    -d '{"scenario_name":"compound-degradation","speed":1,"label":"make demo"}')" || { echo "the API at $$api did not accept the run; is the stack up?"; exit 1; }; \
+	  if command -v python3 >/dev/null 2>&1; then \
+	    printf '%s' "$$response" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("run", d["id"], "queued:", d["scenario_name"], "on", d["adapter"])'; \
+	  else printf '%s\n' "$$response"; fi; \
+	  echo "follow it in Mission Control at $$api/mission-control"; \
+	fi
 
 sim: ## Start the platform with the PX4 SITL / Gazebo simulation profile (Linux)
 	$(COMPOSE) --profile sim up --build -d

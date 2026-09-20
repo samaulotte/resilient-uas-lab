@@ -128,9 +128,12 @@ docker compose up --build -d
 ```
 
 Wait until `docker compose ps` shows every service healthy (the first build takes a few
-minutes), then open **http://localhost:8080**. Press **Run demo scenario**.
+minutes), then open **http://localhost:8080**. Press **Run demo scenario**. If port 8080
+is taken on your machine, set `RESLAB_GATEWAY_PORT` in `.env` before starting.
 
-Without Docker, the scenario engine runs in-process with the mock adapter:
+Without Docker, the scenario engine runs in-process with the mock adapter. This path and
+the `reslab` command need [uv](https://docs.astral.sh/uv/getting-started/installation/)
+(`brew install uv` on macOS):
 
 ```bash
 uv sync --all-packages
