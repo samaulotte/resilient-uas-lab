@@ -13,6 +13,8 @@ ARG UV_IMAGE=ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de
 # ---------------------------------------------------------------- build
 FROM ${UV_IMAGE} AS build
 ARG SERVICE=api
+# Workspace package installed for the service (the migrate job ships the platform package).
+ARG PACKAGE=reslab-${SERVICE}
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never \
@@ -33,14 +35,16 @@ COPY services/runner/pyproject.toml services/runner/
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=secret,id=extra_ca \
     sh -c 'if [ -f /run/secrets/extra_ca ]; then export SSL_CERT_FILE=/run/secrets/extra_ca; fi; \
-           uv sync --frozen --no-dev --no-install-workspace --package reslab-${SERVICE}'
+           uv sync --frozen --no-dev --no-install-workspace --package ${PACKAGE}'
 
 # Source layer.
 COPY packages ./packages
 COPY adapters ./adapters
 COPY services ./services
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable --package reslab-${SERVICE}
+    --mount=type=secret,id=extra_ca \
+    sh -c 'if [ -f /run/secrets/extra_ca ]; then export SSL_CERT_FILE=/run/secrets/extra_ca; fi; \
+           uv sync --frozen --no-dev --no-editable --package ${PACKAGE}'
 
 # ---------------------------------------------------------------- runtime
 FROM ${PYTHON_IMAGE} AS runtime

@@ -191,6 +191,7 @@ services:
       dockerfile: infra/docker/python-service.Dockerfile
       args:
         SERVICE: migrate
+        PACKAGE: reslab-platform
         VERSION: ${RESLAB_VERSION:-0.1.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     restart: "no"
