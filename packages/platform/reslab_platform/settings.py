@@ -89,7 +89,7 @@ class PlatformSettings(BaseSettings):
     image_version: str | None = Field(default=None, description="Container image tag")
 
     # Simulation (PX4)
-    px4_mavsdk_address: str = Field(default="udpin://0.0.0.0:14540")
+    px4_mavsdk_address: str = Field(default="udpin://0.0.0.0:14550")
     px4_connection_timeout_seconds: float = Field(default=60.0, gt=0)
 
     @field_validator("log_level")

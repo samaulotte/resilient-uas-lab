@@ -276,12 +276,17 @@ services:
     profiles: [sim]
     # Official PX4 SITL + Gazebo Harmonic image, pinned by digest (see docs/deployment.md).
     image: ${PX4_SIM_IMAGE:-px4io/px4-sitl-gazebo@sha256:aa4bbf35f0bd6bdb3269cc96e317c8e78b87f1fc769c734c0818094074e1cc0a}
+    # `-d` runs PX4 without an interactive shell (no pxh> prompt filling the logs).
+    command: ["-d"]
     restart: unless-stopped
     environment:
       HEADLESS: "1"
       PX4_SIM_MODEL: ${PX4_SIM_MODEL:-gz_x500}
       PX4_GZ_WORLD: ${PX4_GZ_WORLD:-default}
       PX4_SIM_SPEED_FACTOR: ${PX4_SIM_SPEED_FACTOR:-1}
+      # Broadcast MAVLink on the simulation network so the runner can (re)discover PX4
+      # after dropping its link (companion-restart scenario); see docs/px4-integration.md.
+      PX4_NET_INTERFACE: ${PX4_NET_INTERFACE:-eth0}
     networks: [simulation]
     security_opt: [no-new-privileges:true]
     stop_grace_period: 20s
@@ -304,7 +309,7 @@ services:
       RESLAB_RUNNER_ID: ${RESLAB_SIM_RUNNER_ID:-runner-sim-1}
       RESLAB_RUNNER_ADAPTERS: px4-gazebo
       RESLAB_RUNNER_CONCURRENCY: "1"
-      RESLAB_PX4_MAVSDK_ADDRESS: ${RESLAB_PX4_MAVSDK_ADDRESS:-udpout://px4-sim:14580}
+      RESLAB_PX4_MAVSDK_ADDRESS: ${RESLAB_PX4_MAVSDK_ADDRESS:-udpin://0.0.0.0:14550}
       RESLAB_PX4_CONNECTION_TIMEOUT_SECONDS: ${RESLAB_PX4_CONNECTION_TIMEOUT_SECONDS:-120}
       RESLAB_API_BASE_URL: http://api:8000
     networks: [control, simulation, observability]

@@ -88,6 +88,8 @@ class PX4Link(Protocol):
 
     async def set_param_int(self, name: str, value: int) -> None: ...
 
+    async def get_param_int(self, name: str) -> int: ...
+
     async def upload_mission(self, waypoints: list[GeodeticWaypoint], rtl: bool) -> None: ...
 
     async def arm_and_start_mission(self) -> None: ...
@@ -121,6 +123,17 @@ class MavsdkLink:
     def snapshot(self) -> VehicleSnapshot:
         return self._snapshot
 
+    @staticmethod
+    def _free_port() -> int:
+        # Each System spins its own mavsdk_server; give every connection a fresh gRPC
+        # port so a reconnect (companion restart) never collides with a not-yet-reaped
+        # server on the default 50051.
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            return int(sock.getsockname()[1])
+
     async def connect(self, timeout: float) -> None:
         from mavsdk_grpc import System
 
@@ -130,7 +143,7 @@ class MavsdkLink:
             self._version = f"mavsdk-grpc {metadata.version('mavsdk-grpc')}"
         except Exception:
             self._version = "mavsdk-grpc"
-        self._system = System()
+        self._system = System(port=self._free_port())
 
         async def _connect_and_wait() -> None:
             # System.connect() starts mavsdk_server and waits for its gRPC endpoint; when
@@ -179,6 +192,9 @@ class MavsdkLink:
 
     async def set_param_int(self, name: str, value: int) -> None:
         await self._system.param.set_param_int(name, value)
+
+    async def get_param_int(self, name: str) -> int:
+        return int(await self._system.param.get_param_int(name))
 
     async def upload_mission(self, waypoints: list[GeodeticWaypoint], rtl: bool) -> None:
         from mavsdk_grpc.mission import MissionItem, MissionPlan
