@@ -15,6 +15,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Keep the working tree free of generated editor instruction files.
+  agentRules: false,
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../../"),
   reactStrictMode: true,

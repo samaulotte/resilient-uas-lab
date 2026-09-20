@@ -18,7 +18,7 @@ export function PlatformStatus() {
           ? "PLATFORM NOMINAL"
           : "PLATFORM DEGRADED";
   return (
-    <div className="flex items-center gap-3 text-[11px]">
+    <div className="flex items-center gap-3 whitespace-nowrap text-[11px]">
       <span className="mono text-dim">v{data?.software_version ?? "0.1.0"}</span>
       <span className="flex items-center gap-1.5 text-muted" role="status" aria-live="polite">
         <span

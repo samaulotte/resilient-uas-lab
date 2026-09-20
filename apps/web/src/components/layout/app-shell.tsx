@@ -29,8 +29,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 flex h-12 items-center gap-6 border-b border-border bg-elevated/95 px-4 backdrop-blur">
-        <Link href="/mission-control" className="flex items-center gap-2.5" aria-label="Home">
+      <header className="sticky top-0 z-40 flex h-12 min-w-[1024px] items-center gap-2 border-b border-border bg-elevated/95 px-3 backdrop-blur">
+        <Link
+          href="/mission-control"
+          className="flex shrink-0 items-center gap-2.5"
+          aria-label="Home"
+        >
           <span
             aria-hidden
             className="inline-flex h-6 w-6 items-center justify-center rounded-sm border border-info/50 bg-info-soft"
@@ -40,11 +44,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <circle cx="12" cy="12" r="4.5" strokeWidth="1.6" />
             </svg>
           </span>
-          <span className="text-[12px] font-semibold tracking-[0.18em] text-foreground">
+          <span className="whitespace-nowrap text-[12px] font-semibold tracking-[0.07em] text-foreground">
             RESILIENT UAS LAB
           </span>
         </Link>
-        <nav aria-label="Primary" className="flex h-full items-stretch gap-1 overflow-x-auto">
+        <nav aria-label="Primary" className="flex h-full shrink-0 items-stretch gap-0.5">
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
@@ -53,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 px-2.5 text-[12px] font-medium text-muted transition-colors hover:text-foreground",
+                  "relative flex items-center gap-1.5 whitespace-nowrap px-1.5 text-[12px] font-medium text-muted transition-colors hover:text-foreground",
                   active && "text-foreground",
                 )}
               >
@@ -66,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex shrink-0 items-center gap-4">
           <PlatformStatus />
         </div>
       </header>
