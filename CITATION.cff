@@ -1,0 +1,30 @@
+# Citation metadata (Citation File Format 1.2.0). GitHub renders this as "Cite this
+# repository". Only verifiable facts are recorded here; there is no associated
+# publication yet.
+cff-version: 1.2.0
+message: If you use Resilient UAS Lab in your work, please cite it using this metadata.
+type: software
+title: Resilient UAS Lab
+abstract: >-
+  Open-source resilience engineering and chaos testing platform for autonomous systems.
+  Declarative scenarios inject the effects of degradation (GNSS loss, datalink loss,
+  sensor failure, compute restarts, resource pressure, abstract electromagnetic
+  transient consequence profiles) into a simulated or mock unmanned aircraft system,
+  observe the response, and produce reproducible resilience metrics, scores and reports.
+authors:
+  - family-names: Aulotte
+    given-names: Samuel
+    email: samuel.aulotte@dtsc.be
+    affiliation: DTSC
+version: 0.1.0
+date-released: "2026-09-20"
+license: Apache-2.0
+keywords:
+  - resilience engineering
+  - chaos engineering
+  - autonomous systems
+  - unmanned aircraft systems
+  - fault injection
+  - PX4
+  - Gazebo
+  - simulation
