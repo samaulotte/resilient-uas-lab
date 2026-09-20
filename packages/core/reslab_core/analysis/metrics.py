@@ -345,13 +345,16 @@ def compute_metrics(
             opened = open_faults.pop(e.subsystem)
             cause = opened.scenario_event_id
             # The disturbance ends when the last bounded injection acting on this
-            # subsystem (directly, or through the attributed cause) is cleared.
+            # subsystem (directly, through the attributed cause, or through an upstream
+            # provider in the topology) is cleared.
             candidates = [cleared_at[cause]] if cause and cause in cleared_at else []
-            candidates += [
-                t_clear
-                for t_clear in cleared_by_subsystem.get(e.subsystem, [])
-                if opened.simulation_time <= t_clear <= e.simulation_time
-            ]
+            related = {e.subsystem, *topology.upstream(e.subsystem)}
+            for subsystem_id in related:
+                candidates += [
+                    t_clear
+                    for t_clear in cleared_by_subsystem.get(subsystem_id, [])
+                    if opened.simulation_time <= t_clear <= e.simulation_time
+                ]
             disturbance_end = max(candidates) if candidates else None
             reference = opened.simulation_time
             if disturbance_end is not None:
