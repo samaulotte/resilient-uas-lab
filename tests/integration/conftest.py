@@ -13,13 +13,10 @@ import subprocess
 import sys
 import time
 from collections.abc import Iterator
-from pathlib import Path
 
 import httpx
 import pytest
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-API_URL = os.environ.get("RESLAB_TEST_API_URL", "http://127.0.0.1:8010")
+from integration_support import API_URL, REPO_ROOT
 
 pytestmark = pytest.mark.integration
 
@@ -103,13 +100,3 @@ def platform() -> Iterator[str]:
 def client(platform: str) -> Iterator[httpx.Client]:
     with httpx.Client(base_url=platform, timeout=60) as http:
         yield http
-
-
-def wait_for_terminal(client: httpx.Client, run_id: str, timeout: float = 240) -> dict:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        run = client.get(f"/api/v1/runs/{run_id}").json()
-        if run["state"] in ("COMPLETED", "FAILED", "CANCELLED"):
-            return run
-        time.sleep(1)
-    raise AssertionError(f"run {run_id} did not finish in {timeout}s")

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 
 import pytest
-from conftest import RUN_ID, healthy_states, make_sample
+from core_support import RUN_ID, healthy_states, make_sample
 
 from reslab_core.adapter import (
     AdapterCapabilities,

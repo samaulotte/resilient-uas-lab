@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from conftest import RUN_ID, healthy_states, make_event, make_sample
+from core_support import RUN_ID, healthy_states, make_event, make_sample
 
 from reslab_core.analysis.assertions import evaluate_assertions
 from reslab_core.analysis.metrics import compute_metrics

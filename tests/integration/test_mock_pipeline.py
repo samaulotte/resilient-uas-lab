@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from conftest import REPO_ROOT, wait_for_terminal
+from integration_support import REPO_ROOT, wait_for_terminal
 
 pytestmark = pytest.mark.integration
 
