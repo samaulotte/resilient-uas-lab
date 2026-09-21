@@ -22,7 +22,7 @@ x-python-service: &python-service
     context: .
     dockerfile: infra/docker/python-service.Dockerfile
     args:
-      VERSION: ${RESLAB_VERSION:-0.1.0}
+      VERSION: ${RESLAB_VERSION:-0.2.0}
       GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
   restart: unless-stopped
   read_only: true
@@ -85,7 +85,7 @@ services:
       context: .
       dockerfile: infra/docker/web.Dockerfile
       args:
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     restart: unless-stopped
     environment:
@@ -118,7 +118,7 @@ services:
       dockerfile: infra/docker/python-service.Dockerfile
       args:
         SERVICE: api
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     environment:
       <<: [*common-env, *data-env]
@@ -143,7 +143,7 @@ services:
       dockerfile: infra/docker/python-service.Dockerfile
       args:
         SERVICE: orchestrator
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     environment:
       <<: [*common-env, *data-env]
@@ -169,7 +169,7 @@ services:
       dockerfile: infra/docker/python-service.Dockerfile
       args:
         SERVICE: runner
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     environment:
       <<: *common-env
@@ -193,7 +193,7 @@ services:
       args:
         SERVICE: migrate
         PACKAGE: reslab-platform
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     restart: "no"
     environment:
@@ -302,7 +302,7 @@ services:
       dockerfile: infra/docker/python-service.Dockerfile
       args:
         SERVICE: runner
-        VERSION: ${RESLAB_VERSION:-0.1.0}
+        VERSION: ${RESLAB_VERSION:-0.2.0}
         GIT_COMMIT: ${RESLAB_GIT_COMMIT:-unknown}
     environment:
       <<: *common-env

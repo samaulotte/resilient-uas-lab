@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from reslab_adapter_mock import MockAdapter
+from reslab_adapter_mock import MOCK_ADAPTER_VERSION, MockAdapter
 from reslab_core.analysis.scoring import DEFAULT_SCORE_PROFILE, ScoreProfile
 from reslab_core.engine import ScenarioEngine
 from reslab_core.ids import new_run_id
@@ -82,7 +82,7 @@ async def run_locally(
         scenario_hash=content_hash,
         scenario_version=scenario.metadata.version,
         adapter="mock",
-        adapter_version="0.1.0",
+        adapter_version=MOCK_ADAPTER_VERSION,
         seed=engine.seed,
         speed=engine.speed,
         started_at=started_at,

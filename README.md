@@ -99,7 +99,7 @@ and tooling to make the results comparable across runs, versions and CI pipeline
 
 ## 4. Core capabilities
 
-| Area | In 0.1.0 |
+| Area | In 0.2.0 |
 | ---- | -------- |
 | Scenario language | Versioned schema `resilient-uas.dev/v1alpha1`; strict validation; timeline events with bounded injections; expectations with deadlines; assertion grammar; abstract consequence profiles; canonical content hash for provenance |
 | Fault catalogue | 11 abstract effects on 17 subsystems across 7 domains, with a per-effect parameter whitelist |
@@ -298,7 +298,7 @@ the MinIO community edition stopped receiving releases in 2026, and the platform
 speaks the S3 API, so any S3-compatible endpoint works (`docs/deployment.md`).
 TimescaleDB is not used: telemetry is persisted as JSONB chunks of samples per run in
 plain PostgreSQL, which keeps the deployment to one stock image and is sufficient for
-the telemetry rates of 0.1.0; a time-series extension remains an option behind the same
+the telemetry rates of 0.2.0; a time-series extension remains an option behind the same
 repository interface. The `packages/` directory holds three Python packages (`core`,
 `platform`, `cli`) in addition to `schemas` and `client`, so that the domain library has
 no I/O dependencies and can be imported by the CLI and by adapters without pulling in
@@ -652,11 +652,11 @@ docs/                   Documentation
 
 ### Verification status of this release
 
-What was executed for `v0.1.0`, and what was not:
+What was executed for `v0.2.0`, and what was not:
 
 | Check | Result |
 | ----- | ------ |
-| Python unit tests (`uv run pytest`) | 138 passed, 6 integration tests skipped without infrastructure |
+| Python unit tests (`uv run pytest`) | 157 passed, 6 integration tests skipped without infrastructure |
 | Web unit tests (`vitest`) | 49 passed |
 | Lint, format, type checks | clean (ruff, eslint, prettier, tsc) |
 | Schema and client drift | none (`scripts/export_schemas.py --check`, generated client committed) |

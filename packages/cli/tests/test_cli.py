@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from reslab_cli import regression
 from reslab_cli.main import app
+from reslab_core.versions import SOFTWARE_VERSION
 
 SCENARIOS = Path(__file__).resolve().parents[3] / "scenarios"
 runner = CliRunner()
@@ -16,7 +17,7 @@ runner = CliRunner()
 def test_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "reslab 0.1.0" in result.output
+    assert f"reslab {SOFTWARE_VERSION}" in result.output
 
 
 def test_validate_all_starter_scenarios() -> None:

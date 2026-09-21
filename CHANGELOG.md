@@ -8,7 +8,7 @@ Three artefacts are versioned: the software (this file), the scenario schema
 (`apiVersion: resilient-uas.dev/v1alpha1`) and the report schema (`schema_version` in
 `report.json`). Schema changes are listed in their own subsections.
 
-## [Unreleased]
+## [0.2.0] - 2026-09-21
 
 ### Added
 
@@ -37,6 +37,15 @@ Three artefacts are versioned: the software (this file), the scenario schema
   silent fail; and a critical assertion that cannot be evaluated makes the benchmark
   inconclusive rather than passed. The live recovery estimate no longer counts a return
   from UNKNOWN as a recovered fault.
+- The artifact store package was excluded from the repository by an unanchored
+  `artifacts/` ignore rule, so no checkout could import `reslab_platform.artifacts`,
+  which the API service, the orchestrator and the platform tests all require. The rule
+  is anchored to the repository root and the package is tracked. Ruff had been skipping
+  the same files for the same reason.
+- A single release version is now asserted across the ten Python distributions, the
+  three Node packages, the three adapter constants and the changelog, so a partial
+  bump fails the test suite instead of shipping a build that misreports itself in run
+  provenance.
 
 ## [0.1.0] - 2026-09-20
 

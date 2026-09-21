@@ -3,7 +3,7 @@
   "info": {
     "title": "Resilient UAS Lab API",
     "description": "\nResilient UAS Lab control-plane API.\n\nResilience scenarios are declarative YAML documents validated against a versioned\nschema. Runs execute scenarios against an autonomous-system adapter and produce\nnormalized telemetry, classified events, objective metrics, a transparent score and a\ncanonical report. Live run state is streamed over `WS /api/v1/runs/{run_id}/stream`.\n\nAuthentication is not enforced in the local v0.1 deployment; the API is designed to\nsit behind an OIDC-aware gateway (see docs/security-model.md).\n",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "paths": {
     "/healthz": {
@@ -2904,7 +2904,7 @@
           "software_version": {
             "type": "string",
             "title": "Software Version",
-            "default": "0.1.0"
+            "default": "0.2.0"
           },
           "scenario_api_version": {
             "type": "string",

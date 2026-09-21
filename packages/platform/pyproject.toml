@@ -1,6 +1,6 @@
 [project]
 name = "reslab-platform"
-version = "0.1.0"
+version = "0.2.0"
 description = "Resilient UAS Lab platform layer: settings, database models and migrations, event bus, artifact storage, logging."
 requires-python = ">=3.12"
 license = "Apache-2.0"

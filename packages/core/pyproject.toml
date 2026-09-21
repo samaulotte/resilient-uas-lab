@@ -1,6 +1,6 @@
 [project]
 name = "reslab-core"
-version = "0.1.0"
+version = "0.2.0"
 description = "Resilient UAS Lab core domain library: scenario schema, run lifecycle, telemetry model, adapter contract, metrics, scoring and reports."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -9,7 +9,7 @@ independently and be migrated in a backward compatible way:
 - `SOFTWARE_VERSION`: the platform release, recorded in run provenance.
 """
 
-SOFTWARE_VERSION = "0.1.0"
+SOFTWARE_VERSION = "0.2.0"
 
 SCENARIO_API_VERSION = "resilient-uas.dev/v1alpha1"
 SCENARIO_KIND = "ResilienceScenario"

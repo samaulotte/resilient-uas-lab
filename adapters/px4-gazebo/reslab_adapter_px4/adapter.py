@@ -51,7 +51,7 @@ from reslab_core.telemetry import (
 )
 from reslab_core.topology import DEFAULT_TOPOLOGY, SystemTopology
 
-PX4_ADAPTER_VERSION = "0.1.0"
+PX4_ADAPTER_VERSION = "0.2.0"
 
 PX4_CAPABILITIES = AdapterCapabilities(
     name="px4-gazebo",

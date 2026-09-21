@@ -828,7 +828,7 @@
     "Provenance": {
       "properties": {
         "software_version": {
-          "default": "0.1.0",
+          "default": "0.2.0",
           "title": "Software Version",
           "type": "string"
         },
