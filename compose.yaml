@@ -275,7 +275,7 @@ services:
   px4-sim:
     profiles: [sim]
     # Official PX4 SITL + Gazebo Harmonic image, pinned by digest (see docs/deployment.md).
-    image: ${PX4_SIM_IMAGE:-px4io/px4-sitl-gazebo@sha256:aa4bbf35f0bd6bdb3269cc96e317c8e78b87f1fc769c734c0818094074e1cc0a}
+    image: ${PX4_SIM_IMAGE:-px4io/px4-sitl-gazebo@sha256:29a5a1b5af77e5d39b67bc6664d36acead63f9dfb829475216522b1feec8036e}
     # `-d` runs PX4 without an interactive shell (no pxh> prompt filling the logs).
     command: ["-d"]
     restart: unless-stopped
