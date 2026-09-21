@@ -1207,7 +1207,7 @@ export type components = {
             seed: number;
             /**
              * Software Version
-             * @default 0.1.0
+             * @default 0.2.0
              */
             software_version: string;
             /** Speed */

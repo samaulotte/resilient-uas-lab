@@ -20,7 +20,7 @@ Degraded modes          ✓
 Recovery testing        ✓
 Fault containment       ✓
 Deterministic mock      ✓
-SITL (PX4 + Gazebo)     ✓  experimental, not yet verified against a live simulator
+SITL (PX4 + Gazebo)     ✓  validated against live PX4 SITL v1.18 + Gazebo Harmonic
 Replay and compare      ✓
 HITL                    Planned
 ArduPilot, ROS 2        Planned
@@ -99,7 +99,7 @@ and tooling to make the results comparable across runs, versions and CI pipeline
 
 ## 4. Core capabilities
 
-| Area | In 0.1.0 |
+| Area | In 0.2.0 |
 | ---- | -------- |
 | Scenario language | Versioned schema `resilient-uas.dev/v1alpha1`; strict validation; timeline events with bounded injections; expectations with deadlines; assertion grammar; abstract consequence profiles; canonical content hash for provenance |
 | Fault catalogue | 11 abstract effects on 17 subsystems across 7 domains, with a per-effect parameter whitelist |
@@ -108,7 +108,7 @@ and tooling to make the results comparable across runs, versions and CI pipeline
 | Scoring | Seven weighted dimensions (weights sum to 100) with hard gates that override the score; default profile shipped, profile per scenario |
 | Reports | `report.json` (schema 1.0) and a standalone `report.html`; every report states its data origin |
 | Replay and comparison | Recording download; replay adapter reproduces identical metrics; baseline-versus-candidate comparison with a verdict |
-| Adapters | Mock (deterministic, clearly labelled), PX4 SITL with modern Gazebo over MAVSDK (experimental, graceful failure), replay; catalogue entries for planned adapters |
+| Adapters | Mock (deterministic, clearly labelled), PX4 SITL with modern Gazebo over MAVSDK (validated end to end on PX4 v1.18 + Gazebo Harmonic), replay; catalogue entries for planned adapters |
 | Mission Control | Live mission view with digital twin, blast radius, state timeline, event feed and system panel; runs, run detail, compare, scenario library and studio, reports, system, settings; 1440x900 layout usable down to 1024 px |
 | CLI | `reslab`: validate, run (platform or in-process), report, compare, system, regression check |
 | API | Versioned REST API with OpenAPI, WebSocket run stream, Prometheus metrics, generated TypeScript client |
@@ -128,9 +128,12 @@ docker compose up --build -d
 ```
 
 Wait until `docker compose ps` shows every service healthy (the first build takes a few
-minutes), then open **http://localhost:8080**. Press **Run demo scenario**.
+minutes), then open **http://localhost:8080**. Press **Run demo scenario**. If port 8080
+is taken on your machine, set `RESLAB_GATEWAY_PORT` in `.env` before starting.
 
-Without Docker, the scenario engine runs in-process with the mock adapter:
+Without Docker, the scenario engine runs in-process with the mock adapter. This path and
+the `reslab` command need [uv](https://docs.astral.sh/uv/getting-started/installation/)
+(`brew install uv` on macOS):
 
 ```bash
 uv sync --all-packages
@@ -277,7 +280,7 @@ truthful declaration of capabilities. The control plane knows nothing about PX4 
 | Adapter | Status | Notes |
 | ------- | ------ | ----- |
 | `mock` | available | Deterministic component-state simulation of a multirotor with companion computer; supports the whole catalogue; every output labelled as mock |
-| `px4-gazebo` | experimental | PX4 SITL with modern Gazebo (Harmonic) running headless in the `sim` profile, driven over MAVLink through MAVSDK; effects mapped to PX4's failure injection (requires `SYS_FAILURE_EN=1`) and mission commands; fails with an explicit reason when the simulator is unreachable |
+| `px4-gazebo` | experimental | PX4 SITL with modern Gazebo (Harmonic) headless in the `sim` profile, over MAVLink through MAVSDK; injects observable effects by removing EKF aiding sources (GNSS, baro, mag) and by dropping the MAVLink link to trigger PX4's real data-link-loss failsafe; validated end to end (see below) |
 | `replay` | available | Re-emits a recorded run |
 | `px4-hitl`, `ardupilot`, `ros2` | planned | Catalogue entries only; no code in this release |
 
@@ -295,7 +298,7 @@ the MinIO community edition stopped receiving releases in 2026, and the platform
 speaks the S3 API, so any S3-compatible endpoint works (`docs/deployment.md`).
 TimescaleDB is not used: telemetry is persisted as JSONB chunks of samples per run in
 plain PostgreSQL, which keeps the deployment to one stock image and is sufficient for
-the telemetry rates of 0.1.0; a time-series extension remains an option behind the same
+the telemetry rates of 0.2.0; a time-series extension remains an option behind the same
 repository interface. The `packages/` directory holds three Python packages (`core`,
 `platform`, `cli`) in addition to `schemas` and `client`, so that the domain library has
 no I/O dependencies and can be imported by the CLI and by adapters without pulling in
@@ -538,15 +541,20 @@ docker compose --profile sim up --build -d
 uv run reslab run gnss-loss --adapter px4-gazebo --api http://localhost:8080
 ```
 
-Linux is the reference simulation environment. **The adapter has not been executed
-against a live PX4 SITL in the environment where this release was built**: a 2-vCPU,
-7 GB container without a GPU, in which running the multi-gigabyte PX4 and Gazebo image
-was not attempted. Only the runner side of the profile was exercised there, including
-its failure path when the simulator is unreachable. Its unit tests run against a fake link. What is
-known to work, what is inferred from the code and what remains to be confirmed are
-listed in [`docs/px4-integration.md`](docs/px4-integration.md). The nightly
-`Simulation (PX4 SITL)` workflow is the intended proving ground and is not a required
-check until it has proven stable.
+Linux is the reference simulation environment. The adapter was executed against a live
+PX4 SITL (PX4 v1.18.0-rc1, Gazebo Harmonic, MAVSDK 3.17.4), both directly through the
+engine and through the full Compose `sim` stack. Three scenarios pass end to end with
+real injected faults: `gnss-loss` (97.4), `mission-compute-restart` (82.2) and
+`compound-degradation` (74.2); their reports are in
+[`docs/px4-runs/`](docs/px4-runs/). One measured finding shaped the adapter: PX4's
+`MAV_CMD_INJECT_FAILURE` sensor injections are accepted but not realised by this Gazebo
+image, so GNSS, barometer and magnetometer losses are injected by removing the aiding
+source from the EKF, and command and companion-link losses by dropping the MAVLink link
+to trigger PX4's real data-link-loss failsafe. What was observed, what stays UNKNOWN and
+the remaining limitations are in [`docs/px4-integration.md`](docs/px4-integration.md).
+The nightly `Simulation (PX4 SITL)` workflow reproduces a run and fails clearly if PX4
+does not start, if no fault is applied, or if the benchmark does not pass; it is not a
+required check because a run needs the multi-gigabyte image and minutes of flight.
 
 ## 15. Security model
 
@@ -644,11 +652,11 @@ docs/                   Documentation
 
 ### Verification status of this release
 
-What was executed for `v0.1.0`, and what was not:
+What was executed for `v0.2.0`, and what was not:
 
 | Check | Result |
 | ----- | ------ |
-| Python unit tests (`uv run pytest`) | 138 passed, 6 integration tests skipped without infrastructure |
+| Python unit tests (`uv run pytest`) | 157 passed, 6 integration tests skipped without infrastructure |
 | Web unit tests (`vitest`) | 49 passed |
 | Lint, format, type checks | clean (ruff, eslint, prettier, tsc) |
 | Schema and client drift | none (`scripts/export_schemas.py --check`, generated client committed) |
@@ -656,7 +664,7 @@ What was executed for `v0.1.0`, and what was not:
 | Compose stack `docker compose up --build` | all 9 default services healthy; hardening verified on the running containers |
 | End-to-end (Playwright against the gateway) | 5 passed: load, live demo run to report, compare, scenario studio, remaining pages |
 | Observability profile | Prometheus scraping all four targets, Grafana dashboard provisioned |
-| `sim` profile | `runner-sim` built and started; a run without a reachable simulator fails within the connection timeout with an explicit reason. **PX4 SITL itself was not executed** in the build environment; the adapter is unverified against a live simulator |
+| `sim` profile (PX4 SITL) | Executed against live PX4 v1.18 + Gazebo Harmonic, both directly and through the full Compose stack: `gnss-loss`, `mission-compute-restart` and `compound-degradation` pass end to end with real injected faults ([`docs/px4-runs/`](docs/px4-runs/)) |
 | Container scans | Dockerfile misconfiguration scan clean; no fixable high or critical vulnerabilities in the project images at build time |
 
 The in-process and platform runs of all seven starter scenarios pass on the mock

@@ -51,15 +51,17 @@ from reslab_core.telemetry import (
 )
 from reslab_core.topology import DEFAULT_TOPOLOGY, SystemTopology
 
-PX4_ADAPTER_VERSION = "0.1.0"
+PX4_ADAPTER_VERSION = "0.2.0"
 
 PX4_CAPABILITIES = AdapterCapabilities(
     name="px4-gazebo",
     kind=AdapterKind.SIMULATION,
     description=(
-        "PX4 SITL with Gazebo (headless). Effects are realised through PX4 System Failure "
-        "Injection over MAVLink and companion-side link mechanisms; component states are "
-        "derived from PX4 telemetry and health reports."
+        "PX4 SITL with Gazebo (headless). Sensor-aiding losses are realised by removing "
+        "the source from the EKF (EKF2 control parameters); command and companion-link "
+        "losses by dropping the MAVLink link, which triggers PX4's data-link-loss "
+        "failsafe. Component states are derived from PX4 telemetry and health reports; "
+        "unobserved components stay UNKNOWN."
     ),
     vehicles=("x500", "gz_x500"),
     supported_effects=supported_effects(),
@@ -83,7 +85,7 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
     def __init__(
         self,
         *,
-        connection_url: str = "udpout://px4-sim:14580",
+        connection_url: str = "udpin://0.0.0.0:14550",
         connection_timeout: float = 120.0,
         link_factory: Callable[[str], PX4Link] | None = None,
         topology: SystemTopology = DEFAULT_TOPOLOGY,
@@ -101,6 +103,9 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         self._t0: float | None = None
         self._states: dict[str, ComponentState] = {}
         self._active: dict[str, InjectionRequest] = {}
+        # scenario_event_id -> (param_name, original_value) so a param injection can be
+        # restored exactly on clear.
+        self._param_restore: dict[str, tuple[str, int]] = {}
         self._companion_down_until: float | None = None
         self._companion_reason = ""
         self._previous_mode: FlightMode | None = None
@@ -189,6 +194,23 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
                 mechanism="px4",
                 detail=f"{request.subsystem}:{request.effect.value} has no PX4 mechanism",
             )
+        if mapping.mechanism == "param" and mapping.param_name is not None:
+            if self._link is None or not self._link.snapshot().connected:
+                return InjectionResult(
+                    applied=False, mechanism=mapping.describe(), detail="link down"
+                )
+            try:
+                original = await self._link.get_param_int(mapping.param_name)
+                await self._link.set_param_int(mapping.param_name, mapping.param_off_value or 0)
+            except Exception as exc:  # report, never assume it worked
+                detail = f"PX4 rejected {mapping.param_name}: {exc}"
+                self._log.append(f"inject {request.subsystem} {request.effect.value}: {detail}")
+                return InjectionResult(applied=False, mechanism=mapping.describe(), detail=detail)
+            self._param_restore[request.scenario_event_id] = (mapping.param_name, original)
+            self._active[request.scenario_event_id] = request
+            detail = f"{mapping.param_name} {original} -> {mapping.param_off_value}: {mapping.note}"
+            self._log.append(f"inject {request.subsystem} {request.effect.value}: {detail}")
+            return InjectionResult(applied=True, mechanism=mapping.describe(), detail=detail)
         if mapping.mechanism == "failure" and mapping.unit and mapping.failure_type:
             if self._link is None or not self._link.snapshot().connected:
                 return InjectionResult(
@@ -226,6 +248,25 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         mapping = mapping_for(request.subsystem, request.effect)
         if mapping is None or active is None:
             return InjectionResult(applied=False, mechanism="px4", detail="effect not active")
+        if mapping.mechanism == "param":
+            restore = self._param_restore.pop(request.scenario_event_id, None)
+            if restore is None or self._link is None or not self._link.snapshot().connected:
+                return InjectionResult(
+                    applied=False,
+                    mechanism=mapping.describe(),
+                    detail="link down or not restorable",
+                )
+            name, original = restore
+            try:
+                await self._link.set_param_int(name, original)
+            except Exception as exc:
+                return InjectionResult(
+                    applied=False, mechanism=mapping.describe(), detail=f"restore failed: {exc}"
+                )
+            self._log.append(f"clear {request.subsystem}: {name} restored to {original}")
+            return InjectionResult(
+                applied=True, mechanism=mapping.describe(), detail=f"{name} restored to {original}"
+            )
         if mapping.mechanism == "failure" and mapping.unit:
             if self._link is None or not self._link.snapshot().connected:
                 return InjectionResult(
@@ -398,8 +439,12 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         )
 
     def _derive_states(self, snap: VehicleSnapshot) -> dict[str, ComponentState]:
+        # Everything starts UNKNOWN: a component is only assigned a state once PX4 gives a
+        # positive observation for it. UNKNOWN is an observability gap, never a fault.
         states = {c.id: ComponentState.UNKNOWN for c in self.topology.components}
-        companion_down = self._companion_down_until is not None or not snap.connected
+
+        # Mission compute is the adapter itself (the companion). While its link is
+        # intentionally dropped it is RECOVERING; once back it is RECOVERED then OPERATIONAL.
         if self._companion_down_until is not None:
             states["mission.compute"] = ComponentState.RECOVERING
         elif snap.connected:
@@ -408,9 +453,17 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
                 if self._states.get("mission.compute") is ComponentState.RECOVERING
                 else ComponentState.OPERATIONAL
             )
-        if companion_down:
+
+        # When we cannot see the vehicle (link down or companion restart in progress),
+        # only telemetry observability is affected. Everything else stays UNKNOWN rather
+        # than being guessed at: we are blind, we do not declare failures.
+        if self._companion_down_until is not None:
             states["communications.telemetry"] = ComponentState.UNAVAILABLE
             return states
+        if not snap.connected:
+            states["communications.telemetry"] = ComponentState.UNKNOWN
+            return states
+
         states["communications.telemetry"] = ComponentState.NOMINAL
         c2_injected = any(
             r.subsystem in ("communications.c2", "external.gcs") for r in self._active.values()
@@ -418,29 +471,53 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         states["communications.c2"] = (
             ComponentState.UNAVAILABLE if c2_injected else ComponentState.NOMINAL
         )
-        if snap.gps_fix in ("NO_GPS", "NO_FIX"):
+
+        # GNSS: normally a live observation from the GPS report. When a GNSS-aiding
+        # injection is active we have removed GPS from the EKF (EKF2_GPS_CTRL=0); the raw
+        # receiver may still report a fix, but the navigation function it provides is gone,
+        # so the component is UNAVAILABLE. The estimator degradation below is the
+        # independent, observed consequence.
+        gnss_injected = any(r.subsystem == "navigation.gnss" for r in self._active.values())
+        if gnss_injected:
+            states["navigation.gnss"] = ComponentState.UNAVAILABLE
+        elif snap.gps_fix in ("NO_GPS", "NO_FIX"):
             states["navigation.gnss"] = ComponentState.UNAVAILABLE
         elif snap.gps_fix == "FIX_2D" or snap.gps_satellites < 6:
             states["navigation.gnss"] = ComponentState.DEGRADED
         else:
             states["navigation.gnss"] = ComponentState.NOMINAL
+
+        # The vehicle is "ready" once the estimator has converged (position valid) or it is
+        # armed. Before that, PX4 health flags are still settling at boot and must not be
+        # read as live component health.
+        ready = (
+            snap.armed
+            or snap.health.get("local_position", False)
+            or snap.health.get("global_position", False)
+        )
+
+        # Navigation estimator: derived from the EKF position validity. This is the honest
+        # observable effect of a GNSS or sensor failure (PX4 reports no per-sensor health
+        # over MAVLink, only the estimator's use of them).
         local_ok = snap.health.get("local_position", False)
         global_ok = snap.health.get("global_position", False)
-        if local_ok and global_ok:
+        if not ready:
+            states["navigation.estimator"] = ComponentState.UNKNOWN
+        elif local_ok and global_ok:
             states["navigation.estimator"] = ComponentState.NOMINAL
         elif local_ok:
             states["navigation.estimator"] = ComponentState.DEGRADED
-        elif snap.health:
+        else:
             states["navigation.estimator"] = ComponentState.UNAVAILABLE
-        if snap.health:
-            states["sensors.magnetometer"] = (
-                ComponentState.NOMINAL if snap.health.get("mag") else ComponentState.DEGRADED
-            )
-            states["sensors.imu"] = (
-                ComponentState.NOMINAL
-                if snap.health.get("gyro") and snap.health.get("accel")
-                else ComponentState.DEGRADED
-            )
+
+        # IMU and magnetometer: PX4 does not expose live per-sensor health over MAVLink
+        # (the calibration flags only report that calibration parameters exist), so once
+        # the vehicle is ready these are NOMINAL and only an active failure injection on
+        # them drives a degraded/unavailable state. Before readiness they stay UNKNOWN.
+        if ready:
+            states["sensors.imu"] = ComponentState.NOMINAL
+            states["sensors.magnetometer"] = ComponentState.NOMINAL
+
         mode = _MODE_MAP.get(snap.flight_mode, FlightMode.UNKNOWN)
         states["flight_control.core"] = (
             ComponentState.OPERATIONAL if mode is not FlightMode.UNKNOWN else ComponentState.UNKNOWN
@@ -448,8 +525,11 @@ class PX4GazeboAdapter(AutonomousSystemAdapter):
         states["power.battery"] = (
             ComponentState.DEGRADED if snap.battery_remaining < 0.2 else ComponentState.NOMINAL
         )
+
+        # Active sensor injections are the authoritative observation for the injected
+        # component: the scenario asked PX4 to fail it and PX4 accepted.
         for request in self._active.values():
-            if request.subsystem in ("sensors.barometer",):
+            if request.subsystem in ("sensors.barometer", "sensors.magnetometer", "sensors.imu"):
                 states[request.subsystem] = (
                     ComponentState.UNAVAILABLE
                     if request.effect is Effect.UNAVAILABLE

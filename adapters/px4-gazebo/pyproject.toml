@@ -1,6 +1,6 @@
 [project]
 name = "reslab-adapter-px4"
-version = "0.1.0"
+version = "0.2.0"
 description = "PX4 SITL + Gazebo adapter for Resilient UAS Lab (MAVSDK transport)."
 requires-python = ">=3.12"
 license = "Apache-2.0"

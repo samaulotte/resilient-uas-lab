@@ -25,7 +25,7 @@ from reslab_core.adapter import (
 from reslab_core.scenario.catalog import DEFAULT_CATALOG
 from reslab_core.telemetry import PlannedPath
 
-MOCK_ADAPTER_VERSION = "0.1.0"
+MOCK_ADAPTER_VERSION = "0.2.0"
 
 MOCK_CAPABILITIES = AdapterCapabilities(
     name="mock",

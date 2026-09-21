@@ -229,6 +229,11 @@ def compute_score(
         for a in assertions
         if a.severity is Severity.CRITICAL and a.outcome is AssertionOutcome.FAILED
     ]
+    unevaluated_critical = [
+        a
+        for a in assertions
+        if a.severity is Severity.CRITICAL and a.outcome is AssertionOutcome.NOT_EVALUATED
+    ]
     gates.append(
         HardGate(
             name="critical_assertions",
@@ -257,18 +262,32 @@ def compute_score(
             reason="run executed to completion" if run_completed else "run did not complete",
         )
     )
+    # Result precedence:
+    #   1. run did not complete            -> INCONCLUSIVE
+    #   2. positive failure (a critical assertion failed, or loss of control) -> FAILED
+    #   3. a critical assertion could not be evaluated (missing observation)  -> INCONCLUSIVE
+    #   4. otherwise                        -> PASSED
+    # A positive failure always wins over an unevaluable assertion: we have evidence the
+    # run failed. INCONCLUSIVE is never reported as a pass.
+    positive_failure = bool(failed_critical) or metrics.safety.loss_of_control
     if not run_completed:
         hard_gate_result = BenchmarkResult.INCONCLUSIVE
         result = BenchmarkResult.INCONCLUSIVE
         reason = "run did not complete; result is inconclusive"
-    elif all(g.passed for g in gates):
-        hard_gate_result = BenchmarkResult.PASSED
-        result = BenchmarkResult.PASSED
-        reason = "all hard gates passed"
-    else:
+    elif positive_failure:
         hard_gate_result = BenchmarkResult.FAILED
         result = BenchmarkResult.FAILED
         reason = "; ".join(g.reason for g in gates if not g.passed)
+    elif unevaluated_critical:
+        hard_gate_result = BenchmarkResult.INCONCLUSIVE
+        result = BenchmarkResult.INCONCLUSIVE
+        reason = "critical assertion could not be evaluated: " + "; ".join(
+            a.expression for a in unevaluated_critical
+        )
+    else:
+        hard_gate_result = BenchmarkResult.PASSED
+        result = BenchmarkResult.PASSED
+        reason = "all hard gates passed"
     return ScoreResult(
         profile=profile,
         total=total,

@@ -24,7 +24,7 @@ from reslab_core.scenario.catalog import DEFAULT_CATALOG
 from reslab_core.states import ComponentState, EventKind, MissionPhase
 from reslab_core.telemetry import ComponentStateChange, PlannedPath, TelemetrySample
 
-REPLAY_ADAPTER_VERSION = "0.1.0"
+REPLAY_ADAPTER_VERSION = "0.2.0"
 
 REPLAY_CAPABILITIES = AdapterCapabilities(
     name="replay",

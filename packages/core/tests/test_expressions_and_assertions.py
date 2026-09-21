@@ -68,8 +68,10 @@ def test_assertion_not_evaluated_when_metric_missing() -> None:
     assert result.outcome is AssertionOutcome.NOT_EVALUATED
 
 
-def test_assertion_fails_when_metric_never_measured() -> None:
+def test_assertion_not_evaluated_when_metric_never_measured() -> None:
+    # A metric that exists in the model but was never observed (value None) cannot be
+    # evaluated. It must be NOT_EVALUATED, never silently treated as a pass or a fail.
     assertion = Assertion(expression="recovery.mission_compute < 10s")
     result = evaluate_assertion(assertion, {"recovery.mission_compute": None})
-    assert result.outcome is AssertionOutcome.FAILED
-    assert "never measured" in result.explanation
+    assert result.outcome is AssertionOutcome.NOT_EVALUATED
+    assert "never observed" in result.explanation

@@ -1,6 +1,6 @@
 [project]
 name = "reslab-cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "reslab command line interface for Resilient UAS Lab."
 requires-python = ">=3.12"
 license = "Apache-2.0"

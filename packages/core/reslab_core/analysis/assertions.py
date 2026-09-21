@@ -53,6 +53,16 @@ def evaluate_assertion(
     if not known:
         outcome = AssertionOutcome.NOT_EVALUATED
         explanation = f"metric '{expression.path}' is not available for this run"
+    elif measured is None:
+        # The metric exists in the model but was never observed during the run (for
+        # example a recovery time when nothing recovered, or a state that stayed UNKNOWN
+        # because the link was down). The assertion cannot be evaluated; it must not be
+        # silently treated as a pass or a fail.
+        outcome = AssertionOutcome.NOT_EVALUATED
+        explanation = (
+            f"{expression.path} was never observed during the run; "
+            "the assertion could not be evaluated"
+        )
     else:
         passed = expression.evaluate(measured)
         outcome = AssertionOutcome.PASSED if passed else AssertionOutcome.FAILED
@@ -60,8 +70,6 @@ def evaluate_assertion(
             f"measured {expression.path} = {_format(measured, expression.raw_value)}, "
             f"expected {expression.operator.value} {expression.raw_value}"
         )
-        if measured is None:
-            explanation = f"{expression.path} was never measured during the run"
     return AssertionResult(
         expression=assertion.expression,
         severity=assertion.severity,

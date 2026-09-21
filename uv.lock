@@ -1017,7 +1017,7 @@ wheels = [
 
 [[package]]
 name = "resilient-uas-lab"
-version = "0.1.0"
+version = "0.2.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -1044,7 +1044,7 @@ dev = [
 
 [[package]]
 name = "reslab-adapter-mock"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "adapters/mock" }
 dependencies = [
     { name = "reslab-core" },
@@ -1055,7 +1055,7 @@ requires-dist = [{ name = "reslab-core", editable = "packages/core" }]
 
 [[package]]
 name = "reslab-adapter-px4"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "adapters/px4-gazebo" }
 dependencies = [
     { name = "mavsdk-grpc" },
@@ -1072,7 +1072,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-adapter-replay"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "adapters/replay" }
 dependencies = [
     { name = "reslab-core" },
@@ -1083,7 +1083,7 @@ requires-dist = [{ name = "reslab-core", editable = "packages/core" }]
 
 [[package]]
 name = "reslab-api"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "services/api" }
 dependencies = [
     { name = "fastapi" },
@@ -1106,7 +1106,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-cli"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/cli" }
 dependencies = [
     { name = "httpx" },
@@ -1129,7 +1129,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-core"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "jinja2" },
@@ -1146,7 +1146,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-orchestrator"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "services/orchestrator" }
 dependencies = [
     { name = "prometheus-client" },
@@ -1163,7 +1163,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-platform"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/platform" }
 dependencies = [
     { name = "alembic" },
@@ -1192,7 +1192,7 @@ requires-dist = [
 
 [[package]]
 name = "reslab-runner"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "services/runner" }
 dependencies = [
     { name = "httpx" },

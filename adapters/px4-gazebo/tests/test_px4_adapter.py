@@ -36,6 +36,7 @@ class FakeLink:
         self.reject: set[tuple[FailureUnit, FailureType]] = set()
         self.landed = False
         self.connect_calls = 0
+        self._param_defaults = {"EKF2_GPS_CTRL": 7, "EKF2_BARO_CTRL": 1, "EKF2_MAG_TYPE": 0}
 
     @property
     def version(self) -> str:
@@ -71,6 +72,14 @@ class FakeLink:
 
     async def set_param_int(self, name: str, value: int) -> None:
         self.params[name] = value
+        # Removing GPS aiding from the EKF is what makes the global position estimate
+        # invalid; restoring it makes it valid again. This mirrors the measured behaviour
+        # of the reference PX4 build (see docs/px4-integration.md).
+        if name == "EKF2_GPS_CTRL":
+            self.snap.health["global_position"] = value != 0
+
+    async def get_param_int(self, name: str) -> int:
+        return self.params.get(name, self._param_defaults.get(name, 0))
 
     async def upload_mission(self, waypoints: list[GeodeticWaypoint], rtl: bool) -> None:
         self.mission = list(waypoints)
@@ -113,8 +122,7 @@ def test_mapping_is_a_subset_of_the_catalog() -> None:
             assert DEFAULT_CATALOG.allows(subsystem, effect), (subsystem, effect)
             assert mapping_for(subsystem, effect) is not None
     assert (
-        mapping_for("navigation.gnss", Effect.UNAVAILABLE).describe()
-        == "px4:failure sensor_gps off"
+        mapping_for("navigation.gnss", Effect.UNAVAILABLE).describe() == "px4:param EKF2_GPS_CTRL=0"
     )
     assert mapping_for("mission.compute", Effect.RESTART).mechanism == "companion"
     assert mapping_for("security.gateway", Effect.UNAVAILABLE) is None
@@ -163,10 +171,14 @@ async def test_prepare_uploads_mission_and_enables_failure_injection() -> None:
             scenario_event_id="gnss", subsystem="navigation.gnss", effect=Effect.UNAVAILABLE
         )
     )
-    assert result.applied and result.mechanism == "px4:failure sensor_gps off"
-    assert link.injections[-1] == (FailureUnit.SENSOR_GPS, FailureType.OFF)
+    # GNSS loss is injected by removing GPS aiding from the EKF (a real, observable
+    # parameter change), the original value is recorded for exact restoration.
+    assert result.applied and result.mechanism == "px4:param EKF2_GPS_CTRL=0"
+    assert link.params["EKF2_GPS_CTRL"] == 0
     observation = adapter._observe_once()
     assert observation.sample.health["navigation.gnss"] is ComponentState.UNAVAILABLE
+    # The estimator degradation is the independent, observed consequence (global position
+    # invalid, local position still ok).
     assert observation.sample.health["navigation.estimator"] is ComponentState.DEGRADED
     assert any(c.subsystem == "navigation.gnss" for c in observation.state_changes)
 
@@ -175,15 +187,15 @@ async def test_prepare_uploads_mission_and_enables_failure_injection() -> None:
             scenario_event_id="gnss", subsystem="navigation.gnss", effect=Effect.UNAVAILABLE
         )
     )
-    assert cleared.applied and link.injections[-1] == (FailureUnit.SENSOR_GPS, FailureType.OK)
+    assert cleared.applied and link.params["EKF2_GPS_CTRL"] == 7
 
-    link.reject.add((FailureUnit.SENSOR_MAG, FailureType.WRONG))
+    # An effect with no observable PX4 mechanism is reported as not applied, never faked.
     rejected = await adapter.inject(
         InjectionRequest(
             scenario_event_id="mag", subsystem="sensors.magnetometer", effect=Effect.ERRONEOUS
         )
     )
-    assert not rejected.applied and "unsupported" in rejected.detail
+    assert not rejected.applied and "no PX4 mechanism" in rejected.detail
 
     unsupported = await adapter.inject(
         InjectionRequest(

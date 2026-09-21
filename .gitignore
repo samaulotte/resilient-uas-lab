@@ -35,9 +35,11 @@ tests/e2e/playwright-report/
 tests/e2e/blob-report/
 tests/e2e/.auth/
 
-# Local run artifacts
+# Local run artifacts. Anchored to the repository root on purpose: an unanchored
+# rule also matches source directories named "artifacts", such as the artifact
+# store package in reslab_platform.
 .reslab/
-artifacts/
+/artifacts/
 *.log
 
 # OS / editors

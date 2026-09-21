@@ -1,6 +1,6 @@
 [project]
 name = "reslab-adapter-mock"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic mock autonomous-system adapter for Resilient UAS Lab."
 requires-python = ">=3.12"
 license = "Apache-2.0"
