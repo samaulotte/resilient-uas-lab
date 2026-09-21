@@ -29,7 +29,7 @@ The code base follows a small number of rules that explain most of its shape.
    adapters.
 5. **Runners are untrusted workers.** They receive jobs over the event bus and hold no
    database or object store credentials.
-6. **Everything is versioned independently.** Software `0.1.0`, scenario schema
+6. **Everything is versioned independently.** Software `0.2.0`, scenario schema
    `resilient-uas.dev/v1alpha1`, report schema `1.0`, runner protocol `1`
    (`packages/core/reslab_core/versions.py`).
 

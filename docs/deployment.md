@@ -112,7 +112,7 @@ Copy `.env.example` to `.env`. Every variable has a working default for a local 
 | `RESLAB_ENVIRONMENT` | `development` | All Python services (`development`, `test`, `production`) |
 | `RESLAB_LOG_LEVEL` | `INFO` | All Python services |
 | `RESLAB_LOG_FORMAT` | `json` | All Python services (`json` or `console`) |
-| `RESLAB_VERSION` | `0.1.0` | Image build argument, recorded in provenance |
+| `RESLAB_VERSION` | `0.2.0` | Image build argument, recorded in provenance |
 | `RESLAB_GIT_COMMIT` | empty | Image build argument and runtime setting, recorded in provenance |
 | `RESLAB_GATEWAY_PORT` | `8080` | Published gateway port |
 | `RESLAB_API_CORS_ORIGINS` | `http://localhost:8080,http://localhost:3000` | API |

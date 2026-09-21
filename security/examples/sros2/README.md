@@ -2,7 +2,7 @@
 
 The adapter catalog lists a `ros2` adapter with status `planned`: a generic adapter for
 ROS 2 robots built on lifecycle nodes and SROS2 security enclaves. No code in release
-0.1.0 implements it or reads the files in this directory. They are here so that the
+0.2.0 implements it or reads the files in this directory. They are here so that the
 access boundary a ROS 2 runner should respect is written down before the adapter is,
 and so that adapter authors start from a least-privilege policy instead of an open
 graph.

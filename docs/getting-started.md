@@ -43,7 +43,7 @@ uv run reslab --version
 uv run reslab scenario validate scenarios/*.yaml
 ```
 
-`reslab --version` prints `reslab 0.1.0 (scenario API resilient-uas.dev/v1alpha1)`.
+`reslab --version` prints `reslab 0.2.0 (scenario API resilient-uas.dev/v1alpha1)`.
 The validation output lists every file with its name, number of events and assertions
 and the first characters of its content hash, for example:
 

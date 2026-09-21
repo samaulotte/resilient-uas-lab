@@ -29,7 +29,7 @@ The examples are written against the service names and subjects of the reference
 deployment has its own host names, certificate arrangements and secret management.
 Each file says what it changes and what the operator must provide.
 
-`examples/sros2/` is provided ahead of the ROS 2 adapter. No code in release 0.1.0
+`examples/sros2/` is provided ahead of the ROS 2 adapter. No code in release 0.2.0
 reads it; it documents the access boundary a ROS 2 runner is expected to respect and
 gives adapter authors a starting point (see the adapter catalog entry `ros2`, status
 `planned`, and [`docs/roadmap.md`](../docs/roadmap.md)).
