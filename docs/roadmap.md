@@ -1,6 +1,6 @@
 # Roadmap
 
-This page separates what release 0.1.0 does from what is planned, so that nobody
+This page separates what release 0.2.0 does from what is planned, so that nobody
 mistakes a catalog entry, a settings field or a sentence in a docstring for a working
 feature. It lists no dates. Items move from "planned" to "implemented" through the
 normal contribution process (`CONTRIBUTING.md`); larger items start with an issue so
@@ -11,7 +11,7 @@ Everything in the "Implemented" section has been verified in this release: unit 
 Playwright end-to-end journey against the gateway. The one exception is called out
 explicitly.
 
-## Implemented in 0.1.0
+## Implemented in 0.2.0
 
 | Area | State |
 | ---- | ----- |
@@ -66,7 +66,7 @@ not features.
 
 ### Authentication and authorization
 
-The API description states that authentication is not enforced in the local v0.1
+The API description states that authentication is not enforced in the local v0.2
 deployment and that the API is designed to sit behind an OIDC-aware gateway. Nothing in
 the gateway configuration or the API implements identity yet. The intended shape is
 identity at the edge (the gateway) with the API receiving and recording who did what;

@@ -13,6 +13,12 @@ that document explains.
 | `mission-compute-restart.report.json` | passed | 82.2 | 1 | Companion link dropped and re-established, mission compute recovered ~5.8 s later, flight domain untouched |
 | `compound-degradation.report.json` | passed | 74.2 | 3 | Sequential GNSS loss, datalink loss and compute restart; GNSS failsafe to LAND then resume to MISSION |
 
+The reports record `software_version` and `adapter_version` `0.1.0`: they were captured
+on the working tree that became commits `dec2cb4` (metrics), `c601e14` (connectivity)
+and `23d19c5` (fault mechanisms), before the version was raised to `0.2.0`. That code is
+what shipped in `0.2.0`; only the version literals changed afterwards. The
+`INJECTION_APPLIED` events in the reports name the shipped mechanism (`EKF2_GPS_CTRL`).
+
 Each run passes the three critical assertions (flight control available, no loss of
 control, flight domain contained). The high and medium assertions that do not hold
 (`mission.completion`, `mission.completed`, and one recovery-time bound) reflect real

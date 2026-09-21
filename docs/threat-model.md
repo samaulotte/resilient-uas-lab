@@ -6,7 +6,7 @@ The first part states what the platform is **for** and, more importantly, what i
 **not for**: the scope line that decides which capabilities are accepted into the code
 base. The second part is a conventional threat model **of the platform as software**:
 assets, actors, entry points, threats and the controls that answer them, plus the
-residual risks of release 0.1.0.
+residual risks of release 0.2.0.
 
 ## Part 1: scope of the tool
 
@@ -73,7 +73,7 @@ to the measurement while creating material that has no place in an open reposito
 
 ### Actors and entry points
 
-| Actor | Entry point | Trust in 0.1.0 |
+| Actor | Entry point | Trust in 0.2.0 |
 | ----- | ----------- | -------------- |
 | Operator using Mission Control or the CLI | Gateway port 8080: REST, WebSocket | Fully trusted; no authentication exists |
 | Author of a scenario document | `POST /api/v1/scenarios`, `POST /api/v1/runs` with `document`, files passed to the CLI | Untrusted input, validated |
@@ -142,7 +142,7 @@ chosen by an operator of the same deployment.
 
 ### Residual risks summarized
 
-Release 0.1.0 is a local, single-tenant tool. Its main residual risks are the absence
+Release 0.2.0 is a local, single-tenant tool. Its main residual risks are the absence
 of authentication (T10), the reliance on the deployment for TLS and credential hygiene
 (T11, T13, T14), and the fact that a runner's own telemetry is trusted for its own run
 (T6). None of these is hidden: they are stated in the API description, in

@@ -701,18 +701,20 @@ fail on score drops between versions. The same command works against any directo
 ## 19. Roadmap
 
 The roadmap ([`docs/roadmap.md`](docs/roadmap.md)) is explicit about what exists, what
-is planned without code, and what is not planned. Near-term items: confirm the PX4
-adapter against live SITL and promote the simulation workflow, the ArduPilot and ROS 2
-adapters, score profile management, and authentication and TLS as defaults of the
-reference stack.
+is planned without code, and what is not planned. Near-term items: flight-verify the
+barometer and magnetometer mechanisms and record `sensor-failure` and `datalink-loss`
+runs on PX4, promote the simulation workflow to a required check once it is stable on
+hosted runners, the ArduPilot and ROS 2 adapters, score profile management, and
+authentication and TLS as defaults of the reference stack.
 
 | Version | Theme | Contents |
 | ------- | ----- | -------- |
-| v0.1 (this release) | Foundation | Mission Control, scenario engine, mock adapter, PX4 SITL adapter (experimental), metrics and score, reports, fault containment, Compose, CI |
-| v0.2 | Security and replay | SROS2 policy integration, richer replay, ULog and rosbag ingestion, deeper trust-boundary analysis, score profile management |
-| v0.3 | Hardware integration | PX4 HITL, physical runner architecture, bench profiles (no automatic hardware control without an explicit safety design) |
-| v0.4 | Multi-system | ArduPilot adapter, generic ROS 2 adapter, adapter SDK |
-| v0.5 | Distributed experimentation | Distributed runners, Kubernetes execution as a job per scenario, campaigns and repeated statistical runs |
+| v0.1 | Foundation | Mission Control, scenario engine, mock adapter, PX4 SITL adapter (experimental), metrics and score, reports, fault containment, Compose, CI |
+| v0.2 (this release) | PX4 validation | PX4 SITL executed end to end on live PX4 v1.18 and Gazebo Harmonic; observable fault mechanisms (EKF aiding, companion link); UNKNOWN and INCONCLUSIVE observability semantics; a simulation workflow that runs a real scenario and fails clearly; one release version asserted across every package |
+| v0.3 | Security and replay | SROS2 policy integration, richer replay, ULog and rosbag ingestion, deeper trust-boundary analysis, score profile management |
+| v0.4 | Hardware integration | PX4 HITL, physical runner architecture, bench profiles (no automatic hardware control without an explicit safety design) |
+| v0.5 | Multi-system | ArduPilot adapter, generic ROS 2 adapter, adapter SDK |
+| v0.6 | Distributed experimentation | Distributed runners, Kubernetes execution as a job per scenario, campaigns and repeated statistical runs |
 
 Roadmap items are intentions, not promises.
 

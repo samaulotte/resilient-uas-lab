@@ -1,7 +1,7 @@
 # Security model
 
 This document describes the security design of the platform as implemented in
-release 0.1.0: what is protected, by which mechanism, and where the mechanism lives in
+release 0.2.0: what is protected, by which mechanism, and where the mechanism lives in
 the code. It is written for people who deploy the platform or review it. The
 [threat model](threat-model.md) lists the threats these controls answer and the ones
 they do not; `SECURITY.md` at the repository root explains how to report a
@@ -96,7 +96,7 @@ from the code.
 ### Authentication and authorization
 
 **There is none in this release.** The API description says so: authentication is not
-enforced in the local v0.1 deployment, and the API is designed to sit behind an
+enforced in the local v0.2 deployment, and the API is designed to sit behind an
 OIDC-aware gateway. Every request the gateway forwards is trusted. Consequences:
 
 - The reference Compose deployment is meant for a trusted network or a single

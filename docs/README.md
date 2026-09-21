@@ -6,7 +6,7 @@ against a target through an adapter; the result is a set of objective metrics, a
 transparent score and a canonical report. The platform simulates the effects of
 degradation only; it never models how a disturbance is produced.
 
-Software version 0.1.0, scenario schema `resilient-uas.dev/v1alpha1`, report schema
+Software version 0.2.0, scenario schema `resilient-uas.dev/v1alpha1`, report schema
 `1.0`, runner protocol `1`.
 
 ## Start here
@@ -49,7 +49,7 @@ Software version 0.1.0, scenario schema `resilient-uas.dev/v1alpha1`, report sch
 | [PX4 integration](px4-integration.md) | The experimental PX4 SITL adapter: profile, transport, effect mapping, state derivation, limitations, and its unverified status in this release |
 | [Adapter development](adapter-development.md) | The adapter contract, how the engine drives it, registration, testing and expectations |
 | [Development](development.md) | Toolchain, running services locally, unit, integration and end-to-end tests, regression check, code generation, conventions, CI |
-| [Roadmap](roadmap.md) | What is implemented and verified in 0.1.0, what is planned without code yet, and what is not planned |
+| [Roadmap](roadmap.md) | What is implemented and verified in 0.2.0, what is planned without code yet, and what is not planned |
 
 ## Elsewhere in the repository
 
