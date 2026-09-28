@@ -40,8 +40,8 @@ dev = [
   "pytest-asyncio==1.4.0",
   "pytest-cov==7.1.0",
   "httpx==0.28.1",
-  "ruff==0.16.8",
-  "hypothesis==6.168.0",
+  "ruff==0.16.9",
+  "hypothesis==6.168.1",
 ]
 
 [tool.ruff]
